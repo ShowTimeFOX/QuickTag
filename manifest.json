@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "QuickTag LazyMod",
+  "version": "6.1.0",
+  "description": "An image-tagging tool with customizable palettes and a floating interface.",
+  "icons": {
+    "128": "icon.png"
+  },
+  "action": {
+    "default_title": "QuickTag LazyMod",
+    "default_popup": "extension-popup.html",
+    "default_icon": "icon.png"
+  },
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1/*",
+    "http://127.0.0.1:7860/*",
+    "http://127.0.0.1:8188/*"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "import.json",
+        "popup.html",
+        "styles.css",
+        "theme-dark.css",
+        "theme-light.css",
+        "theme-femboy.css",
+        "theme-halloween.css",
+        "theme-minimalistic.css",
+        "theme-cyberpunk.css",
+        "theme-custom.css"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

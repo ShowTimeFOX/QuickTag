@@ -1,0 +1,85 @@
+#lazymod-window.theme-light {
+  --lm-bg: #f1f4f8;
+  --lm-surface: #ffffff;
+  --lm-surface-raised: #e8eef5;
+  --lm-border: #d2dbe7;
+  --lm-text: #243247;
+  --lm-muted: #586a80;
+  --lm-accent: #285fa8;
+  --lm-accent-soft: rgba(40, 95, 168, 0.12);
+  --lm-theme-section: rgba(255, 255, 255, 0.88);
+  --lm-theme-input: #f7f9fc;
+  --lm-theme-chip: #edf2f8;
+  --lm-theme-chip-border: #d2dce8;
+  --lm-theme-hover: #e2eaf3;
+  --lm-theme-active: rgba(40, 95, 168, 0.14);
+  --lm-danger: #a52b38;
+  --lm-success: #176b43;
+  color-scheme: light;
+  border-color: var(--lm-border);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(80, 132, 195, 0.12), transparent 45%),
+    var(--lm-bg);
+  color: var(--lm-text);
+  box-shadow: 0 18px 48px rgba(34, 52, 75, 0.2);
+}
+
+#lazymod-window.theme-light .lazymod-header-bar {
+  border-bottom-color: var(--lm-border);
+  background: linear-gradient(110deg, rgba(40, 95, 168, 0.08), transparent 72%);
+}
+
+#lazymod-window.theme-light .lazymod-section {
+  border-color: var(--lm-border);
+  border-radius: 11px;
+  box-shadow: 0 4px 14px rgba(37, 58, 84, 0.06);
+}
+
+#lazymod-window.theme-light :is(.lazymod-app-title, .lazymod-title, .lazymod-settings-row > span, .lazymod-settings-field strong, .lazymod-settings-control strong) {
+  color: var(--lm-text);
+}
+
+#lazymod-window.theme-light .lazymod-blacklist-summary code,
+#lazymod-window.theme-light .lazymod-win-btn,
+#lazymod-window.theme-light .lazymod-resize-handle {
+  color: var(--lm-muted);
+}
+
+#lazymod-window.theme-light .lazymod-chip .score {
+  background: rgba(36, 50, 71, 0.08);
+}
+
+#lazymod-window.theme-light .lazymod-ai-status[data-state="working"] {
+  color: var(--lm-accent);
+}
+
+#lazymod-window.theme-light .lazymod-badge {
+  border-color: var(--lm-border);
+  background: var(--lm-accent-soft);
+  color: var(--lm-accent);
+}
+
+#lazymod-window.theme-light #lm-view-main .lazymod-btn:hover:not(:disabled) {
+  border-color: var(--lm-accent);
+  background: var(--lm-surface-raised);
+  color: var(--lm-text);
+}
+
+#lazymod-window.theme-light #lm-view-main .lazymod-btn-danger {
+  border-color: rgba(165, 43, 56, 0.34);
+  background: rgba(165, 43, 56, 0.08);
+  color: var(--lm-danger);
+}
+
+#lazymod-window.theme-light #lm-view-main .lazymod-btn-danger:hover:not(:disabled) {
+  border-color: #8b2430;
+  background: rgba(165, 43, 56, 0.14);
+  color: #7d202a;
+}
+
+#lazymod-window.theme-light #lm-view-main .lazymod-btn-accent,
+#lazymod-window.theme-light #lm-view-main .lazymod-btn-accent:hover:not(:disabled) {
+  border-color: var(--lm-accent);
+  background: var(--lm-accent);
+  color: #ffffff;
+}

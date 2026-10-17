@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QuickTag LazyMod</title>
+    <link rel="stylesheet" href="extension-popup.css" />
+  </head>
+  <body>
+    <main class="panel">
+      <header class="header">
+        <img class="brand-icon" src="icon.png" alt="" />
+        <div>
+          <h1>QuickTag <span>LazyMod</span></h1>
+          <p>Quick controls</p>
+        </div>
+      </header>
+
+      <section class="enable-card" aria-label="Extension control">
+        <div>
+          <strong>Extension</strong>
+          <span id="enabled-status" class="status-copy">Loading…</span>
+        </div>
+        <label class="switch" aria-label="Enable or disable QuickTag">
+          <input id="enabled-toggle" type="checkbox" />
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <section class="section" aria-labelledby="domains-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="domains-title">Site access</h2>
+            <p>Choose where the tagger can appear.</p>
+          </div>
+        </div>
+        <label class="field-label" for="domain-mode">Access rule</label>
+        <select id="domain-mode">
+          <option value="blacklist">Blacklist — allow everywhere else</option>
+          <option value="whitelist">Whitelist — allow only listed sites</option>
+        </select>
+        <p id="mode-hint" class="hint"></p>
+        <form id="domain-form" class="domain-form">
+          <label class="visually-hidden" for="domain-input">Domain name</label>
+          <input
+            id="domain-input"
+            type="text"
+            placeholder="example.com"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button type="submit" class="add-button">Add</button>
+        </form>
+        <p id="domain-error" class="error" role="alert" hidden></p>
+        <ul id="domain-list" class="domain-list" aria-label="Managed domains"></ul>
+        <p id="empty-list" class="empty-list"></p>
+      </section>
+
+      <section class="connection-card" aria-live="polite">
+        <span id="connection-indicator" class="connection-indicator" aria-hidden="true"></span>
+        <div class="connection-copy">
+          <strong>ComfyUI</strong>
+          <span id="connection-status">Checking connection…</span>
+        </div>
+        <button id="connection-refresh" type="button" class="icon-button" title="Check connection again" aria-label="Check ComfyUI connection again">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 5.5A5.5 5.5 0 1 0 13.2 9M13 2.5v3.7H9.3" /></svg>
+        </button>
+      </section>
+
+      <a class="about-link" href="about.html" target="_blank" rel="noreferrer">
+        <span>About QuickTag LazyMod</span>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3 6.5 9.5M11 9v4H3V5h4" /></svg>
+      </a>
+      <p id="save-error" class="error save-error" role="alert" hidden></p>
+    </main>
+    <script src="extension-popup.js"></script>
+  </body>
+</html>
