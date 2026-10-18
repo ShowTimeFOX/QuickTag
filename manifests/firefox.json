@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "QuickTag LazyMod",
+  "version": "1.0.0",
+  "description": "An image-tagging tool with customizable palettes and a floating interface.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "quicktag@lazymod.app",
+      "strict_min_version": "109.0"
+    }
+  },
+  "icons": {
+    "128": "assets/icon.png"
+  },
+  "action": {
+    "default_title": "QuickTag LazyMod",
+    "default_popup": "pages/extension-popup.html",
+    "default_icon": "assets/icon.png"
+  },
+  "permissions": ["storage", "activeTab", "alarms"],
+  "host_permissions": [
+    "<all_urls>",
+    "https://api.github.com/*",
+    "http://127.0.0.1/*",
+    "http://127.0.0.1:7860/*",
+    "http://127.0.0.1:8188/*"
+  ],
+  "background": {
+    "scripts": ["scripts/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["scripts/content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "data/import.json",
+        "pages/popup.html",
+        "styles/tagger.css",
+        "styles/theme-dark.css",
+        "styles/theme-light.css",
+        "styles/theme-femboy.css",
+        "styles/theme-halloween.css",
+        "styles/theme-minimalistic.css",
+        "styles/theme-cyberpunk.css",
+        "styles/theme-custom.css"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,90 +1,101 @@
 # QuickTag LazyMod
 
-QuickTag LazyMod to rozszerzenie przeglądarki Chromium Manifest V3, które dodaje
-do stron pływający interfejs do szybkiego tagowania obrazów. Umożliwia
-korzystanie z własnych palet tagów, dopasowanie interfejsu do strony oraz
-opcjonalną analizę obrazu przez lokalne ComfyUI i węzeł WD14 Tagger.
+QuickTag LazyMod is a Manifest V3 browser extension for tagging images with a
+floating interface. It provides editable tag palettes, site-specific profiles,
+interface customization, and optional image analysis through a local ComfyUI
+installation with the WD14 Tagger node.
 
-## Funkcje
+## Features
 
-- **Język interfejsu** — cały interfejs użytkownika wtyczki, w tym tagger,
-  edytory i strona About, ma być wyświetlany po angielsku. Dokumentacja projektu
-  (`PROJECT.md`) pozostaje po polsku.
-- **Palety tagów** — wbudowana paleta startowa oraz własne palety podzielone na
-  grupy i kategorie. Można przełączać się między paletami, importować i
-  eksportować pliki JSON, edytować palety albo usuwać własne palety.
-- **Dodawanie i usuwanie tagów** — kliknięcie tagu przełącza jego stan.
-  Przyciski zbiorcze dodają albo usuwają widoczne tagi; w sekcji AI ta sama
-  akcja obejmuje rozpoznane sugestie.
-- **Wyszukiwanie** — wyszukiwanie rozmyte obsługuje dopasowania przybliżone.
-  Tryb pisania tagów pozwala rozpocząć wyszukiwanie, gdy fokus nie jest
-  w polu edytowalnym. Wyniki można obsługiwać klawiaturą: strzałkami, Enter
-  i Escape.
-- **Analiza AI** — wysyła obraz do lokalnego ComfyUI-WD14-Tagger, pokazuje
-  postęp, filtruje wyniki progiem pewności i respektuje listę wykluczonych
-  tagów. Próg pewności jest zapisywany lokalnie.
-- **Kopia konfiguracji** — w ustawieniach można wyeksportować lub zaimportować
-  wszystkie zapisane dane QuickTag w pliku JSON, w tym palety, profile stron,
-  czarną listę AI, ustawienia okna oraz reguły domen i globalnego włączenia.
-  Import zastępuje bieżącą konfigurację.
-- **Przywracanie ustawień domyślnych** — usuwa zapisane dane rozszerzenia,
-  aby po ponownym załadowaniu użyć pierwotnych wartości domyślnych.
-- **Profile stron** — dla strony można ustawić selektory CSS pola tagów,
-  obrazu i pola/linku źródłowego. Wybór elementu podświetla wskazywany element.
-- **Panel rozszerzenia** — po kliknięciu ikony można globalnie włączyć lub
-  wyłączyć tagger, ustawić listę dozwolonych albo blokowanych domen, sprawdzić
-  połączenie z ComfyUI, sprawdzić dostępność aktualizacji i otworzyć stronę
-  About. Nowa wersja jest sygnalizowana badge'em „NEW” przy ikonie rozszerzenia.
-- **Edytor palet** — edycja JSON z formatowaniem oraz czytelniejszy tryb
-  easyJson.
-- **Dopasowanie interfejsu** — przesuwanie, skalowanie, dokowanie przy
-  krawędzi, zwijanie i ukrywanie taggera. Tryb ghost można przełączać
-  skrótem klawiszowym również wtedy, gdy fokus jest w polu edycji; opcjonalnie
-  działa tylko podczas przytrzymywania przycisku lub skrótu. Przezroczystość
-  działa również w trybie dokowanym i we wszystkich motywach. Tryb
-  dokowany/pływający i krawędź dokowania są zapamiętywane
-  osobno dla każdego originu strony. Widoczność i pozycja okna float również
-  są pamiętane per strona: po odświeżeniu tagger pozostaje w ustawionym stanie,
-  a nowa strona startuje ukryta z uchwytem przy prawej krawędzi ekranu.
-- **Motywy interfejsu** — w ustawieniach można wybrać jeden z motywów:
-  Dark mode, Light mode, Femboy, Halloween, Minimalistic lub Cyberpunk.
-  Każdy motyw ma własny, czytelny zestaw kolorów i charakterystyczne detale;
-  dostępny jest także własny kolor akcentu. Wybrany motyw i własny kolor są
-  zapisywane lokalnie oraz uwzględniane w kopii konfiguracji.
-- **Szybkie akcje** — kopiowanie tagów, czyszczenie pola oraz licznik tagów.
-- **Spójny interfejs** — tagger, edytor i strona informacyjna używają angielskich
-  etykiet, wspólnych stanów kontrolek i ikon akcji opartych na lekkich SVG;
-  poszczególne motywy zachowują własną paletę i oprawę wizualną.
+- **Tag palettes:** Use the built-in starter palette or create palettes
+  organized into groups and categories. Switch palettes, import and export JSON
+  files, edit palettes, and remove custom palettes.
+- **Tag management:** Toggle tags individually or add and remove visible tags
+  in batches. The same batch actions are available for AI suggestions.
+- **Fuzzy search:** Find approximate matches. Keyboard controls include the
+  arrow keys, Enter, and Escape; typing mode can start a search when focus is
+  outside an editable field.
+- **AI image analysis:** Send an image to the local ComfyUI-WD14-Tagger
+  integration. Review progress, filter suggestions by confidence threshold,
+  and exclude selected tags. The confidence threshold is saved locally.
+- **Configuration backup:** Export or import QuickTag settings, including
+  palettes, site profiles, the AI blacklist, window settings, domain rules,
+  and the global enabled state. Import replaces the current configuration.
+- **Restore defaults:** Clear saved extension data and restore the default
+  values after the page is reloaded.
+- **Site profiles:** Configure CSS selectors for tag fields, images, and
+  source links. The element picker highlights the selected element.
+- **Toolbar popup:** Enable or disable the tagger globally, manage allowed or
+  blocked domains, check the ComfyUI connection and available updates, and open
+  the About page. A newer version is indicated by a "NEW" badge.
+- **Palette editor:** Edit palette JSON with formatting support or use the
+  easier-to-read easyJson format.
+- **Interface controls:** Move, resize, dock, collapse, or hide the tagger.
+  Ghost mode can be toggled with a keyboard shortcut, including while an
+  editable field has focus; it can optionally be active only while a button or
+  shortcut is held. Transparency works when docked and across themes. Docking
+  mode, dock edge, visibility, and floating position are saved per page origin.
+  A page starts hidden with a handle at the right edge until a visibility state
+  has been saved for it.
+- **Themes:** Choose Dark mode, Light mode, Femboy, Halloween, Minimalistic, or
+  Cyberpunk, or select a custom accent color. The theme and custom accent are
+  saved locally and included in configuration backups.
+- **Quick actions:** Copy tags, clear the tag field, and view the tag count.
+- **Consistent interface:** The tagger, editor, and About page use English
+  labels, consistent control states, and lightweight SVG action icons. Themes
+  retain their own color palettes and visual details.
 
-## Wymagania
+## Requirements
 
-- Przeglądarka oparta na Chromium obsługująca Manifest V3.
-- Dostęp do stron, na których ma działać tagger.
-- Opcjonalnie: lokalnie uruchomione ComfyUI z węzłem
+- Chrome or Firefox with Manifest V3 support.
+- Access to the websites where you want to use the tagger.
+- Optional: ComfyUI running locally at `http://127.0.0.1:8188`, with the
   [ComfyUI-WD14-Tagger](https://github.com/pythongosssss/ComfyUI-WD14-Tagger)
-  dostępnym pod `http://127.0.0.1:8188`.
+  custom node installed.
 
-## Instalacja rozszerzenia do developmentu
+## Build and install for development
 
-1. Pobierz lub sklonuj projekt na komputer.
-2. Otwórz stronę rozszerzeń przeglądarki, np. `chrome://extensions`.
-3. Włącz **Developer mode**.
-4. Wybierz **Load unpacked** i wskaż folder zawierający `manifest.json`.
-5. Po zmianie plików użyj przycisku **Reload** na stronie rozszerzeń, a
-   następnie odśwież stronę, na której testujesz QuickTag.
+Chrome and Firefox use different Manifest V3 background configurations. Build
+the package for the browser you want to test:
 
-Projekt nie zawiera obecnie skryptu build ani zewnętrznych zależności
-JavaScript instalowanych przez menedżer pakietów. Pliki rozszerzenia są
-ładowane bezpośrednio z folderu projektu.
+```powershell
+.\build-extension.ps1 -Browser chrome
+.\build-extension.ps1 -Browser firefox
+```
 
-## Uruchamianie ComfyUI i instalacja WD14
+The package is written to `dist/chrome` or `dist/firefox`.
 
-Analiza AI jest opcjonalna. Tagger i pozostałe funkcje rozszerzenia działają
-również bez ComfyUI.
+### Chrome
 
-1. Zainstaluj Python 3 i Git.
-2. Zainstaluj i uruchom ComfyUI. Jedną z metod opisanych przez projekt
-   `comfy-cli` jest:
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Select **Load unpacked** and choose the `dist/chrome` directory.
+4. Click the QuickTag LazyMod toolbar icon to open its control panel.
+
+### Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Select **Load Temporary Add-on...**.
+3. Choose `dist/firefox/manifest.json`.
+4. Click the QuickTag LazyMod toolbar icon to open its control panel.
+
+After changing source files, rebuild the package, reload the extension from the
+browser's extensions page, and refresh the website where you are testing.
+Temporary Firefox add-ons are removed when Firefox closes. Unpacked extensions
+are not installed or updated automatically.
+
+The build script copies the shared extension files and selects the
+browser-specific manifest. It does not require a JavaScript package manager or
+external JavaScript dependencies.
+
+## Set up ComfyUI and WD14
+
+AI analysis is optional. Tagging, palette editing, and other non-AI features do
+not require ComfyUI.
+
+1. Install Python 3 and Git.
+2. Install and start ComfyUI. One installation method provided by `comfy-cli`
+   is:
 
    ```powershell
    python -m venv .venv
@@ -95,102 +106,102 @@ również bez ComfyUI.
    comfy launch
    ```
 
-   Po instalacji sprawdź, czy interfejs ComfyUI jest dostępny pod
-   `http://127.0.0.1:8188`. Pozostaw proces ComfyUI uruchomiony podczas
-   korzystania z funkcji Analizuj obraz. Więcej informacji:
-   [Comfy-Org/comfy-cli](https://github.com/Comfy-Org/comfy-cli).
-3. Zainstaluj **ComfyUI-WD14-Tagger** przez ComfyUI-Manager, wyszukując
-   „WD14 Tagger”, albo ręcznie w katalogu `ComfyUI\custom_nodes`:
+   Confirm that ComfyUI is available at `http://127.0.0.1:8188` and keep it
+   running while using image analysis. See the
+   [Comfy-Org/comfy-cli](https://github.com/Comfy-Org/comfy-cli) documentation.
+3. Install **ComfyUI-WD14-Tagger** through ComfyUI-Manager by searching for
+   "WD14 Tagger", or clone it into `ComfyUI\custom_nodes`:
 
    ```powershell
    git clone https://github.com/pythongosssss/ComfyUI-WD14-Tagger.git
    ```
 
-4. Zainstaluj wymagania w środowisku Pythona używanym przez ComfyUI, zgodnie
-   z instrukcjami repozytorium węzła, a następnie uruchom ComfyUI ponownie.
-   Modele WD14 są pobierane przy pierwszym użyciu, jeśli nie są już dostępne.
-5. Otwórz stronę zawierającą obraz i kliknij **Analizuj obraz** w QuickTag.
-   Postęp i błędy połączenia są wyświetlane w sekcji Sugestie AI.
+4. Install the node's requirements in the Python environment used by ComfyUI,
+   following the node repository's instructions, then restart ComfyUI. WD14
+   models are downloaded on first use if they are not already available.
+5. Open a page containing an image and select **Analyze image** in QuickTag.
+   Progress and connection errors are shown in the AI suggestions section.
 
-Instrukcje zależności mogą różnić się między instalacją przenośną,
-instalacją przez comfy-cli i innymi sposobami uruchamiania ComfyUI. W razie
-wątpliwości skorzystaj z aktualnej dokumentacji:
-[ComfyUI-WD14-Tagger](https://github.com/pythongosssss/ComfyUI-WD14-Tagger).
+Requirements may differ between portable installations, `comfy-cli`, and
+other ways of running ComfyUI. Refer to the
+[ComfyUI-WD14-Tagger documentation](https://github.com/pythongosssss/ComfyUI-WD14-Tagger)
+if you need help.
 
-## Struktura projektu
+## Project structure
 
-| Plik | Rola |
+| File or directory | Purpose |
 | --- | --- |
-| `manifest.json` | Konfiguracja rozszerzenia Manifest V3, uprawnienia, service worker i content script. |
-| `assets/icon.png` | Ikona używana na pasku narzędzi przeglądarki i w panelu rozszerzenia. |
-| `scripts/background.js` | Obsługa wiadomości rozszerzenia, otwieranie podstron edytora i informacji oraz integracja API ComfyUI i WD14. |
-| `pages/extension-popup.html` | Panel ikony rozszerzenia: przełącznik globalny, reguły domen, status ComfyUI i link About. |
-| `styles/extension-popup.css` | Style panelu ikony rozszerzenia. |
-| `scripts/extension-popup.js` | Obsługa ustawień globalnych, domen, testu połączenia ComfyUI i aktualizacji w panelu. |
-| `scripts/content.js` | Wstrzykiwanie taggera na stronę, palety, profile stron, wyszukiwanie, stan tagów i ustawienia interfejsu. |
-| `pages/popup.html` | Struktura pływającego interfejsu taggera. |
-| `styles/tagger.css` | Wspólne style interfejsu taggera oraz elementów nakładanych na stronę. |
-| `styles/theme-dark.css` | Dedykowane kolory i wygląd motywu Dark mode. |
-| `styles/theme-light.css` | Dedykowane kolory i wygląd motywu Light mode. |
-| `styles/theme-femboy.css` | Dedykowane kolory i wygląd motywu Femboy. |
-| `styles/theme-halloween.css` | Dedykowane kolory i wygląd motywu Halloween. |
-| `styles/theme-minimalistic.css` | Dedykowane kolory i wygląd motywu Minimalistic. |
-| `styles/theme-cyberpunk.css` | Dedykowane kolory i wygląd motywu Cyberpunk. |
-| `styles/theme-custom.css` | Bazowy wygląd motywu z własnym kolorem akcentu. |
-| `pages/palette-editor.html` | Dokument edytora palet i ustawień. |
-| `scripts/palette-editor.js` | Ładowanie, walidacja, konwersja i zapis palet, profili oraz czarnej listy. |
-| `styles/palette-editor.css` | Style edytora. |
-| `pages/about.html` | Przewodnik funkcji i konfiguracji widoczny po wybraniu zakładki O wtyczce. |
-| `styles/about.css` | Style strony informacyjnej. |
-| `data/import.json` | Domyślne dane palety ładowane przez rozszerzenie. |
+| `manifest.json` | Chrome Manifest V3 configuration, permissions, service worker, and content script. |
+| `manifests/firefox.json` | Firefox Manifest V3 configuration using a background script. |
+| `build-extension.ps1` | Builds a browser-specific extension directory from shared source files. |
+| `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
+| `scripts/background.js` | Handles extension messages, opens editor and information pages, and integrates with ComfyUI and WD14. |
+| `scripts/content.js` | Injects and manages the tagger, palettes, site profiles, search, tag state, and interface settings. |
+| `scripts/extension-popup.js` | Handles global settings, domain rules, ComfyUI connectivity, and update checks in the toolbar popup. |
+| `scripts/palette-editor.js` | Loads, validates, converts, and saves palettes, site profiles, and the AI blacklist. |
+| `pages/extension-popup.html` | Toolbar popup for global controls, domain rules, ComfyUI status, and the About link. |
+| `pages/palette-editor.html` | Palette and settings editor page. |
+| `pages/about.html` | Feature and setup guide. |
+| `pages/popup.html` | Floating tagger interface template. |
+| `styles/tagger.css` | Shared styles for the tagger and its overlays. |
+| `styles/extension-popup.css` | Toolbar popup styles. |
+| `styles/palette-editor.css` | Palette editor styles. |
+| `styles/about.css` | About page styles. |
+| `styles/theme-dark.css` | Dark mode theme. |
+| `styles/theme-light.css` | Light mode theme. |
+| `styles/theme-femboy.css` | Femboy theme. |
+| `styles/theme-halloween.css` | Halloween theme. |
+| `styles/theme-minimalistic.css` | Minimalistic theme. |
+| `styles/theme-cyberpunk.css` | Cyberpunk theme. |
+| `styles/theme-custom.css` | Base styles for the custom accent color theme. |
+| `data/import.json` | Built-in starter palette loaded by the extension. |
 
-## Architektura i przechowywanie danych
+## Architecture and data storage
 
-- `scripts/content.js` działa na stronach określonych w `content_scripts` i tworzy
-  interfejs wewnątrz Shadow DOM, aby ograniczyć kolizje ze stylami strony.
-  Kontener pozostaje niewidoczny w trakcie asynchronicznego ładowania zasobów
-  i ustawień, a pokazywany jest dopiero po odtworzeniu właściwego stanu okna,
-  co zapobiega miganiu przy odświeżeniu.
-- Wspólne komponenty taggera są stylowane w `styles/tagger.css`, a wybrany motyw jest
-  asynchronicznie ładowany z osobnego pliku `styles/theme-<nazwa>.css` do tego samego
-  Shadow DOM. Pliki motywów są udostępnione content scriptowi przez
-  `web_accessible_resources`; host interfejsu pozostaje ukryty do chwili
-  załadowania właściwego motywu.
-- `scripts/background.js` działa jako service worker Manifest V3. Obsługuje komunikację
-  z content scriptem i wysyła żądania do lokalnego ComfyUI.
-- Ustawienia, profile stron, palety i czarną listę przechowuje
-  `chrome.storage.local` w przeglądarce.
-- Globalne włączenie (`lazymod_enabled`) oraz reguły domen
-  (`lazymod_domain_mode`, `lazymod_domains`) są zapisywane w `chrome.storage.local`.
-  Content script stosuje je przy uruchomieniu i usuwa tagger ze stron, które
-  przestają spełniać regułę; strony odblokowane po zmianie reguł są
-  przeładowywane, aby zainicjować interfejs.
-- Sprawdzanie aktualizacji pobiera publiczny `update.json` z Gista
-  `ShowTimeFOX/1c601aab8d8a4b7540b34fc3e273d74f`, porównuje wersję z manifestem
-  i ustawia badge „NEW” przez `chrome.action`, gdy Gist wskazuje nowszą wersję.
-  Kontrola jest wykonywana przy uruchomieniu, co 6 godzin oraz na żądanie
-  w panelu. Przycisk otwiera stronę GitHub Releases; instalacja rozpakowanej
-  wersji nadal wymaga ręcznej podmiany plików i przeładowania rozszerzenia.
-- Tryb dock/float, krawędź dokowania, widoczność i pozycja float są
-  przechowywane per origin w osobnym kluczu
-  `lazymod_site_layout_<origin>`, aby niezależne strony nie nadpisywały sobie
-  ustawień. Nowe strony domyślnie startują ukryte; kolejne załadowania
-  przywracają ostatni stan widoczności i uchwyt przy zapamiętanej krawędzi.
-- Eksport obejmuje wpisy z lokalnego magazynu rozszerzenia; import waliduje
-  plik i zastępuje zapisane wpisy. Przywrócenie wartości domyślnych czyści
-  magazyn rozszerzenia i przeładowuje bieżącą stronę, aby zastosować stan
-  początkowy.
-- Edytor otwiera się jako wewnętrzna strona rozszerzenia. Tryb easyJson
-  pozwala edytować strukturę palety bez ręcznego wpisywania składni JSON.
-- Analiza ComfyUI korzysta z węzła `WD14Tagger|pysssss`: rozszerzenie pobiera
-  obraz strony, przesyła go do `/upload/image`, uruchamia workflow przez
-  `/prompt`, sprawdza `/history` i `/queue`, a następnie odczytuje tagi.
-- ComfyUI jest wskazane w kodzie jako `http://127.0.0.1:8188`. Inny host lub
-  port wymaga zgodnej zmiany konfiguracji i uprawnień hosta.
+- `scripts/content.js` runs on pages matched by `content_scripts` and creates
+  the interface inside a Shadow DOM to reduce style conflicts with the host
+  page. The host remains hidden while resources and settings load, then becomes
+  visible after the saved window state has been restored to prevent flicker.
+- Shared tagger components use `styles/tagger.css`. The selected theme is
+  loaded asynchronously from `styles/theme-<name>.css` into the same Shadow
+  DOM. The theme stylesheets are listed in `web_accessible_resources`.
+- `scripts/background.js` handles extension events and messages and sends
+  requests to the local ComfyUI server. Chrome uses it as an MV3 service worker;
+  Firefox loads it as an MV3 background script. The browser-specific manifests
+  are assembled by `build-extension.ps1`.
+- The extension uses the `chrome.*` WebExtension API namespace, which is
+  supported by both target browsers.
+- Settings, site profiles, palettes, and the AI blacklist are stored locally
+  with `chrome.storage.local`.
+- The global enabled setting (`lazymod_enabled`) and domain rules
+  (`lazymod_domain_mode`, `lazymod_domains`) are also stored locally. The
+  content script applies the rules when it starts and removes the tagger from
+  pages that no longer match. Pages that become allowed are reloaded so the
+  interface can be initialized.
+- Update checks fetch `update.json` from the public Gist
+  `ShowTimeFOX/1c601aab8d8a4b7540b34fc3e273d74f`, compare its version with the
+  manifest, and set a "NEW" badge through the browser action API. Checks run at
+  startup, every six hours, and when requested from the toolbar popup. The
+  button opens the GitHub Releases page; unpacked installations still require
+  a manual update and reload.
+- Docking mode, dock edge, visibility, and floating position are saved per
+  origin under `lazymod_site_layout_<origin>`. New pages start hidden; later
+  loads restore the saved visibility and handle position.
+- Export includes entries from the extension's local storage. Import validates
+  the file and replaces the saved entries. Restoring defaults clears extension
+  storage and reloads the current page to apply the initial state.
+- The palette editor opens as an internal extension page. Its easyJson mode
+  edits palette structure without requiring users to write JSON syntax by hand.
+- ComfyUI analysis uses the `WD14Tagger|pysssss` node. The extension fetches
+  the page image, uploads it to `/upload/image`, submits a workflow to `/prompt`,
+  checks `/history` and `/queue`, and reads the resulting tags.
+- The ComfyUI address is set in the code to `http://127.0.0.1:8188`. Changing
+  its host or port requires matching changes to the configuration and host
+  permissions in both manifests.
 
-## Walidacja zmian
+## Validation
 
-Po zmianach JavaScriptu można sprawdzić składnię poleceniami:
+Check JavaScript syntax after changing scripts:
 
 ```powershell
 node --check scripts/background.js
@@ -199,13 +210,13 @@ node --check scripts/extension-popup.js
 node --check scripts/palette-editor.js
 ```
 
-Zmiany w `manifest.json` należy sprawdzić jako poprawny JSON i następnie
-przeładować rozszerzenie w przeglądarce. Pełny test analizy AI wymaga
-działającego lokalnego ComfyUI z zainstalowanym węzłem WD14.
+Validate both manifest files as JSON, build each browser package, and test by
+loading the corresponding output directory in the browser. Full AI analysis
+testing requires a running ComfyUI instance with the WD14 node installed.
 
-## Utrzymywanie dokumentacji
+## Documentation maintenance
 
-Przy każdej kolejnej zmianie funkcji, architektury, konfiguracji lub struktury
-plików aktualizuj `PROJECT.md` oraz `CHANGELOG.md` w ramach tego samego zadania.
-Opis powinien odzwierciedlać aktualny kod; pomijaj zmiany czysto kosmetyczne,
-które nie wpływają na użycie ani utrzymanie projektu.
+Keep `README.md`, `PROJECT.md`, and `CHANGELOG.md` in English. Update
+`PROJECT.md` and `CHANGELOG.md` in the same change when project features,
+architecture, configuration, or file structure changes. Describe the current
+implementation and omit cosmetic changes that do not affect use or maintenance.

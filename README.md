@@ -1,9 +1,9 @@
 # QuickTag LazyMod
 
-QuickTag LazyMod is a Chromium extension for tagging images with a floating
-tagger. It includes editable tag palettes, page-specific profiles, interface
-customization, and optional image analysis through a local ComfyUI installation
-with the WD14 Tagger node.
+QuickTag LazyMod is a browser extension for tagging images with a floating
+tagger in Chrome and Firefox. It includes editable tag palettes, page-specific
+profiles, interface customization, and optional image analysis through a local
+ComfyUI installation with the WD14 Tagger node.
 
 > **Work in progress:** QuickTag LazyMod is actively being developed. Some
 > features or interface elements may be incomplete or may not work as expected.
@@ -25,28 +25,39 @@ with the WD14 Tagger node.
 - Export or import the extension configuration and restore default settings.
 - Check for a newer version from the toolbar popup.
 
-The extension interface is in English. The project notes in `PROJECT.md` are
-maintained in Polish.
+The extension interface and project documentation are in English.
 
 ## Requirements
 
-- A Chromium-based browser that supports Manifest V3, such as Chrome or Edge.
+- Chrome or Firefox with Manifest V3 support.
 - Access to the websites where you want to use the tagger.
 - Optional: ComfyUI running locally at `http://127.0.0.1:8188`, with the
   [ComfyUI-WD14-Tagger](https://github.com/pythongosssss/ComfyUI-WD14-Tagger)
   custom node installed.
 
-## Install from this source folder
+## Build and install
 
-1. Download or clone this project to your computer.
-2. Open your browser's extensions page (for example, `chrome://extensions`).
-3. Enable **Developer mode**.
-4. Select **Load unpacked** and choose the folder containing `manifest.json`.
-5. Click the QuickTag LazyMod toolbar icon to open its control panel.
+The browsers use different Manifest V3 background formats. Build a package
+with the matching manifest before loading it:
+
+```powershell
+.\build-extension.ps1 -Browser chrome
+.\build-extension.ps1 -Browser firefox
+```
+
+The output is written to `dist/chrome` or `dist/firefox`.
+
+- **Chrome:** open `chrome://extensions`, enable **Developer mode**, and select
+  **Load unpacked**. Choose `dist/chrome`.
+- **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load
+  Temporary Add-on...**, and select `dist/firefox/manifest.json`.
+
+Click the QuickTag LazyMod toolbar icon to open its control panel.
 
 After changing the source files, click **Reload** for the extension on the
-extensions page, then refresh the website where you are testing it. Unpacked
-extensions are not installed or updated automatically by the browser.
+browser's extensions page, rebuild the relevant package, and refresh the
+website where you are testing it. Temporary Firefox add-ons are removed when
+Firefox closes. Unpacked extensions are not installed or updated automatically.
 
 ## Optional: enable AI image analysis
 
@@ -80,7 +91,11 @@ require a JavaScript package manager or build step. See
 
 ## Source layout
 
-- `manifest.json` stays at the project root as the extension entry point.
+- `manifest.json` is the Chrome Manifest V3 source manifest.
+- `manifests/firefox.json` contains the Firefox Manifest V3 background-script
+  variant.
+- `build-extension.ps1` packages the shared files with the selected browser's
+  manifest.
 - `scripts/` contains the background worker, content script, and page scripts.
 - `pages/` contains the extension pages and the tagger interface template.
 - `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and
