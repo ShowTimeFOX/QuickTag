@@ -25,7 +25,7 @@ with the WD14 Tagger node.
 - Export or import the extension configuration and restore default settings.
 - Check for a newer version from the toolbar popup.
 
-The extension interface is in English. The project notes in `project.md` are
+The extension interface is in English. The project notes in `PROJECT.md` are
 maintained in Polish.
 
 ## Requirements
@@ -75,13 +75,32 @@ accessible to your GitHub account.
 ## Project notes
 
 The extension is loaded directly from this folder and does not currently
-require a JavaScript package manager or build step. See `project.md` for
-additional project details and development notes.
+require a JavaScript package manager or build step. See
+[PROJECT.md](PROJECT.md) for additional project details and development notes.
 
 ## Source layout
 
 - `manifest.json` stays at the project root as the extension entry point.
 - `scripts/` contains the background worker, content script, and page scripts.
 - `pages/` contains the extension pages and the tagger interface template.
-- `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and themes.
+- `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and
+  themes.
 - `data/` contains built-in palette data; `assets/` contains extension images.
+
+## Development
+
+After changing JavaScript files, check their syntax with:
+
+```powershell
+node --check scripts/background.js
+node --check scripts/content.js
+node --check scripts/extension-popup.js
+node --check scripts/palette-editor.js
+```
+
+Validate `manifest.json` as JSON and reload the unpacked extension in your
+browser after making changes. Full AI analysis testing requires a running
+ComfyUI instance with the WD14 Tagger node installed.
+
+See [CHANGELOG.md](CHANGELOG.md) for project changes and [LICENCE](LICENCE) for
+the MIT license.

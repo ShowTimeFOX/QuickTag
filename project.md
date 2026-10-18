@@ -9,7 +9,7 @@ opcjonalną analizę obrazu przez lokalne ComfyUI i węzeł WD14 Tagger.
 
 - **Język interfejsu** — cały interfejs użytkownika wtyczki, w tym tagger,
   edytory i strona About, ma być wyświetlany po angielsku. Dokumentacja projektu
-  (`project.md`) pozostaje po polsku.
+  (`PROJECT.md`) pozostaje po polsku.
 - **Palety tagów** — wbudowana paleta startowa oraz własne palety podzielone na
   grupy i kategorie. Można przełączać się między paletami, importować i
   eksportować pliki JSON, edytować palety albo usuwać własne palety.
@@ -206,6 +206,6 @@ działającego lokalnego ComfyUI z zainstalowanym węzłem WD14.
 ## Utrzymywanie dokumentacji
 
 Przy każdej kolejnej zmianie funkcji, architektury, konfiguracji lub struktury
-plików aktualizuj ten dokument w ramach tego samego zadania. Opis powinien
-odzwierciedlać aktualny kod; pomijaj zmiany czysto kosmetyczne, które nie
-wpływają na użycie ani utrzymanie projektu.
+plików aktualizuj `PROJECT.md` oraz `CHANGELOG.md` w ramach tego samego zadania.
+Opis powinien odzwierciedlać aktualny kod; pomijaj zmiany czysto kosmetyczne,
+które nie wpływają na użycie ani utrzymanie projektu.
