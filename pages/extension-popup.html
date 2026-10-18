@@ -16,44 +16,16 @@
         </div>
       </header>
 
-      <section class="enable-card" aria-label="Extension control">
-        <div>
-          <strong>Extension</strong>
-          <span id="enabled-status" class="status-copy">Loading…</span>
+      <section class="site-card" aria-labelledby="site-title">
+        <div class="site-copy">
+          <strong id="site-title">Per-site override</strong>
+          <span id="site-host" class="site-host">Checking current site…</span>
+          <span id="site-status" class="status-copy">Loading site settings…</span>
         </div>
-        <label class="switch" aria-label="Enable or disable QuickTag">
-          <input id="enabled-toggle" type="checkbox" />
+        <label class="switch" aria-label="Enable or disable QuickTag on this site">
+          <input id="site-toggle" type="checkbox" disabled />
           <span class="switch-track" aria-hidden="true"></span>
         </label>
-      </section>
-
-      <section class="section" aria-labelledby="domains-title">
-        <div class="section-heading">
-          <div>
-            <h2 id="domains-title">Site access</h2>
-            <p>Choose where the tagger can appear.</p>
-          </div>
-        </div>
-        <label class="field-label" for="domain-mode">Access rule</label>
-        <select id="domain-mode">
-          <option value="blacklist">Blacklist — allow everywhere else</option>
-          <option value="whitelist">Whitelist — allow only listed sites</option>
-        </select>
-        <p id="mode-hint" class="hint"></p>
-        <form id="domain-form" class="domain-form">
-          <label class="visually-hidden" for="domain-input">Domain name</label>
-          <input
-            id="domain-input"
-            type="text"
-            placeholder="example.com"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button type="submit" class="add-button">Add</button>
-        </form>
-        <p id="domain-error" class="error" role="alert" hidden></p>
-        <ul id="domain-list" class="domain-list" aria-label="Managed domains"></ul>
-        <p id="empty-list" class="empty-list"></p>
       </section>
 
       <section class="connection-card" aria-live="polite">
@@ -79,13 +51,14 @@
         <button id="update-download" type="button" class="update-button" disabled>
           Check for updates
         </button>
-        <p class="update-note">Downloads open the GitHub release page. Install the downloaded version and reload the extension in your browser.</p>
+        <div class="update-note">
+          <span>Downloads open the GitHub release page. Install the update and reload the extension.</span>
+          <a class="about-link" href="about.html" target="_blank" rel="noreferrer" aria-label="About QuickTag LazyMod" title="About QuickTag LazyMod">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path d="M8 7.2v4M8 4.8h.01" /></svg>
+          </a>
+        </div>
       </section>
 
-      <a class="about-link" href="about.html" target="_blank" rel="noreferrer">
-        <span>About QuickTag LazyMod</span>
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3 6.5 9.5M11 9v4H3V5h4" /></svg>
-      </a>
       <p id="save-error" class="error save-error" role="alert" hidden></p>
     </main>
     <script src="../scripts/extension-popup.js"></script>

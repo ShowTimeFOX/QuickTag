@@ -4,17 +4,12 @@ const STORAGE_KEYS = {
   enabled: "lazymod_enabled",
   mode: "lazymod_domain_mode",
   domains: "lazymod_domains",
+  siteBlacklist: "lazymod_site_blacklist",
 };
 const COMFYUI_URL = "http://127.0.0.1:8188/system_stats";
-const enabledToggle = document.querySelector("#enabled-toggle");
-const enabledStatus = document.querySelector("#enabled-status");
-const domainMode = document.querySelector("#domain-mode");
-const modeHint = document.querySelector("#mode-hint");
-const domainForm = document.querySelector("#domain-form");
-const domainInput = document.querySelector("#domain-input");
-const domainList = document.querySelector("#domain-list");
-const emptyList = document.querySelector("#empty-list");
-const domainError = document.querySelector("#domain-error");
+const siteToggle = document.querySelector("#site-toggle");
+const siteHost = document.querySelector("#site-host");
+const siteStatus = document.querySelector("#site-status");
 const saveError = document.querySelector("#save-error");
 const connectionStatus = document.querySelector("#connection-status");
 const connectionIndicator = document.querySelector("#connection-indicator");
@@ -25,43 +20,12 @@ const updateIndicator = document.querySelector("#update-indicator");
 const updateStatus = document.querySelector("#update-status");
 const updateDownload = document.querySelector("#update-download");
 
-let domains = [];
+let currentHostname = null;
 let updateUrl = null;
 
 function showSaveError(message = "") {
   saveError.textContent = message;
   saveError.hidden = !message;
-}
-
-function showDomainError(message = "") {
-  domainError.textContent = message;
-  domainError.hidden = !message;
-}
-
-function normalizeDomain(input) {
-  const value = input.trim();
-  if (!value) throw new Error("Enter a domain name.");
-  let parsed;
-  try {
-    parsed = new URL(value.includes("://") ? value : `https://${value}`);
-  } catch {
-    throw new Error("Enter a valid domain, such as example.com.");
-  }
-  if (
-    parsed.username ||
-    parsed.password ||
-    parsed.port ||
-    parsed.pathname !== "/" ||
-    parsed.search ||
-    parsed.hash
-  ) {
-    throw new Error("Enter a domain only, without a port, path, or query.");
-  }
-  const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
-  if (!hostname || hostname === "localhost" || !hostname.includes(".")) {
-    throw new Error("Enter a public domain name, such as example.com.");
-  }
-  return hostname;
 }
 
 async function saveSettings(values) {
@@ -75,119 +39,113 @@ async function saveSettings(values) {
   }
 }
 
-function renderDomains() {
-  domainList.replaceChildren();
-  emptyList.hidden = domains.length > 0;
-  emptyList.textContent = domains.length
-    ? ""
-    : domainMode.value === "whitelist"
-      ? "No allowed domains yet. The tagger is blocked on every site."
-      : "No blocked domains. The tagger is allowed on every site.";
-
-  for (const domain of domains) {
-    const item = document.createElement("li");
-    item.className = "domain-item";
-    const name = document.createElement("span");
-    name.textContent = domain;
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "remove-domain";
-    remove.textContent = "×";
-    remove.setAttribute("aria-label", `Remove ${domain}`);
-    remove.title = `Remove ${domain}`;
-    remove.addEventListener("click", () => {
-      updateDomains(domains.filter((entry) => entry !== domain)).catch(() => {});
-    });
-    item.append(name, remove);
-    domainList.append(item);
-  }
-}
-
-function updateModeDescription() {
-  const whitelist = domainMode.value === "whitelist";
-  modeHint.textContent = whitelist
-    ? "Only listed domains and their subdomains can show the tagger."
-    : "Listed domains and their subdomains will be blocked.";
-  renderDomains();
-}
-
-async function updateDomains(nextDomains) {
-  const updatedDomains = [...new Set(nextDomains)].sort((left, right) => left.localeCompare(right));
-  await saveSettings({ [STORAGE_KEYS.domains]: updatedDomains });
-  domains = updatedDomains;
-  renderDomains();
-}
-
 async function loadSettings() {
   showSaveError();
-  const stored = await chrome.storage.local.get([
-    STORAGE_KEYS.enabled,
-    STORAGE_KEYS.mode,
-    STORAGE_KEYS.domains,
+  const [tabs, stored] = await Promise.all([
+    chrome.tabs.query({ active: true, currentWindow: true }),
+    chrome.storage.local.get([
+      STORAGE_KEYS.enabled,
+      STORAGE_KEYS.mode,
+      STORAGE_KEYS.domains,
+      STORAGE_KEYS.siteBlacklist,
+    ]),
   ]);
+  const activeTab = tabs[0];
+  currentHostname = null;
+  if (activeTab?.url) {
+    try {
+      const activeUrl = new URL(activeTab.url);
+      if (["http:", "https:"].includes(activeUrl.protocol)) {
+        currentHostname = activeUrl.hostname.toLowerCase();
+      }
+    } catch {
+      currentHostname = null;
+    }
+  }
 
-  enabledToggle.checked = stored[STORAGE_KEYS.enabled] !== false;
-  enabledStatus.textContent = enabledToggle.checked ? "Enabled globally" : "Disabled globally";
+  if (!currentHostname) {
+    siteHost.textContent = "Unavailable on this page";
+    siteStatus.textContent = "Open a website to manage its override.";
+    siteToggle.checked = false;
+    siteToggle.disabled = true;
+    return;
+  }
+
+  siteHost.textContent = currentHostname;
   const storedMode = stored[STORAGE_KEYS.mode];
   if (storedMode !== undefined && !["blacklist", "whitelist"].includes(storedMode)) {
     console.error("[QuickTag] Saved domain access mode is invalid; using blacklist.");
   }
-  domainMode.value = ["blacklist", "whitelist"].includes(storedMode)
-    ? storedMode
-    : "blacklist";
   const savedDomains = stored[STORAGE_KEYS.domains] ?? [];
-  if (!Array.isArray(savedDomains) || !savedDomains.every((domain) => typeof domain === "string")) {
-    console.error("[QuickTag] Saved domain rules are invalid.");
-    domains = [];
-    showSaveError("Saved domain rules are invalid. Correct the list before using it.");
-  } else {
-    domains = [...new Set(savedDomains.map((domain) => domain.toLowerCase()))].sort(
-      (left, right) => left.localeCompare(right),
-    );
+  const siteBlacklist = stored[STORAGE_KEYS.siteBlacklist] ?? [];
+  if (
+    !Array.isArray(savedDomains) ||
+    !savedDomains.every((domain) => typeof domain === "string") ||
+    !Array.isArray(siteBlacklist) ||
+    !siteBlacklist.every((domain) => typeof domain === "string")
+  ) {
+    console.error("[QuickTag] Saved site access rules are invalid.");
+    showSaveError("Saved site access rules are invalid.");
+    siteToggle.checked = false;
+    siteToggle.disabled = true;
+    return;
   }
-  updateModeDescription();
+
+  const enabled = stored[STORAGE_KEYS.enabled] !== false;
+  const mode = storedMode === "whitelist" ? "whitelist" : "blacklist";
+  const normalizedDomains = savedDomains.map((domain) => domain.toLowerCase());
+  const normalizedSiteBlacklist = siteBlacklist.map((domain) => domain.toLowerCase());
+  const matchesSite = (domain) => {
+    const normalizedDomain = domain.toLowerCase();
+    return currentHostname === normalizedDomain ||
+      currentHostname.endsWith(`.${normalizedDomain}`);
+  };
+  const blockedByExistingRules = mode === "whitelist"
+    ? !normalizedDomains.some(matchesSite)
+    : normalizedDomains.some(matchesSite);
+  const blockedByOverride = normalizedSiteBlacklist.some(matchesSite);
+
+  siteToggle.checked = enabled && !blockedByExistingRules && !blockedByOverride;
+  siteToggle.disabled = !enabled || blockedByExistingRules;
+  if (!enabled) {
+    siteStatus.textContent = "QuickTag is disabled globally.";
+  } else if (blockedByExistingRules) {
+    siteStatus.textContent = "Blocked by existing access rules.";
+  } else if (blockedByOverride) {
+    siteStatus.textContent = "Disabled on this site.";
+  } else {
+    siteStatus.textContent = "Enabled on this site.";
+  }
 }
 
-enabledToggle.addEventListener("change", async () => {
-  enabledStatus.textContent = enabledToggle.checked ? "Enabled globally" : "Disabled globally";
+siteToggle.addEventListener("change", async () => {
+  if (!currentHostname) return;
+  siteToggle.disabled = true;
   try {
-    await saveSettings({ [STORAGE_KEYS.enabled]: enabledToggle.checked });
-  } catch {
-    enabledToggle.checked = !enabledToggle.checked;
-    enabledStatus.textContent = enabledToggle.checked ? "Enabled globally" : "Disabled globally";
-  }
-});
-
-domainMode.addEventListener("change", async () => {
-  updateModeDescription();
-  try {
-    await saveSettings({ [STORAGE_KEYS.mode]: domainMode.value });
-  } catch {
-    loadSettings().catch((error) => {
-      console.error("[QuickTag] Could not restore domain mode after a save failure.", error);
-      showSaveError(`Could not reload settings: ${error.message}`);
-    });
-  }
-});
-
-domainForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  showDomainError();
-  let domain;
-  try {
-    domain = normalizeDomain(domainInput.value);
+    const stored = await chrome.storage.local.get(STORAGE_KEYS.siteBlacklist);
+    const siteBlacklist = stored[STORAGE_KEYS.siteBlacklist] ?? [];
+    if (
+      !Array.isArray(siteBlacklist) ||
+      !siteBlacklist.every((domain) => typeof domain === "string")
+    ) {
+      throw new Error("Saved per-site overrides are invalid.");
+    }
+    const nextBlacklist = siteToggle.checked
+      ? siteBlacklist.filter((domain) => domain !== currentHostname)
+      : [...new Set([...siteBlacklist, currentHostname])].sort((left, right) =>
+          left.localeCompare(right),
+        );
+    await saveSettings({ [STORAGE_KEYS.siteBlacklist]: nextBlacklist });
+    await loadSettings();
   } catch (error) {
-    showDomainError(error.message);
-    return;
+    console.error("[QuickTag] Could not update the current site's override.", error);
+    try {
+      await loadSettings();
+    } catch (loadError) {
+      console.error("[QuickTag] Could not restore the current site's override.", loadError);
+    }
+    showSaveError(`Could not update this site: ${error.message}`);
   }
-  if (domains.includes(domain)) {
-    showDomainError(`${domain} is already in the list.`);
-    return;
-  }
-  try {
-    await updateDomains([...domains, domain]);
-    domainInput.value = "";
-  } catch {}
 });
 
 async function checkComfyUI() {
@@ -277,7 +235,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (
     changes[STORAGE_KEYS.enabled] ||
     changes[STORAGE_KEYS.mode] ||
-    changes[STORAGE_KEYS.domains]
+    changes[STORAGE_KEYS.domains] ||
+    changes[STORAGE_KEYS.siteBlacklist]
   ) {
     loadSettings().catch((error) => {
       console.error("[QuickTag] Could not refresh popup settings.", error);

@@ -25,16 +25,55 @@
     "lazymod_enabled",
     "lazymod_domain_mode",
     "lazymod_domains",
+    "lazymod_site_blacklist",
   ];
   let originalBodyMargins = null;
+  let extensionHost = null;
+  let extensionReady = false;
+  let siteAccessAllowed = true;
 
-  function isPageAllowedBySettings(enabled, mode, domains) {
+  function isPageAllowedBySettings(enabled, mode, domains, siteBlacklist = []) {
     if (!enabled) return false;
     const hostname = window.location.hostname.toLowerCase();
-    const matchesDomain = domains.some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
-    return mode === "whitelist" ? matchesDomain : !matchesDomain;
+    const matchesDomain = (domain) => {
+      const normalizedDomain = domain.toLowerCase();
+      return hostname === normalizedDomain ||
+        hostname.endsWith(`.${normalizedDomain}`);
+    };
+    const isBlockedBySiteOverride = siteBlacklist.some(matchesDomain);
+    if (isBlockedBySiteOverride) return false;
+    const matchesConfiguredDomain = domains.some(matchesDomain);
+    return mode === "whitelist" ? matchesConfiguredDomain : !matchesConfiguredDomain;
+  }
+
+  function applySiteAccessSettings(settings) {
+    const enabled = settings.lazymod_enabled !== false;
+    const mode = settings.lazymod_domain_mode === "whitelist"
+      ? "whitelist"
+      : "blacklist";
+    const domains = Array.isArray(settings.lazymod_domains)
+      ? settings.lazymod_domains.filter((domain) => typeof domain === "string")
+      : [];
+    const siteBlacklist = Array.isArray(settings.lazymod_site_blacklist)
+      ? settings.lazymod_site_blacklist.filter((domain) => typeof domain === "string")
+      : [];
+    siteAccessAllowed = isPageAllowedBySettings(enabled, mode, domains, siteBlacklist);
+    if (!extensionHost) return;
+
+    extensionHost.style.display = siteAccessAllowed ? "" : "none";
+    if (!siteAccessAllowed && document.body && originalBodyMargins) {
+      Object.assign(document.body.style, originalBodyMargins);
+      if (extensionReady) {
+        if (elementPickerType) stopElementPicker();
+        releaseGhostMode();
+        if (isRecordingGhostShortcut) {
+          isRecordingGhostShortcut = false;
+          ghostShortcutButton.textContent = formatGhostShortcut(ghostShortcut);
+        }
+      }
+    } else if (siteAccessAllowed && extensionReady) {
+      updateDockPageSpace();
+    }
   }
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -47,23 +86,7 @@
     chrome.storage.local
       .get(accessSettingsKeys)
       .then((settings) => {
-        const enabled = settings.lazymod_enabled !== false;
-        const mode = settings.lazymod_domain_mode === "whitelist"
-          ? "whitelist"
-          : "blacklist";
-        const domains = Array.isArray(settings.lazymod_domains)
-          ? settings.lazymod_domains.filter((domain) => typeof domain === "string")
-          : [];
-        const shouldRun = isPageAllowedBySettings(enabled, mode, domains);
-        const currentHost = document.getElementById("quicktag-extension-root");
-        if (shouldRun && !currentHost) {
-          window.location.reload();
-        } else if (!shouldRun && currentHost) {
-          currentHost.remove();
-          if (document.body && originalBodyMargins) {
-            Object.assign(document.body.style, originalBodyMargins);
-          }
-        }
+        applySiteAccessSettings(settings);
       })
       .catch((error) => {
         console.error("[QuickTag] Could not apply global access settings.", error);
@@ -71,14 +94,7 @@
   });
 
   const accessSettings = await chrome.storage.local.get(accessSettingsKeys);
-  const accessEnabled = accessSettings.lazymod_enabled !== false;
-  const accessMode = accessSettings.lazymod_domain_mode === "whitelist"
-    ? "whitelist"
-    : "blacklist";
-  const accessDomains = Array.isArray(accessSettings.lazymod_domains)
-    ? accessSettings.lazymod_domains.filter((domain) => typeof domain === "string")
-    : [];
-  if (!isPageAllowedBySettings(accessEnabled, accessMode, accessDomains)) return;
+  applySiteAccessSettings(accessSettings);
   if (document.body) {
     originalBodyMargins = {
       marginLeft: document.body.style.marginLeft,
@@ -438,6 +454,8 @@
   const hostDiv = document.createElement("div");
   hostDiv.id = "quicktag-extension-root";
   hostDiv.style.visibility = "hidden";
+  hostDiv.style.display = siteAccessAllowed ? "" : "none";
+  extensionHost = hostDiv;
   document.documentElement.appendChild(hostDiv);
   const shadowRoot = hostDiv.attachShadow({ mode: "open" });
   let themeStyleElement;
@@ -536,7 +554,7 @@
 
   function updateDockPageSpace() {
     Object.assign(document.body.style, originalBodyMargins);
-    if (!windowEl.classList.contains("docked") || windowEl.hidden) return;
+    if (!siteAccessAllowed || !windowEl.classList.contains("docked") || windowEl.hidden) return;
 
     const rect = windowEl.getBoundingClientRect();
     const margin = `${Math.ceil(
@@ -841,6 +859,7 @@
     const eventPath = event.composedPath();
     if (
       event.isComposing ||
+      !siteAccessAllowed ||
       windowEl.hidden ||
       event.ctrlKey ||
       event.altKey ||
@@ -1684,6 +1703,13 @@
     ) {
       throw new Error("The domain list in this backup is invalid.");
     }
+    if (
+      data.lazymod_site_blacklist !== undefined &&
+      (!Array.isArray(data.lazymod_site_blacklist) ||
+        !data.lazymod_site_blacklist.every((domain) => typeof domain === "string"))
+    ) {
+      throw new Error("The per-site blacklist in this backup is invalid.");
+    }
 
     if (
       data.lazymod_theme !== undefined &&
@@ -2382,6 +2408,7 @@
     ghostShortcutButton.focus();
   };
   document.addEventListener("keydown", (event) => {
+    if (!siteAccessAllowed) return;
     if (isRecordingGhostShortcut) {
       event.preventDefault();
       event.stopPropagation();
@@ -2425,7 +2452,7 @@
     }
   }, true);
   document.addEventListener("keyup", (event) => {
-    if (!ghostShortcutHeld) return;
+    if (!siteAccessAllowed || !ghostShortcutHeld) return;
     const key = event.key.toLowerCase();
     if (
       key === ghostShortcut.key ||
@@ -2610,5 +2637,7 @@
   // INIT
   applyTheme();
   renderFoldersUI();
+  extensionReady = true;
   hostDiv.style.visibility = "visible";
+  if (siteAccessAllowed) updateDockPageSpace();
 })();

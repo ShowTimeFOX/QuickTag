@@ -20,8 +20,7 @@ ComfyUI installation with the WD14 Tagger node.
 - Move, resize, dock, collapse, or hide the tagger. Its layout is remembered
   separately for each site.
 - Choose a built-in theme or a custom accent color.
-- Enable or disable the extension globally and allow or block selected domains
-  from the toolbar popup.
+- Disable or re-enable QuickTag for the current site from the toolbar popup.
 - Export or import the extension configuration and restore default settings.
 - Check for a newer version from the toolbar popup.
 
@@ -101,6 +100,10 @@ require a JavaScript package manager or build step. See
 - `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and
   themes.
 - `data/` contains built-in palette data; `assets/` contains extension images.
+
+The toolbar popup's **Per-site override** adds the current hostname to a
+dedicated site blacklist. QuickTag hides or shows on that site immediately;
+other sites are not reloaded or changed by this control.
 
 ## Development
 

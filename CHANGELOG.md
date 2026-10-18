@@ -8,6 +8,10 @@ Notable changes to QuickTag LazyMod are documented here.
 
 - Restored type-to-search in the tagger and prevented page inputs, including
   inputs inside open shadow roots, from being intercepted.
+- Replaced the toolbar's global enable and whitelist/blacklist controls with a
+  current-site override that hides or shows QuickTag without reloading tabs.
+- Compacted the toolbar popup, removed the domain-list controls, and moved the
+  About link into its update banner as an information icon.
 
 ### Changed
 
