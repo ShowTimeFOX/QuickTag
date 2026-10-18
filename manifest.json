@@ -1,47 +1,48 @@
 {
   "manifest_version": 3,
   "name": "QuickTag LazyMod",
-  "version": "6.1.0",
+  "version": "1.0.0",
   "description": "An image-tagging tool with customizable palettes and a floating interface.",
   "icons": {
-    "128": "icon.png"
+    "128": "assets/icon.png"
   },
   "action": {
     "default_title": "QuickTag LazyMod",
-    "default_popup": "extension-popup.html",
-    "default_icon": "icon.png"
+    "default_popup": "pages/extension-popup.html",
+    "default_icon": "assets/icon.png"
   },
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "alarms"],
   "host_permissions": [
     "<all_urls>",
+    "https://api.github.com/*",
     "http://127.0.0.1/*",
     "http://127.0.0.1:7860/*",
     "http://127.0.0.1:8188/*"
   ],
   "background": {
-    "scripts": ["background.js"],
-    "service_worker": "background.js"
+    "scripts": ["scripts/background.js"],
+    "service_worker": "scripts/background.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["scripts/content.js"],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
       "resources": [
-        "import.json",
-        "popup.html",
-        "styles.css",
-        "theme-dark.css",
-        "theme-light.css",
-        "theme-femboy.css",
-        "theme-halloween.css",
-        "theme-minimalistic.css",
-        "theme-cyberpunk.css",
-        "theme-custom.css"
+        "data/import.json",
+        "pages/popup.html",
+        "styles/tagger.css",
+        "styles/theme-dark.css",
+        "styles/theme-light.css",
+        "styles/theme-femboy.css",
+        "styles/theme-halloween.css",
+        "styles/theme-minimalistic.css",
+        "styles/theme-cyberpunk.css",
+        "styles/theme-custom.css"
       ],
       "matches": ["<all_urls>"]
     }

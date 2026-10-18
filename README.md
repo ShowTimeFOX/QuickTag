@@ -77,3 +77,11 @@ accessible to your GitHub account.
 The extension is loaded directly from this folder and does not currently
 require a JavaScript package manager or build step. See `project.md` for
 additional project details and development notes.
+
+## Source layout
+
+- `manifest.json` stays at the project root as the extension entry point.
+- `scripts/` contains the background worker, content script, and page scripts.
+- `pages/` contains the extension pages and the tagger interface template.
+- `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and themes.
+- `data/` contains built-in palette data; `assets/` contains extension images.

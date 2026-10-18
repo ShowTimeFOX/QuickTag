@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QuickTag Palette Editor</title>
+    <link rel="stylesheet" href="../styles/palette-editor.css" />
+    <script src="../scripts/palette-editor.js" defer></script>
+  </head>
+  <body>
+    <main class="editor-shell">
+      <header class="editor-header">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M9.5 1.5 3.5 8h4L7 14.5 12.5 7h-4z" /></svg></span>
+          <div>
+            <h1 id="editor-title">Palette editor</h1>
+            <p id="palette-name">Loading palette…</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button
+            class="button button-subtle easy-json-toggle"
+            id="easy-json-toggle"
+            type="button"
+            aria-pressed="false"
+            title="Switch between JSON and easyJson"
+            hidden
+          >
+            easyJson: Off
+          </button>
+          <button class="button button-subtle" id="format-button" type="button" disabled>
+            <span id="format-label">Format JSON</span>
+            <kbd>Ctrl Shift F</kbd>
+          </button>
+          <button class="button button-primary" id="save-button" type="button" disabled>
+            Save palette
+            <kbd>Ctrl S</kbd>
+          </button>
+        </div>
+      </header>
+
+      <section class="editor-panel" aria-label="Palette JSON editor">
+        <div class="editor-meta">
+          <span>JSON</span>
+          <span id="editor-status" role="status" aria-live="polite">Loading…</span>
+        </div>
+        <div class="code-editor">
+          <div class="line-gutter" aria-hidden="true">
+            <div id="line-numbers"></div>
+          </div>
+          <div class="editor-input-wrap">
+            <div id="active-line" aria-hidden="true"></div>
+            <textarea
+              id="palette-json"
+              aria-label="Palette JSON"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              disabled
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <footer class="editor-footer">
+        <p>
+          <kbd>Ctrl A</kbd> Select all
+          <span aria-hidden="true">·</span>
+          <kbd>Ctrl C</kbd> Copy
+          <span aria-hidden="true">·</span>
+          <kbd>Ctrl V</kbd> Paste
+          <span aria-hidden="true">·</span>
+          <kbd>Tab</kbd> Indent
+        </p>
+        <p id="editor-footer-note">Changes are saved in this browser and synced back to the tagger.</p>
+      </footer>
+    </main>
+  </body>
+</html>
