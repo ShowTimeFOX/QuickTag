@@ -14,7 +14,7 @@ installation with the WD14 Tagger node.
   in batches. The same batch actions are available for AI suggestions.
 - **Fuzzy search:** Find approximate matches. Keyboard controls include the
   arrow keys, Enter, and Escape; typing mode can start a search when focus is
-  outside an editable field.
+  outside an editable field, including when the page uses an open shadow root.
 - **AI image analysis:** Send an image to the local ComfyUI-WD14-Tagger
   integration. Review progress, filter suggestions by confidence threshold,
   and exclude selected tags. The confidence threshold is saved locally.

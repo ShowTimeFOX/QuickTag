@@ -4,6 +4,11 @@ Notable changes to QuickTag LazyMod are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Restored type-to-search in the tagger and prevented page inputs, including
+  inputs inside open shadow roots, from being intercepted.
+
 ### Changed
 
 - Renamed the project guide to `PROJECT.md` and translated it into English.

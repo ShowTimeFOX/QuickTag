@@ -803,6 +803,14 @@
     renderUserChips();
   }
 
+  function isEditableTarget(target) {
+    if (!(target instanceof Element)) return false;
+    return (
+      target.isContentEditable ||
+      target.matches("input, textarea, select")
+    );
+  }
+
   paletteSearchInput.addEventListener("input", () => {
     typeToTagBuffer = "";
     clearTimeout(typeToTagResetTimer);
@@ -830,13 +838,15 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const eventPath = event.composedPath();
     if (
       event.isComposing ||
       windowEl.hidden ||
       event.ctrlKey ||
       event.altKey ||
       event.metaKey ||
-      isEditableTarget(event.target) ||
+      eventPath.some(isEditableTarget) ||
+      isEditableTarget(document.activeElement) ||
       isEditableTarget(shadowRoot.activeElement) ||
       elementPickerType ||
       isRecordingGhostShortcut
