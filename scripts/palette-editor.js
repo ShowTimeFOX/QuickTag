@@ -11,10 +11,12 @@ const status = document.querySelector("#editor-status");
 const saveButton = document.querySelector("#save-button");
 const formatButton = document.querySelector("#format-button");
 const formatLabel = document.querySelector("#format-label");
+const wordWrapToggle = document.querySelector("#word-wrap-toggle");
 const easyJsonToggle = document.querySelector("#easy-json-toggle");
 const editorTitle = document.querySelector("#editor-title");
 const editorFooterNote = document.querySelector("#editor-footer-note");
 const editorFormatLabel = document.querySelector(".editor-meta > span");
+const codeEditor = document.querySelector(".code-editor");
 
 const defaultAiBlacklist = [
   "uncensored",
@@ -44,19 +46,87 @@ let currentAiBlacklist;
 let dirty = false;
 let easyJsonMode = false;
 let draftPaletteName = "";
+let editorLineHeights = [];
+
+function measureWrappedLineHeights(lines) {
+  if (!codeEditor.classList.contains("word-wrap")) {
+    return lines.map(() => 24);
+  }
+
+  const computedStyle = getComputedStyle(textarea);
+  const horizontalPadding =
+    parseFloat(computedStyle.paddingLeft) + parseFloat(computedStyle.paddingRight);
+  const contentWidth = Math.max(1, textarea.clientWidth - horizontalPadding);
+  const mirror = document.createElement("div");
+  Object.assign(mirror.style, {
+    position: "fixed",
+    top: "0",
+    left: "-100000px",
+    width: `${contentWidth}px`,
+    padding: "0",
+    border: "0",
+    visibility: "hidden",
+    fontFamily: computedStyle.fontFamily,
+    fontSize: computedStyle.fontSize,
+    fontWeight: computedStyle.fontWeight,
+    fontStyle: computedStyle.fontStyle,
+    letterSpacing: computedStyle.letterSpacing,
+    lineHeight: computedStyle.lineHeight,
+    tabSize: computedStyle.tabSize,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    wordBreak: "normal",
+  });
+
+  const lineElements = lines.map((line) => {
+    const element = document.createElement("div");
+    element.textContent = line || "\u200b";
+    Object.assign(element.style, {
+      minHeight: "24px",
+      whiteSpace: "pre-wrap",
+      overflowWrap: "anywhere",
+      wordBreak: "normal",
+    });
+    mirror.appendChild(element);
+    return element;
+  });
+  document.body.appendChild(mirror);
+  const lineHeights = lineElements.map((element) =>
+    Math.max(24, Math.ceil(element.getBoundingClientRect().height / 24) * 24),
+  );
+  mirror.remove();
+  return lineHeights;
+}
 
 function updateLineNumbers() {
-  lineNumbers.textContent = Array.from(
-    { length: textarea.value.split("\n").length },
-    (_, index) => index + 1,
-  ).join("\n");
+  const lines = textarea.value.split("\n");
+  editorLineHeights = measureWrappedLineHeights(lines);
+  lineNumbers.replaceChildren(
+    ...lines.map((_, index) => {
+      const lineNumber = document.createElement("span");
+      lineNumber.textContent = String(index + 1);
+      lineNumber.style.height = `${editorLineHeights[index]}px`;
+      return lineNumber;
+    }),
+  );
   updateActiveLine();
 }
 
 function updateActiveLine() {
   const lineIndex = textarea.value.slice(0, textarea.selectionStart).split("\n").length - 1;
-  activeLine.style.transform = `translateY(${lineIndex * 24 - textarea.scrollTop}px)`;
+  const lineOffset = editorLineHeights
+    .slice(0, lineIndex)
+    .reduce((total, height) => total + height, 0);
+  activeLine.style.height = `${editorLineHeights[lineIndex] || 24}px`;
+  activeLine.style.transform = `translateY(${lineOffset - textarea.scrollTop}px)`;
   lineNumbers.style.transform = `translateY(${-textarea.scrollTop}px)`;
+}
+
+function setEditorValue(value) {
+  textarea.value = value;
+  textarea.scrollTop = 0;
+  textarea.scrollLeft = 0;
+  updateLineNumbers();
 }
 
 function setStatus(message, state = "") {
@@ -173,12 +243,13 @@ function parsePaletteEasy(text, fallbackName) {
 }
 
 function setPaletteEditorContent(pack = currentPack) {
-  textarea.value = easyJsonMode
-    ? serializePaletteEasy(pack)
-    : JSON.stringify({ name: pack.name, groups: pack.groups }, null, 2);
+  setEditorValue(
+    easyJsonMode
+      ? serializePaletteEasy(pack)
+      : JSON.stringify({ name: pack.name, groups: pack.groups }, null, 2),
+  );
   editorFormatLabel.textContent = easyJsonMode ? "EASYJSON" : "JSON";
   formatLabel.textContent = easyJsonMode ? "Format easyJson" : "Format JSON";
-  updateLineNumbers();
 }
 
 function markDirty() {
@@ -311,8 +382,7 @@ async function loadSiteConfigs() {
   paletteName.textContent = "URL patterns and page selectors";
   editorFooterNote.textContent =
     "Save to apply these URL profiles and selectors to the tagger.";
-  textarea.value = JSON.stringify(currentSiteConfigs, null, 2);
-  updateLineNumbers();
+  setEditorValue(JSON.stringify(currentSiteConfigs, null, 2));
   textarea.disabled = false;
   saveButton.disabled = false;
   formatButton.disabled = false;
@@ -346,8 +416,7 @@ async function loadAiBlacklist() {
   paletteName.textContent = `${currentAiBlacklist.length} excluded tags`;
   editorFooterNote.textContent =
     "Tags in this list are always hidden from AI suggestions. Save to update the tagger.";
-  textarea.value = JSON.stringify(currentAiBlacklist, null, 2);
-  updateLineNumbers();
+  setEditorValue(JSON.stringify(currentAiBlacklist, null, 2));
   textarea.disabled = false;
   saveButton.disabled = false;
   formatButton.disabled = false;
@@ -359,9 +428,8 @@ function formatJson() {
   if (editorMode === "palette" && easyJsonMode) {
     try {
       const formattedPack = parsePaletteEasy(textarea.value, draftPaletteName);
-      textarea.value = serializePaletteEasy(formattedPack);
+      setEditorValue(serializePaletteEasy(formattedPack));
       markDirty();
-      updateLineNumbers();
       setStatus("easyJson formatted · unsaved changes", "dirty");
       textarea.focus();
     } catch (error) {
@@ -371,9 +439,8 @@ function formatJson() {
   }
 
   try {
-    textarea.value = JSON.stringify(JSON.parse(textarea.value), null, 2);
+    setEditorValue(JSON.stringify(JSON.parse(textarea.value), null, 2));
     markDirty();
-    updateLineNumbers();
     setStatus("JSON formatted · unsaved changes", "dirty");
     textarea.focus();
   } catch (error) {
@@ -456,8 +523,7 @@ async function saveSiteConfigs() {
       lazymod_global_site_configs: updatedConfigs,
     });
     currentSiteConfigs = updatedConfigs;
-    textarea.value = JSON.stringify(updatedConfigs, null, 2);
-    updateLineNumbers();
+    setEditorValue(JSON.stringify(updatedConfigs, null, 2));
     dirty = false;
     setStatus("Saved · settings updated", "saved");
   } catch (error) {
@@ -484,8 +550,7 @@ async function saveAiBlacklist() {
       lazymod_global_ai_blacklist: updatedBlacklist,
     });
     currentAiBlacklist = updatedBlacklist;
-    textarea.value = JSON.stringify(updatedBlacklist, null, 2);
-    updateLineNumbers();
+    setEditorValue(JSON.stringify(updatedBlacklist, null, 2));
     paletteName.textContent = `${updatedBlacklist.length} excluded tags`;
     dirty = false;
     setStatus("Saved · AI blacklist updated", "saved");
@@ -533,6 +598,16 @@ easyJsonToggle.addEventListener("click", () => {
   }
 });
 
+wordWrapToggle.addEventListener("click", () => {
+  const isWrapped = wordWrapToggle.getAttribute("aria-pressed") !== "true";
+  wordWrapToggle.setAttribute("aria-pressed", String(isWrapped));
+  wordWrapToggle.textContent = `Word wrap: ${isWrapped ? "On" : "Off"}`;
+  codeEditor.classList.toggle("word-wrap", isWrapped);
+  textarea.scrollTop = 0;
+  textarea.scrollLeft = 0;
+  updateLineNumbers();
+});
+
 textarea.addEventListener("input", () => {
   markDirty();
   updateLineNumbers();
@@ -540,6 +615,7 @@ textarea.addEventListener("input", () => {
 textarea.addEventListener("click", updateActiveLine);
 textarea.addEventListener("keyup", updateActiveLine);
 textarea.addEventListener("scroll", updateActiveLine);
+window.addEventListener("resize", updateLineNumbers);
 document.addEventListener("selectionchange", () => {
   if (document.activeElement === textarea) updateActiveLine();
 });

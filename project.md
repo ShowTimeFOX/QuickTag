@@ -30,8 +30,8 @@ installation with the WD14 Tagger node.
   the ComfyUI connection and available updates, and open the About page. The
   per-site override hides or shows QuickTag immediately without reloading
   other sites. A newer version is indicated by a "NEW" badge.
-- **Palette editor:** Edit palette JSON with formatting support or use the
-  easier-to-read easyJson format.
+- **Palette editor:** Edit palette JSON with formatting support, word wrapping,
+  or the easier-to-read easyJson format.
 - **Interface controls:** Move, resize, dock, collapse, or hide the tagger.
   Ghost mode can be toggled with a keyboard shortcut, including while an
   editable field has focus; it can optionally be active only while a button or

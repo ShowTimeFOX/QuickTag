@@ -6,6 +6,10 @@ Notable changes to QuickTag LazyMod are documented here.
 
 ### Fixed
 
+- The palette editor now resets its scroll position to the top when content is
+  loaded or replaced.
+- Word-wrap mode now keeps line numbers and current-line highlighting visible
+  and aligns them with wrapped lines.
 - Restored type-to-search in the tagger and prevented page inputs, including
   inputs inside open shadow roots, from being intercepted.
 - Replaced the toolbar's global enable and whitelist/blacklist controls with a
@@ -24,6 +28,7 @@ Notable changes to QuickTag LazyMod are documented here.
 
 ### Added
 
+- Added a word-wrap toggle to the palette editor.
 - Added this changelog and documented the source layout and development checks
   in the README.
 - Added the MIT license in `LICENCE`.

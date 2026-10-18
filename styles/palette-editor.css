@@ -101,6 +101,7 @@ h1 {
 }
 
 .toolbar {
+  flex-wrap: wrap;
   flex: 0 0 auto;
   gap: 9px;
 }
@@ -154,6 +155,12 @@ h1 {
 }
 
 .easy-json-toggle[aria-pressed="true"] {
+  border-color: #568fe0;
+  background: rgba(54, 119, 209, 0.2);
+  color: #bcd7ff;
+}
+
+.word-wrap-toggle[aria-pressed="true"] {
   border-color: #568fe0;
   background: rgba(54, 119, 209, 0.2);
   color: #bcd7ff;
@@ -221,6 +228,11 @@ kbd {
   line-height: 24px;
   white-space: pre;
   will-change: transform;
+}
+
+#line-numbers > span {
+  display: block;
+  min-height: 24px;
 }
 
 .editor-input-wrap {
@@ -295,6 +307,12 @@ kbd {
   opacity: 0.55;
 }
 
+.code-editor.word-wrap #palette-json {
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .editor-footer {
   display: flex;
   align-items: center;
@@ -331,7 +349,7 @@ kbd {
   }
 
   .toolbar .button {
-    flex: 1;
+    flex: 1 1 110px;
   }
 
   .editor-header {

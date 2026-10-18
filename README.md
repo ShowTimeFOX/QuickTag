@@ -13,6 +13,8 @@ ComfyUI installation with the WD14 Tagger node.
 
 - Organize tags into palettes, groups, and categories; import and export palette
   JSON files.
+- Edit palettes with JSON formatting, easyJson mode, and optional word wrap
+  with aligned line numbers and current-line highlighting.
 - Add or remove tags individually or in batches, and search with fuzzy matching.
 - Analyze the current image with ComfyUI-WD14-Tagger and adjust the confidence
   threshold for suggestions.
