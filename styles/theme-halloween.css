@@ -1,46 +1,797 @@
+/* ==========================================================================
+   QuickTag LazyMod - Theme: Halloween ("Ember Hollow") 🎃🦇
+   Klimat: ciemna fioletowa jaskinia, dyniowy ogień, unoszące się żary,
+   pajęczyna w rogu i nietoperze przelatujące przez nagłówek.
+   Cząsteczki ognia = czyste CSS (3 warstwy paralaksy + migotliwa poświata).
+   Wczytuj PO tagger.css.
+   ========================================================================== */
+
 #lazymod-window.theme-halloween {
-  --lm-bg: #19151d;
-  --lm-surface: #241d29;
-  --lm-surface-raised: #332839;
-  --lm-border: #57465e;
-  --lm-text: #fbf1e6;
-  --lm-muted: #c9b8c7;
-  --lm-accent: #ffb454;
-  --lm-accent-soft: rgba(255, 159, 54, 0.16);
-  --lm-theme-section: #241d29;
-  --lm-theme-input: #19151d;
-  --lm-theme-chip: #302438;
-  --lm-theme-chip-border: #5c4662;
-  --lm-theme-hover: #423146;
-  --lm-theme-active: rgba(255, 159, 54, 0.2);
+  /* tokeny bazowe używane przez tagger.css */
+  --lm-bg: #120d17;
+  --lm-surface: #1c1423;
+  --lm-surface-raised: #2a1d34;
+  --lm-border: #4a3358;
+  --lm-text: #f6ebdd;
+  --lm-muted: #b7a3bf;
+  --lm-accent: #ff8a2a;
+  --lm-accent-soft: rgba(255, 138, 42, 0.18);
+  --lm-danger: #ff6b7a;
+  --lm-success: #8dff6a;
+
+  --lm-theme-section: rgba(27, 19, 33, 0.78);
+  --lm-theme-input: #0d0911;
+  --lm-theme-chip: #231a2c;
+  --lm-theme-chip-border: #4c355d;
+  --lm-theme-hover: #38253f;
+  --lm-theme-active: rgba(255, 138, 42, 0.26);
+
+  /* tokeny własne motywu */
+  --ho-orange: #ff8a2a;
+  --ho-ember: #ffb347;
+  --ho-purple: #9b5de5;
+  --ho-slime: #8dff6a;
+  --ho-bone: #f6ebdd;
+  --ho-serif: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+
+  --ho-web: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23d8c7e6' stroke-opacity='.3' stroke-width='.8'%3E%3Cpath d='M0 0L100 0M0 0L92 40M0 0L70 70M0 0L40 92M0 0L0 100'/%3E%3Cpath d='M28 0Q12 12 0 28M52 0Q22 22 0 52M76 0Q33 33 0 76'/%3E%3C/svg%3E");
+  --ho-bat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 20'%3E%3Cpath fill='%23c9aef0' d='M20 6L22 2L23 7Q30 4 38 5Q34 7 34 11Q31 9 29 11Q27 9 25 12Q23 11 22 14L20 18L18 14Q17 11 15 12Q13 9 11 11Q9 9 6 11Q6 7 2 5Q10 4 17 7L18 2Z'/%3E%3C/svg%3E");
+
   color-scheme: dark;
-  border-color: var(--lm-border);
-  background:
-    radial-gradient(ellipse at 100% 0%, rgba(166, 91, 42, 0.2), transparent 44%),
-    var(--lm-bg);
   color: var(--lm-text);
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.5);
+  background:
+    var(--ho-web) 0 0 / 120px 120px no-repeat,
+    radial-gradient(
+      ellipse at 50% 112%,
+      rgba(255, 106, 20, 0.2),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(155, 93, 229, 0.16),
+      transparent 42%
+    ),
+    var(--lm-bg);
+  border: 2px solid #5a3d6b;
+  border-radius: 12px;
+  box-shadow:
+    0 22px 60px rgba(4, 1, 7, 0.82),
+    0 0 28px rgba(255, 106, 20, 0.16),
+    inset 0 -30px 50px -30px rgba(255, 106, 20, 0.18);
+  backdrop-filter: blur(10px);
 }
 
+/* --- Schowane scrollbary --- */
+#lazymod-window.theme-halloween *,
+#lazymod-window.theme-halloween .lazymod-body,
+#lazymod-window.theme-halloween .lazymod-chips {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+#lazymod-window.theme-halloween *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#lazymod-window.theme-halloween ::selection {
+  background: rgba(255, 138, 42, 0.38);
+  color: #fff;
+}
+
+/* ==========================================================================
+   ŻARY — cząsteczki ognia unoszące się od dołu
+   9 punktów w 3 warstwach (różny rozmiar kafla = różna prędkość/głębia).
+   Warstwy są przeplecione A,B,C,A,B,C,A,B,C, żeby krótkie listy
+   background-size / background-position poprawnie się zapętlały.
+   ========================================================================== */
+#lazymod-window.theme-halloween::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      circle at 20px 40px,
+      #ffd28a 0 1.2px,
+      rgba(255, 120, 30, 0.5) 1.2px 2px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 150px 70px,
+      #ffbb66 0 1px,
+      rgba(255, 100, 20, 0.45) 1px 1.7px,
+      transparent 3.4px
+    ),
+    radial-gradient(
+      circle at 40px 30px,
+      #fff0c4 0 0.8px,
+      rgba(255, 150, 50, 0.5) 0.8px 1.4px,
+      transparent 2.8px
+    ),
+    radial-gradient(
+      circle at 100px 130px,
+      #ffc878 0 1px,
+      rgba(255, 110, 25, 0.5) 1px 1.8px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at 55px 225px,
+      #ffd28a 0 1.3px,
+      rgba(255, 120, 30, 0.45) 1.3px 2.1px,
+      transparent 4.2px
+    ),
+    radial-gradient(
+      circle at 90px 120px,
+      #ffe2a8 0 0.8px,
+      rgba(255, 140, 40, 0.5) 0.8px 1.4px,
+      transparent 2.8px
+    ),
+    radial-gradient(
+      circle at 132px 205px,
+      #ffb866 0 1.1px,
+      rgba(255, 100, 20, 0.5) 1.1px 1.9px,
+      transparent 3.8px
+    ),
+    radial-gradient(
+      circle at 120px 160px,
+      #e4c8ff 0 1px,
+      rgba(160, 90, 240, 0.45) 1px 2px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 14px 150px,
+      #fff0c4 0 0.8px,
+      rgba(255, 150, 50, 0.5) 0.8px 1.4px,
+      transparent 2.8px
+    );
+  background-size:
+    150px 240px,
+    200px 300px,
+    120px 180px;
+  background-repeat: repeat;
+  -webkit-mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0, 0, 0, 0.85) 45%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0, 0, 0, 0.85) 45%,
+    transparent 100%
+  );
+  animation:
+    ho-embers-rise 16s linear infinite,
+    ho-embers-glow 4.2s ease-in-out infinite alternate;
+}
+
+/* Poświata ognia przy dolnej krawędzi (migocze nieregularnie) */
+#lazymod-window.theme-halloween::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 70% 100% at 30% 118%,
+      rgba(255, 96, 10, 0.34),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 90% at 72% 120%,
+      rgba(255, 150, 40, 0.26),
+      transparent 70%
+    );
+  mix-blend-mode: screen;
+  transform-origin: bottom center;
+  animation: ho-fire-flicker 3.7s ease-in-out infinite;
+}
+
+#lazymod-window.theme-halloween.ghost-mode::before,
+#lazymod-window.theme-halloween.ghost-mode::after,
+#lazymod-window.theme-halloween.is-collapsed::before,
+#lazymod-window.theme-halloween.is-collapsed::after {
+  display: none;
+}
+
+/* Zawartość nad żarami */
+#lazymod-window.theme-halloween .lazymod-header-bar,
+#lazymod-window.theme-halloween .lazymod-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Nagłówek: nietoperze przelatują w poprzek --- */
 #lazymod-window.theme-halloween .lazymod-header-bar {
-  border-bottom-color: #604a52;
-  background: linear-gradient(105deg, rgba(255, 159, 54, 0.12), rgba(126, 78, 135, 0.08) 55%, transparent);
+  overflow: hidden;
+  padding: 6px 6px 12px;
+  margin-bottom: 14px;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      var(--ho-orange),
+      var(--ho-purple) 60%,
+      transparent
+    )
+    1;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 138, 42, 0.13),
+    rgba(155, 93, 229, 0.08) 60%,
+    transparent
+  );
 }
 
-#lazymod-window.theme-halloween .lazymod-section {
-  border-color: var(--lm-border);
-  border-radius: 10px 10px 13px 10px;
-  box-shadow: inset 3px 0 rgba(255, 159, 54, 0.24), 0 5px 16px rgba(0, 0, 0, 0.18);
+#lazymod-window.theme-halloween.is-collapsed .lazymod-header-bar {
+  border-image: none;
+  border-bottom: 0;
 }
 
-#lazymod-window.theme-halloween .lazymod-chip.active,
-#lazymod-window.theme-halloween .lazymod-tab.active {
-  box-shadow: 0 0 12px rgba(255, 159, 54, 0.12);
+#lazymod-window.theme-halloween .lazymod-header-bar::before,
+#lazymod-window.theme-halloween .lazymod-header-bar::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--ho-bat) center / contain no-repeat;
 }
 
-#lazymod-window.theme-halloween #lm-view-main .lazymod-btn-accent,
-#lazymod-window.theme-halloween #lm-view-main .lazymod-btn-accent:hover:not(:disabled) {
-  border-color: rgba(255, 180, 84, 0.58);
-  background: var(--lm-accent-soft);
+#lazymod-window.theme-halloween .lazymod-header-bar::before {
+  top: 7px;
+  left: -40px;
+  width: 26px;
+  height: 13px;
+  opacity: 0.55;
+  animation:
+    ho-bat-fly 17s linear infinite,
+    ho-bat-bob 1.7s ease-in-out infinite,
+    ho-bat-flap 0.32s ease-in-out infinite alternate;
+}
+
+#lazymod-window.theme-halloween .lazymod-header-bar::after {
+  top: 22px;
+  left: 100%;
+  width: 17px;
+  height: 9px;
+  opacity: 0.35;
+  scale: -1 1;
+  animation:
+    ho-bat-fly-rev 23s linear 6s infinite,
+    ho-bat-bob 1.3s ease-in-out infinite,
+    ho-bat-flap-rev 0.28s ease-in-out infinite alternate;
+}
+
+#lazymod-window.theme-halloween.ghost-mode .lazymod-header-bar::before,
+#lazymod-window.theme-halloween.ghost-mode .lazymod-header-bar::after {
+  display: none;
+}
+
+#lazymod-window.theme-halloween .lazymod-app-title {
   color: var(--lm-accent);
+  font-family: var(--ho-serif);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(255, 106, 20, 0.6);
+  animation: ho-title-flicker 6s ease-in-out infinite;
+}
+
+#lazymod-window.theme-halloween .lazymod-app-title::before {
+  content: "🎃";
+  font-size: 13px;
+  filter: drop-shadow(0 0 5px rgba(255, 106, 20, 0.8));
+}
+
+#lazymod-window.theme-halloween .lazymod-brand-icon {
+  color: var(--ho-orange);
+}
+
+#lazymod-window.theme-halloween .lazymod-win-btn {
+  color: var(--lm-muted);
+  border-radius: 6px;
+}
+
+#lazymod-window.theme-halloween .lazymod-win-btn:hover {
+  background: rgba(255, 138, 42, 0.16);
+  border-color: rgba(255, 138, 42, 0.45);
+  color: #ffd2a0;
+}
+
+/* --- Sekcje: pomarańczowa krawędź jak światło świecy --- */
+#lazymod-window.theme-halloween .lazymod-section {
+  padding: 12px 14px;
+  margin-bottom: 11px;
+  background: var(--lm-theme-section);
+  border: 1px solid var(--lm-border);
+  border-radius: 8px 14px 8px 14px;
+  box-shadow:
+    inset 3px 0 0 rgba(255, 138, 42, 0.6),
+    0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+#lazymod-window.theme-halloween .lazymod-title {
+  color: #e0a063;
+  font-family: var(--ho-serif);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+#lazymod-window.theme-halloween .lazymod-title::before {
+  content: "☽ ";
+  color: var(--ho-purple);
+}
+
+#lazymod-window.theme-halloween
+  .lazymod-collapsible-header:hover
+  .lazymod-title {
+  color: var(--ho-ember);
+}
+
+/* --- Zakładki --- */
+#lazymod-window.theme-halloween .lazymod-tabs {
+  border-bottom-color: #3f2c4b;
+}
+
+#lazymod-window.theme-halloween .lazymod-tab {
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+#lazymod-window.theme-halloween .lazymod-tab:hover {
+  background: var(--lm-theme-hover);
+  color: #ffd2a0;
+}
+
+#lazymod-window.theme-halloween .lazymod-tab.active {
+  border-color: rgba(255, 138, 42, 0.35);
+  background: linear-gradient(
+    to top,
+    rgba(255, 138, 42, 0.24),
+    rgba(255, 138, 42, 0.05)
+  );
+  color: var(--ho-ember);
+  box-shadow:
+    inset 0 -2px 0 var(--ho-orange),
+    0 4px 14px -6px rgba(255, 106, 20, 0.7);
+}
+
+#lazymod-window.theme-halloween .lazymod-subtab {
+  border-radius: 5px;
+  border-color: #3f2c4b;
+  background: #181020;
+}
+
+#lazymod-window.theme-halloween .lazymod-subtab:hover {
+  color: #ffd2a0;
+  border-color: #6b4a80;
+}
+
+#lazymod-window.theme-halloween .lazymod-subtab.active {
+  border-color: var(--ho-orange);
+  background: rgba(255, 138, 42, 0.16);
+  color: var(--ho-ember);
+}
+
+/* --- Przyciski --- */
+#lazymod-window.theme-halloween .lazymod-btn,
+#lazymod-window.theme-halloween #lm-view-main .lazymod-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--lm-border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #281c33, #1a1122);
+  color: var(--lm-text);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+#lazymod-window.theme-halloween .lazymod-btn:hover:not(:disabled),
+#lazymod-window.theme-halloween
+  #lm-view-main
+  .lazymod-btn:hover:not(:disabled) {
+  border-color: var(--ho-orange);
+  background: linear-gradient(180deg, #3a2748, #261a31);
+  color: #ffd2a0;
+  box-shadow: 0 0 14px rgba(255, 106, 20, 0.35);
+  transform: translateY(-1px);
+}
+
+#lazymod-window.theme-halloween .lazymod-btn-accent,
+#lazymod-window.theme-halloween #lm-view-main .lazymod-btn-accent {
+  border-color: rgba(255, 138, 42, 0.7);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 106, 20, 0.34),
+    rgba(255, 106, 20, 0.1)
+  );
+  color: #ffd9ad;
+  text-shadow: 0 0 6px rgba(255, 106, 20, 0.5);
+}
+
+#lazymod-window.theme-halloween .lazymod-btn-accent:hover:not(:disabled),
+#lazymod-window.theme-halloween
+  #lm-view-main
+  .lazymod-btn-accent:hover:not(:disabled) {
+  border-color: var(--ho-ember);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 106, 20, 0.5),
+    rgba(255, 106, 20, 0.18)
+  );
+  color: #fff;
+  box-shadow: 0 0 18px rgba(255, 106, 20, 0.5);
+}
+
+#lazymod-window.theme-halloween .lazymod-btn-danger,
+#lazymod-window.theme-halloween #lm-view-main .lazymod-btn-danger {
+  border-color: rgba(255, 107, 122, 0.4);
+  background: rgba(150, 20, 40, 0.18);
+  color: var(--lm-danger);
+}
+
+#lazymod-window.theme-halloween .lazymod-btn-danger:hover:not(:disabled),
+#lazymod-window.theme-halloween
+  #lm-view-main
+  .lazymod-btn-danger:hover:not(:disabled) {
+  border-color: #ff6b7a;
+  background: rgba(190, 30, 55, 0.35);
+  color: #ffd0d6;
+  box-shadow: 0 0 14px rgba(255, 60, 80, 0.35);
+}
+
+/* --- Chipsy --- */
+#lazymod-window.theme-halloween .lazymod-chips {
+  padding: 9px;
+  border: 1px dashed var(--lm-border);
+  border-radius: 10px;
+  background: var(--lm-theme-input);
+}
+
+#lazymod-window.theme-halloween .lazymod-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--lm-theme-chip-border);
+  border-radius: 6px;
+  background: var(--lm-theme-chip);
+  color: var(--lm-text);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+#lazymod-window.theme-halloween .lazymod-chip:hover {
+  border-color: var(--ho-orange);
+  background: var(--lm-theme-hover);
+  color: #ffd2a0;
+  box-shadow: 0 0 12px rgba(255, 106, 20, 0.28);
+  transform: translateY(-1px);
+}
+
+#lazymod-window.theme-halloween .lazymod-chip.active {
+  border-color: var(--ho-orange);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 138, 42, 0.36),
+    rgba(255, 106, 20, 0.16)
+  );
+  color: #ffd9ad;
+  font-weight: 700;
+  box-shadow:
+    0 0 14px rgba(255, 106, 20, 0.4),
+    inset 0 -6px 10px -6px rgba(255, 180, 70, 0.35);
+}
+
+#lazymod-window.theme-halloween .lazymod-chip .icon {
+  color: var(--ho-slime);
+}
+
+#lazymod-window.theme-halloween .lazymod-chip.active .icon {
+  color: #ffb866;
+}
+
+#lazymod-window.theme-halloween .lazymod-chip .score {
+  background: rgba(10, 5, 14, 0.6);
+  color: #e0a063;
+}
+
+#lazymod-window.theme-halloween .lazymod-chip.search-highlighted {
+  outline: 2px solid var(--ho-slime);
+  outline-offset: 1px;
+}
+
+/* --- Pola formularzy --- */
+#lazymod-window.theme-halloween .lazymod-input,
+#lazymod-window.theme-halloween .lazymod-threshold-input {
+  border: 1px solid var(--lm-border);
+  border-radius: 8px;
+  background: var(--lm-theme-input);
+  color: var(--lm-text);
+  caret-color: var(--ho-orange);
+}
+
+#lazymod-window.theme-halloween .lazymod-input:focus,
+#lazymod-window.theme-halloween .lazymod-threshold-input:focus {
+  border-color: var(--ho-orange);
+  box-shadow:
+    0 0 0 3px rgba(255, 138, 42, 0.22),
+    0 0 14px rgba(255, 106, 20, 0.2);
+}
+
+#lazymod-window.theme-halloween .lazymod-input::placeholder {
+  color: #7d6a88;
+}
+
+#lazymod-window.theme-halloween .lazymod-settings-summary,
+#lazymod-window.theme-halloween .lazymod-settings-field {
+  border-radius: 8px;
+  border-color: var(--lm-border);
+  background: var(--lm-theme-input);
+}
+
+#lazymod-window.theme-halloween .lazymod-settings-row code,
+#lazymod-window.theme-halloween .lazymod-settings-field code,
+#lazymod-window.theme-halloween .lazymod-blacklist-summary code {
+  color: #d9a56d;
+}
+
+#lazymod-window.theme-halloween .lazymod-info {
+  border-color: #6b4a80;
+  color: var(--ho-ember);
+}
+
+#lazymod-window.theme-halloween .lazymod-scale-value {
+  color: var(--ho-ember);
+}
+
+/* --- Status AI --- */
+#lazymod-window.theme-halloween .lazymod-ai-status[data-state="working"] {
+  color: var(--ho-ember);
+}
+
+#lazymod-window.theme-halloween
+  .lazymod-ai-status[data-state="working"]::before {
+  border-color: rgba(255, 138, 42, 0.25);
+  border-top-color: var(--ho-orange);
+}
+
+#lazymod-window.theme-halloween .lazymod-ai-status[data-state="success"],
+#lazymod-window.theme-halloween
+  .lazymod-ai-status[data-state="success"]::before {
+  color: var(--ho-slime);
+}
+
+#lazymod-window.theme-halloween .lazymod-ai-status[data-state="error"],
+#lazymod-window.theme-halloween .lazymod-ai-status[data-state="error"]::before {
+  color: var(--lm-danger);
+}
+
+/* --- Licznik tagów --- */
+#lazymod-window.theme-halloween .lazymod-badge,
+#lazymod-window.theme-halloween #lm-view-main #lm-tag-count-badge {
+  border: 1px solid rgba(255, 138, 42, 0.55);
+  border-radius: 8px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 106, 20, 0.3),
+    rgba(155, 93, 229, 0.2)
+  );
+  color: #ffd9ad;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(255, 106, 20, 0.3);
+}
+
+/* --- Uchwyt rozmiaru, zakładka krawędzi --- */
+#lazymod-window.theme-halloween .lazymod-resize-handle:hover {
+  border-color: var(--ho-orange);
+  color: var(--ho-ember);
+}
+
+.lazymod-edge-tab {
+  border-color: #ff8a2a;
+  background: rgba(18, 13, 23, 0.95);
+  box-shadow: 0 0 16px rgba(255, 106, 20, 0.4);
+  color: #ffb347;
+}
+
+.lazymod-edge-tab:hover {
+  background: #2a1d34;
+  color: #fff;
+}
+
+/* --- Dokowanie: pomarańczowa poświata krawędzi --- */
+#lazymod-window.theme-halloween.docked {
+  background:
+    var(--ho-web) 0 0 / 120px 120px no-repeat,
+    radial-gradient(
+      ellipse at 50% 112%,
+      rgba(255, 106, 20, 0.18),
+      transparent 55%
+    ),
+    var(--lm-bg) !important;
+}
+
+#lazymod-window.theme-halloween.docked-left {
+  border-right: 2px solid #5a3d6b !important;
+  box-shadow: 8px 0 30px rgba(255, 106, 20, 0.16) !important;
+}
+
+#lazymod-window.theme-halloween.docked-right {
+  border-left: 2px solid #5a3d6b !important;
+  box-shadow: -8px 0 30px rgba(255, 106, 20, 0.16) !important;
+}
+
+#lazymod-window.theme-halloween.docked-top {
+  border-bottom: 2px solid #5a3d6b !important;
+  box-shadow: 0 8px 30px rgba(255, 106, 20, 0.16) !important;
+}
+
+#lazymod-window.theme-halloween.docked-bottom {
+  border-top: 2px solid #5a3d6b !important;
+  box-shadow: 0 -8px 30px rgba(255, 106, 20, 0.16) !important;
+}
+
+/* --- Tryb ghost: bez efektów --- */
+#lazymod-window.theme-halloween.lazymod-float-window.ghost-mode {
+  background: rgba(18, 13, 23, 0.26);
+  background-image: none;
+  border-color: rgba(255, 138, 42, 0.28);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+#lazymod-window.theme-halloween.lazymod-float-window.docked.ghost-mode {
+  background: rgba(18, 13, 23, 0.26) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+#lazymod-window.theme-halloween.ghost-mode .lazymod-header-bar {
+  border-image: none;
+  background: none;
+}
+
+/* ==========================================================================
+   ANIMACJE
+   ========================================================================== */
+@keyframes ho-embers-rise {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      150px -480px,
+      -200px -300px,
+      120px -720px;
+  }
+}
+
+@keyframes ho-embers-glow {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ho-fire-flicker {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scaleY(1);
+  }
+  18% {
+    opacity: 1;
+    transform: scaleY(1.08);
+  }
+  34% {
+    opacity: 0.6;
+    transform: scaleY(0.94);
+  }
+  52% {
+    opacity: 0.95;
+    transform: scaleY(1.05);
+  }
+  71% {
+    opacity: 0.68;
+    transform: scaleY(0.97);
+  }
+  86% {
+    opacity: 0.9;
+    transform: scaleY(1.03);
+  }
+}
+
+@keyframes ho-title-flicker {
+  0%,
+  100% {
+    text-shadow: 0 0 12px rgba(255, 106, 20, 0.6);
+  }
+  22% {
+    text-shadow: 0 0 6px rgba(255, 106, 20, 0.35);
+  }
+  27% {
+    text-shadow: 0 0 16px rgba(255, 150, 40, 0.8);
+  }
+  64% {
+    text-shadow: 0 0 9px rgba(255, 106, 20, 0.5);
+  }
+}
+
+@keyframes ho-bat-fly {
+  0% {
+    left: -40px;
+  }
+  40%,
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes ho-bat-fly-rev {
+  0% {
+    left: 100%;
+  }
+  40%,
+  100% {
+    left: -40px;
+  }
+}
+
+@keyframes ho-bat-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 5px;
+  }
+}
+
+@keyframes ho-bat-flap {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 1 0.5;
+  }
+}
+
+@keyframes ho-bat-flap-rev {
+  from {
+    scale: -1 1;
+  }
+  to {
+    scale: -1 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lazymod-window.theme-halloween::before,
+  #lazymod-window.theme-halloween::after,
+  #lazymod-window.theme-halloween .lazymod-app-title {
+    animation: none;
+  }
+
+  #lazymod-window.theme-halloween .lazymod-header-bar::before,
+  #lazymod-window.theme-halloween .lazymod-header-bar::after {
+    display: none;
+  }
+
+  #lazymod-window.theme-halloween .lazymod-btn,
+  #lazymod-window.theme-halloween .lazymod-chip {
+    transition: none;
+  }
 }

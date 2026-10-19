@@ -21,12 +21,7 @@
     } catch (e) {}
   }
 
-  const accessSettingsKeys = [
-    "lazymod_enabled",
-    "lazymod_domain_mode",
-    "lazymod_domains",
-    "lazymod_site_blacklist",
-  ];
+  const accessSettingsKeys = ["lazymod_enabled", "lazymod_domain_mode", "lazymod_domains", "lazymod_site_blacklist"];
   let originalBodyMargins = null;
   let extensionHost = null;
   let extensionReady = false;
@@ -37,8 +32,7 @@
     const hostname = window.location.hostname.toLowerCase();
     const matchesDomain = (domain) => {
       const normalizedDomain = domain.toLowerCase();
-      return hostname === normalizedDomain ||
-        hostname.endsWith(`.${normalizedDomain}`);
+      return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
     };
     const isBlockedBySiteOverride = siteBlacklist.some(matchesDomain);
     if (isBlockedBySiteOverride) return false;
@@ -48,15 +42,9 @@
 
   function applySiteAccessSettings(settings) {
     const enabled = settings.lazymod_enabled !== false;
-    const mode = settings.lazymod_domain_mode === "whitelist"
-      ? "whitelist"
-      : "blacklist";
-    const domains = Array.isArray(settings.lazymod_domains)
-      ? settings.lazymod_domains.filter((domain) => typeof domain === "string")
-      : [];
-    const siteBlacklist = Array.isArray(settings.lazymod_site_blacklist)
-      ? settings.lazymod_site_blacklist.filter((domain) => typeof domain === "string")
-      : [];
+    const mode = settings.lazymod_domain_mode === "whitelist" ? "whitelist" : "blacklist";
+    const domains = Array.isArray(settings.lazymod_domains) ? settings.lazymod_domains.filter((domain) => typeof domain === "string") : [];
+    const siteBlacklist = Array.isArray(settings.lazymod_site_blacklist) ? settings.lazymod_site_blacklist.filter((domain) => typeof domain === "string") : [];
     siteAccessAllowed = isPageAllowedBySettings(enabled, mode, domains, siteBlacklist);
     if (!extensionHost) return;
 
@@ -77,10 +65,7 @@
   }
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (
-      areaName !== "local" ||
-      !accessSettingsKeys.some((key) => Object.hasOwn(changes, key))
-    ) {
+    if (areaName !== "local" || !accessSettingsKeys.some((key) => Object.hasOwn(changes, key))) {
       return;
     }
     chrome.storage.local
@@ -112,11 +97,9 @@
   const defaultSiteConfigs = {
     ".*": {
       urlPattern: ".*",
-      tagInputSelector:
-        "#tags, #post_tag_string, textarea[name='tags'], input[name='tags']",
+      tagInputSelector: "#tags, #post_tag_string, textarea[name='tags'], input[name='tags']",
       imgSelector: "#image, .main-image, img:not([src^='data:image/svg'])",
-      linkSelector:
-        "a.image-link, input[name='source'], input[name='file_url']",
+      linkSelector: "a.image-link, input[name='source'], input[name='file_url']",
       isXPath: false,
     },
   };
@@ -162,29 +145,15 @@
     "english_text",
   ];
 
-  let tagBlacklist = await loadData(
-    "lazymod_global_ai_blacklist",
-    defaultTagBlacklist,
-  );
+  let tagBlacklist = await loadData("lazymod_global_ai_blacklist", defaultTagBlacklist);
   if (!Array.isArray(tagBlacklist)) {
     console.error("[QuickTag] Saved AI blacklist is not an array; using the built-in list.");
     tagBlacklist = defaultTagBlacklist;
   }
   tagBlacklist = [...new Set(tagBlacklist.filter((tag) => typeof tag === "string").map(formatTag))];
 
-  let siteConfigs = await loadData(
-    "lazymod_global_site_configs",
-    defaultSiteConfigs,
-  );
-  const themeNames = [
-    "dark",
-    "light",
-    "femboy",
-    "halloween",
-    "minimalistic",
-    "cyberpunk",
-    "custom",
-  ];
+  let siteConfigs = await loadData("lazymod_global_site_configs", defaultSiteConfigs);
+  const themeNames = ["dark", "light", "femboy", "halloween", "minimalistic", "cyberpunk", "custom"];
   let savedTheme = await loadData("lazymod_theme", "dark");
   let savedCustomAccent = await loadData("lazymod_custom_accent", "#7cafff");
   if (!themeNames.includes(savedTheme)) {
@@ -204,11 +173,7 @@
     const sourceGroups =
       rawData.groups ||
       rawData.folders ||
-      Object.fromEntries(
-        Object.entries(rawData).filter(
-          ([key]) => !["name", "activeFolder", "activeGroup", "activeCategory"].includes(key),
-        ),
-      );
+      Object.fromEntries(Object.entries(rawData).filter(([key]) => !["name", "activeFolder", "activeGroup", "activeCategory"].includes(key)));
     if (!sourceGroups || typeof sourceGroups !== "object" || Array.isArray(sourceGroups)) {
       throw new Error("No folder groups were found in the palette JSON.");
     }
@@ -235,10 +200,7 @@
     }
 
     return {
-      name:
-        typeof rawData.name === "string" && rawData.name.trim()
-          ? rawData.name.trim()
-          : fallbackName,
+      name: typeof rawData.name === "string" && rawData.name.trim() ? rawData.name.trim() : fallbackName,
       groups,
     };
   }
@@ -260,24 +222,15 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       builtInPack = normalizePalettePack(await res.json(), "data/import.json");
     } catch (e) {
-      console.warn(
-        "[QuickTag] Could not read import.json; using palettes saved in storage.",
-        e,
-      );
+      console.warn("[QuickTag] Could not read import.json; using palettes saved in storage.", e);
     }
 
-    const builtInOverride = await loadData(
-      "lazymod_builtin_palette_override",
-      null,
-    );
+    const builtInOverride = await loadData("lazymod_builtin_palette_override", null);
     if (builtInOverride) {
       try {
         builtInPack = normalizePalettePack(builtInOverride, "QuickTag starter pack");
       } catch (error) {
-        console.warn(
-          "[QuickTag] Could not load the edited built-in palette; using the default version.",
-          error,
-        );
+        console.warn("[QuickTag] Could not load the edited built-in palette; using the default version.", error);
       }
     }
 
@@ -288,21 +241,16 @@
       if (Object.keys(packs).length === 0) {
         packs["builtin-import"] = defaultPaletteData.packs["builtin-import"];
       }
-      const activePackId = packs[savedPalettes.activePackId]
-        ? savedPalettes.activePackId
-        : Object.keys(packs)[0];
+      const activePackId = packs[savedPalettes.activePackId] ? savedPalettes.activePackId : Object.keys(packs)[0];
       const activePack = packs[activePackId];
       const initialLocation = firstPaletteLocation(activePack);
       return {
         packs,
         activePackId,
-        activeGroup: activePack.groups[savedPalettes.activeGroup]
-          ? savedPalettes.activeGroup
-          : initialLocation.activeGroup,
-        activeCategory:
-          activePack.groups[savedPalettes.activeGroup]?.[savedPalettes.activeCategory]
-            ? savedPalettes.activeCategory
-            : initialLocation.activeCategory,
+        activeGroup: activePack.groups[savedPalettes.activeGroup] ? savedPalettes.activeGroup : initialLocation.activeGroup,
+        activeCategory: activePack.groups[savedPalettes.activeGroup]?.[savedPalettes.activeCategory]
+          ? savedPalettes.activeCategory
+          : initialLocation.activeCategory,
       };
     }
 
@@ -311,18 +259,13 @@
 
     // Migrate palettes saved by earlier versions into a separate JSON-like pack.
     if (savedPalettes && savedPalettes.folders) {
-      const legacyPack = normalizePalettePack(
-        { name: "My palettes", groups: savedPalettes.folders },
-        "My palettes",
-      );
+      const legacyPack = normalizePalettePack({ name: "My palettes", groups: savedPalettes.folders }, "My palettes");
       packs["legacy-saved"] = legacyPack;
       const initialLocation = firstPaletteLocation(legacyPack);
       return {
         packs,
         activePackId: "legacy-saved",
-        activeGroup: legacyPack.groups[savedPalettes.activeFolder]
-          ? savedPalettes.activeFolder
-          : initialLocation.activeGroup,
+        activeGroup: legacyPack.groups[savedPalettes.activeFolder] ? savedPalettes.activeFolder : initialLocation.activeGroup,
         activeCategory: initialLocation.activeCategory,
       };
     }
@@ -358,13 +301,7 @@
     if (!selectorStr) return null;
     if (isXPath) {
       try {
-        const result = document.evaluate(
-          selectorStr,
-          document,
-          null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE,
-          null,
-        );
+        const result = document.evaluate(selectorStr, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
         return result.singleNodeValue;
       } catch (e) {
         return null;
@@ -385,31 +322,27 @@
   function getMainInput() {
     const conf = siteConfigs[activeSiteKey] || siteConfigs[".*"];
     let el = getElementBySelector(conf.tagInputSelector, conf.isXPath);
-    if (!el && activeSiteKey !== ".*")
-      el = getElementBySelector(siteConfigs[".*"].tagInputSelector, false);
+    if (!el && activeSiteKey !== ".*") el = getElementBySelector(siteConfigs[".*"].tagInputSelector, false);
     return el;
   }
 
   function getSourceInput() {
     const conf = siteConfigs[activeSiteKey] || siteConfigs[".*"];
     let el = getElementBySelector(conf.linkSelector, conf.isXPath);
-    if (!el && activeSiteKey !== ".*")
-      el = getElementBySelector(siteConfigs[".*"].linkSelector, false);
+    if (!el && activeSiteKey !== ".*") el = getElementBySelector(siteConfigs[".*"].linkSelector, false);
     return el;
   }
 
   function getTargetImageURL() {
     const conf = siteConfigs[activeSiteKey] || siteConfigs[".*"];
     let el = getElementBySelector(conf.imgSelector, conf.isXPath);
-    if (!el && activeSiteKey !== ".*")
-      el = getElementBySelector(siteConfigs[".*"].imgSelector, false);
+    if (!el && activeSiteKey !== ".*") el = getElementBySelector(siteConfigs[".*"].imgSelector, false);
     if (el && el.src) return el.src;
 
     let linkEl = getSourceInput();
     if (linkEl) {
       if (linkEl.tagName === "A" && linkEl.href) return linkEl.href;
-      if (linkEl.tagName === "INPUT" || linkEl.tagName === "TEXTAREA")
-        return linkEl.value.trim();
+      if (linkEl.tagName === "INPUT" || linkEl.tagName === "TEXTAREA") return linkEl.value.trim();
       if (linkEl.src) return linkEl.src;
     }
     return null;
@@ -505,10 +438,7 @@
   const $$ = (selector) => shadowRoot.querySelectorAll(selector);
   const windowEl = $("#lazymod-window");
   const dockEdges = ["left", "right", "top", "bottom"];
-  const pageLayoutId =
-    window.location.origin === "null"
-      ? window.location.hostname || "unknown"
-      : window.location.origin;
+  const pageLayoutId = window.location.origin === "null" ? window.location.hostname || "unknown" : window.location.origin;
   const pageLayoutStorageKey = `lazymod_site_layout_${encodeURIComponent(pageLayoutId)}`;
   let savedPageLayout = await loadData(pageLayoutStorageKey, null);
   if (
@@ -518,19 +448,14 @@
       Array.isArray(savedPageLayout) ||
       typeof savedPageLayout.docked !== "boolean" ||
       !dockEdges.includes(savedPageLayout.dockPosition) ||
-      (savedPageLayout.visible !== undefined &&
-        typeof savedPageLayout.visible !== "boolean") ||
+      (savedPageLayout.visible !== undefined && typeof savedPageLayout.visible !== "boolean") ||
       (savedPageLayout.position !== undefined &&
-        (!savedPageLayout.position ||
-          typeof savedPageLayout.position.top !== "string" ||
-          typeof savedPageLayout.position.left !== "string")))
+        (!savedPageLayout.position || typeof savedPageLayout.position.top !== "string" || typeof savedPageLayout.position.left !== "string")))
   ) {
     console.error("[QuickTag] Saved page layout is invalid; using defaults.");
     savedPageLayout = null;
   }
-  let activeDockPosition = dockEdges.includes(savedPageLayout?.dockPosition)
-    ? savedPageLayout.dockPosition
-    : "right";
+  let activeDockPosition = dockEdges.includes(savedPageLayout?.dockPosition) ? savedPageLayout.dockPosition : "right";
   let isDocked = Boolean(savedPageLayout?.docked);
 
   function persistPageLayout(changes) {
@@ -557,11 +482,7 @@
     if (!siteAccessAllowed || !windowEl.classList.contains("docked") || windowEl.hidden) return;
 
     const rect = windowEl.getBoundingClientRect();
-    const margin = `${Math.ceil(
-      activeDockPosition === "left" || activeDockPosition === "right"
-        ? rect.width
-        : rect.height,
-    )}px`;
+    const margin = `${Math.ceil(activeDockPosition === "left" || activeDockPosition === "right" ? rect.width : rect.height)}px`;
     const marginProperty = {
       left: "marginLeft",
       right: "marginRight",
@@ -588,9 +509,7 @@
     if (isDockedNow) {
       const sideDock = activeDockPosition === "left" || activeDockPosition === "right";
       const dockedWidth = sideDock ? 400 : window.innerWidth / scale;
-      const dockedHeight = sideDock
-        ? window.innerHeight / scale
-        : (window.innerHeight * 0.42) / scale;
+      const dockedHeight = sideDock ? window.innerHeight / scale : (window.innerHeight * 0.42) / scale;
       windowEl.style.setProperty("--lm-docked-width", `${dockedWidth}px`);
       windowEl.style.setProperty("--lm-docked-height", `${dockedHeight}px`);
       windowEl.style.maxWidth = `${window.innerWidth / scale}px`;
@@ -693,10 +612,7 @@
         return;
       }
       if (!response?.success) {
-        console.error(
-          "[QuickTag] Could not open the About page.",
-          response?.error || "Unknown error",
-        );
+        console.error("[QuickTag] Could not open the About page.", response?.error || "Unknown error");
         alert(`Could not open the About page: ${response?.error || "Unknown error"}`);
       }
     });
@@ -720,9 +636,7 @@
 
   function getVisiblePaletteTags() {
     const categories = getActivePack().groups[paletteData.activeGroup];
-    const tags = flatView
-      ? Object.values(categories).flat()
-      : categories[paletteData.activeCategory] || [];
+    const tags = flatView ? Object.values(categories).flat() : categories[paletteData.activeCategory] || [];
     return [...new Set(tags.map(formatTag).filter(Boolean))];
   }
 
@@ -738,17 +652,10 @@
       if (query.length < 3) return;
 
       const maxDistance = Math.max(1, Math.floor(query.length * 0.25));
-      for (
-        let length = Math.max(1, query.length - maxDistance);
-        length <= query.length + maxDistance && length <= word.length;
-        length += 1
-      ) {
+      for (let length = Math.max(1, query.length - maxDistance); length <= query.length + maxDistance && length <= word.length; length += 1) {
         for (let start = 0; start + length <= word.length; start += 1) {
           const fragment = word.slice(start, start + length);
-          const previousRow = Array.from(
-            { length: fragment.length + 1 },
-            (_, index) => index,
-          );
+          const previousRow = Array.from({ length: fragment.length + 1 }, (_, index) => index);
           let row = [];
           for (let queryIndex = 1; queryIndex <= query.length; queryIndex += 1) {
             row = [queryIndex];
@@ -756,8 +663,7 @@
               row[fragmentIndex] = Math.min(
                 row[fragmentIndex - 1] + 1,
                 previousRow[fragmentIndex] + 1,
-                previousRow[fragmentIndex - 1] +
-                  (query[queryIndex - 1] === fragment[fragmentIndex - 1] ? 0 : 1),
+                previousRow[fragmentIndex - 1] + (query[queryIndex - 1] === fragment[fragmentIndex - 1] ? 0 : 1),
               );
             }
             previousRow.splice(0, previousRow.length, ...row);
@@ -809,9 +715,7 @@
         uniqueResults.set(result.tag, result);
       }
     });
-    return [...uniqueResults.values()]
-      .sort((first, second) => first.score - second.score || first.tag.localeCompare(second.tag))
-      .slice(0, 60);
+    return [...uniqueResults.values()].sort((first, second) => first.score - second.score || first.tag.localeCompare(second.tag)).slice(0, 60);
   }
 
   function setPaletteSearchQuery(query) {
@@ -823,10 +727,7 @@
 
   function isEditableTarget(target) {
     if (!(target instanceof Element)) return false;
-    return (
-      target.isContentEditable ||
-      target.matches("input, textarea, select")
-    );
+    return target.isContentEditable || target.matches("input, textarea, select");
   }
 
   paletteSearchInput.addEventListener("input", () => {
@@ -850,75 +751,77 @@
     }
     if (results.length === 0) return;
     const direction = event.key === "ArrowDown" ? 1 : -1;
-    highlightedSearchResult =
-      (highlightedSearchResult + direction + results.length) % results.length;
+    highlightedSearchResult = (highlightedSearchResult + direction + results.length) % results.length;
     renderUserChips();
   });
 
-  document.addEventListener("keydown", (event) => {
-    const eventPath = event.composedPath();
-    if (
-      event.isComposing ||
-      !siteAccessAllowed ||
-      windowEl.hidden ||
-      event.ctrlKey ||
-      event.altKey ||
-      event.metaKey ||
-      eventPath.some(isEditableTarget) ||
-      isEditableTarget(document.activeElement) ||
-      isEditableTarget(shadowRoot.activeElement) ||
-      elementPickerType ||
-      isRecordingGhostShortcut
-    ) {
-      return;
-    }
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      const eventPath = event.composedPath();
+      if (
+        event.isComposing ||
+        !siteAccessAllowed ||
+        windowEl.hidden ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.metaKey ||
+        eventPath.some(isEditableTarget) ||
+        isEditableTarget(document.activeElement) ||
+        isEditableTarget(shadowRoot.activeElement) ||
+        elementPickerType ||
+        isRecordingGhostShortcut
+      ) {
+        return;
+      }
 
-    if (event.key === "Escape" && paletteSearchQuery) {
-      event.preventDefault();
-      event.stopPropagation();
-      typeToTagBuffer = "";
-      clearTimeout(typeToTagResetTimer);
-      setPaletteSearchQuery("");
-      return;
-    }
-    if (event.key === "Backspace" && paletteSearchQuery) {
-      event.preventDefault();
-      event.stopPropagation();
-      typeToTagBuffer = typeToTagBuffer.slice(0, -1);
-      setPaletteSearchQuery(paletteSearchQuery.slice(0, -1));
-      clearTimeout(typeToTagResetTimer);
-      return;
-    }
-    if (event.key === "Enter" && paletteSearchQuery) {
-      event.preventDefault();
-      event.stopPropagation();
-      addSearchResult(getPaletteSearchResults()[highlightedSearchResult]);
-      return;
-    }
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      const results = getPaletteSearchResults();
-      if (results.length === 0) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const direction = event.key === "ArrowDown" ? 1 : -1;
-      highlightedSearchResult =
-        (highlightedSearchResult + direction + results.length) % results.length;
-      renderUserChips();
-      return;
-    }
-    if (event.key.length !== 1) return;
+      if (event.key === "Escape" && paletteSearchQuery) {
+        event.preventDefault();
+        event.stopPropagation();
+        typeToTagBuffer = "";
+        clearTimeout(typeToTagResetTimer);
+        setPaletteSearchQuery("");
+        return;
+      }
+      if (event.key === "Backspace" && paletteSearchQuery) {
+        event.preventDefault();
+        event.stopPropagation();
+        typeToTagBuffer = typeToTagBuffer.slice(0, -1);
+        setPaletteSearchQuery(paletteSearchQuery.slice(0, -1));
+        clearTimeout(typeToTagResetTimer);
+        return;
+      }
+      if (event.key === "Enter" && paletteSearchQuery) {
+        event.preventDefault();
+        event.stopPropagation();
+        addSearchResult(getPaletteSearchResults()[highlightedSearchResult]);
+        return;
+      }
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        const results = getPaletteSearchResults();
+        if (results.length === 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        highlightedSearchResult = (highlightedSearchResult + direction + results.length) % results.length;
+        renderUserChips();
+        return;
+      }
+      if (event.key.length !== 1) return;
 
-    event.preventDefault();
-    event.stopPropagation();
-    if (!tabMainBtn.classList.contains("active")) tabMainBtn.click();
-    setTaggerCollapsed(false);
-    typeToTagBuffer = `${typeToTagBuffer}${event.key}`;
-    setPaletteSearchQuery(typeToTagBuffer);
-    clearTimeout(typeToTagResetTimer);
-    typeToTagResetTimer = setTimeout(() => {
-      typeToTagBuffer = "";
-    }, 1000);
-  }, true);
+      event.preventDefault();
+      event.stopPropagation();
+      if (!tabMainBtn.classList.contains("active")) tabMainBtn.click();
+      setTaggerCollapsed(false);
+      typeToTagBuffer = `${typeToTagBuffer}${event.key}`;
+      setPaletteSearchQuery(typeToTagBuffer);
+      clearTimeout(typeToTagResetTimer);
+      typeToTagResetTimer = setTimeout(() => {
+        typeToTagBuffer = "";
+      }, 1000);
+    },
+    true,
+  );
 
   function addSearchResult(result) {
     if (!result) return;
@@ -939,12 +842,9 @@
     button.hidden = false;
     const visibleTags = getVisiblePaletteTags();
     const mainTags = getMainTags();
-    const allSelected =
-      visibleTags.length > 0 && visibleTags.every((tag) => mainTags.includes(tag));
+    const allSelected = visibleTags.length > 0 && visibleTags.every((tag) => mainTags.includes(tag));
     button.querySelector("span").textContent = allSelected ? "Remove tags" : "Add tags";
-    button.querySelector("svg").innerHTML = allSelected
-      ? '<path d="M2.5 8h11" />'
-      : '<path d="M8 2.5v11M2.5 8h11" />';
+    button.querySelector("svg").innerHTML = allSelected ? '<path d="M2.5 8h11" />' : '<path d="M8 2.5v11M2.5 8h11" />';
     button.classList.toggle("lazymod-btn-danger", allSelected);
     button.classList.toggle("lazymod-btn-accent", !allSelected);
   }
@@ -965,9 +865,7 @@
     const deletePackButton = $("#lm-delete-pack");
     const isBuiltInPack = paletteData.activePackId === "builtin-import";
     deletePackButton.disabled = isBuiltInPack;
-    deletePackButton.title = isBuiltInPack
-      ? "The built-in starter palette cannot be deleted"
-      : `Delete ${getActivePack().name}`;
+    deletePackButton.title = isBuiltInPack ? "The built-in starter palette cannot be deleted" : `Delete ${getActivePack().name}`;
     const activePack = getActivePack();
     const groupNames = Object.keys(activePack.groups);
     if (!groupNames.includes(paletteData.activeGroup)) {
@@ -982,9 +880,7 @@
       tab.textContent = groupName;
       tab.onclick = () => {
         paletteData.activeGroup = groupName;
-        paletteData.activeCategory = Object.keys(
-          getActivePack().groups[groupName],
-        )[0];
+        paletteData.activeCategory = Object.keys(getActivePack().groups[groupName])[0];
         savePaletteData();
         renderFoldersUI();
       };
@@ -995,12 +891,7 @@
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
     const updatedPalettes = changes.lazymod_global_palettes?.newValue;
-    if (
-      areaName !== "local" ||
-      !updatedPalettes ||
-      !updatedPalettes.packs ||
-      !updatedPalettes.packs[updatedPalettes.activePackId]
-    ) {
+    if (areaName !== "local" || !updatedPalettes || !updatedPalettes.packs || !updatedPalettes.packs[updatedPalettes.activePackId]) {
       return;
     }
     paletteData = updatedPalettes;
@@ -1039,9 +930,7 @@
     chipsContainer.innerHTML = "";
     const mainTags = getMainTags();
     const searchResults = paletteSearchQuery ? getPaletteSearchResults() : null;
-    const tags = searchResults
-      ? searchResults.map((result) => result.tag)
-      : getVisiblePaletteTags();
+    const tags = searchResults ? searchResults.map((result) => result.tag) : getVisiblePaletteTags();
 
     if (searchResults && searchResults.length === 0) {
       const emptyMessage = document.createElement("span");
@@ -1054,9 +943,7 @@
       const isActive = mainTags.includes(cleanTag);
       const chip = document.createElement("div");
       const isHighlighted = searchResults && index === highlightedSearchResult;
-      chip.className = `lazymod-chip ${isActive ? "active" : ""} ${
-        isHighlighted ? "search-highlighted" : ""
-      }`;
+      chip.className = `lazymod-chip ${isActive ? "active" : ""} ${isHighlighted ? "search-highlighted" : ""}`;
       chip.dataset.tag = cleanTag;
       chip.innerHTML = `<span class="icon">${isActive ? "−" : "+"}</span> ${cleanTag}`;
       if (searchResults) {
@@ -1075,16 +962,13 @@
   };
 
   $("#lm-edit-pack").onclick = () => {
-    chrome.runtime.sendMessage(
-      { action: "open_palette_editor", packId: paletteData.activePackId },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          alert(`Could not open the editor: ${chrome.runtime.lastError.message}`);
-        } else if (!response?.success) {
-          alert(`Could not open the editor: ${response?.error || "Unknown error"}`);
-        }
-      },
-    );
+    chrome.runtime.sendMessage({ action: "open_palette_editor", packId: paletteData.activePackId }, (response) => {
+      if (chrome.runtime.lastError) {
+        alert(`Could not open the editor: ${chrome.runtime.lastError.message}`);
+      } else if (!response?.success) {
+        alert(`Could not open the editor: ${response?.error || "Unknown error"}`);
+      }
+    });
   };
 
   $$(".lazymod-palette-scroller").forEach((scroller) => {
@@ -1093,10 +977,7 @@
       (event) => {
         if (scroller.scrollWidth <= scroller.clientWidth) return;
         event.preventDefault();
-        scroller.scrollLeft +=
-          Math.abs(event.deltaX) > Math.abs(event.deltaY)
-            ? event.deltaX
-            : event.deltaY;
+        scroller.scrollLeft += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
       },
       { passive: false },
     );
@@ -1183,14 +1064,8 @@
 
   $("#lm-export-pack").onclick = () => {
     const pack = getActivePack();
-    const json = JSON.stringify(
-      { name: pack.name, groups: pack.groups },
-      null,
-      2,
-    );
-    const url = URL.createObjectURL(
-      new Blob([json], { type: "application/json" }),
-    );
+    const json = JSON.stringify({ name: pack.name, groups: pack.groups }, null, 2);
+    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
     const link = document.createElement("a");
     const safeFileName = pack.name
       .trim()
@@ -1207,9 +1082,7 @@
     if (visibleTags.length === 0) return;
     const current = getMainTags();
     const allSelected = visibleTags.every((tag) => current.includes(tag));
-    const selectedTags = allSelected
-      ? current.filter((tag) => !visibleTags.includes(tag))
-      : [...new Set([...current, ...visibleTags])];
+    const selectedTags = allSelected ? current.filter((tag) => !visibleTags.includes(tag)) : [...new Set([...current, ...visibleTags])];
     setMainTags(selectedTags);
   };
 
@@ -1220,14 +1093,8 @@
   const analyzeImageButton = $("#lm-fetch-ai");
   let activeAnalysisId = null;
   let lastAnalysisThreshold = null;
-  const savedAiThreshold = Number(
-    await loadData("lazymod_ai_threshold", thresholdInput.value),
-  );
-  if (
-    Number.isFinite(savedAiThreshold) &&
-    savedAiThreshold >= Number(thresholdInput.min) &&
-    savedAiThreshold <= Number(thresholdInput.max)
-  ) {
+  const savedAiThreshold = Number(await loadData("lazymod_ai_threshold", thresholdInput.value));
+  if (Number.isFinite(savedAiThreshold) && savedAiThreshold >= Number(thresholdInput.min) && savedAiThreshold <= Number(thresholdInput.max)) {
     thresholdInput.value = String(savedAiThreshold);
   } else {
     console.warn("[QuickTag] Saved AI threshold is invalid; using the default value.");
@@ -1241,21 +1108,13 @@
   }
 
   chrome.runtime.onMessage.addListener((request) => {
-    if (
-      request.action === "analysis_progress" &&
-      request.analysisId === activeAnalysisId
-    ) {
+    if (request.action === "analysis_progress" && request.analysisId === activeAnalysisId) {
       setAiStatus(request.message, "working");
     }
   });
 
   function updateThresholdStatus() {
-    if (
-      Array.isArray(rawAiTagsObj) &&
-      rawAiTagsObj.length > 0 &&
-      lastAnalysisThreshold !== null &&
-      Number(thresholdInput.value) !== lastAnalysisThreshold
-    ) {
+    if (Array.isArray(rawAiTagsObj) && rawAiTagsObj.length > 0 && lastAnalysisThreshold !== null && Number(thresholdInput.value) !== lastAnalysisThreshold) {
       setAiStatus("Threshold changed. Analyze the image again to refresh tags.", "info");
     }
   }
@@ -1274,12 +1133,10 @@
       thresholdInput.value = lastValidThreshold;
     }
     lastValidThreshold = thresholdInput.value;
-    chrome.storage.local
-      .set({ lazymod_ai_threshold: Number(lastValidThreshold) })
-      .catch((error) => {
-        console.error("[QuickTag] Could not save the AI threshold.", error);
-        setAiStatus(`Could not save AI threshold: ${error.message}`, "error");
-      });
+    chrome.storage.local.set({ lazymod_ai_threshold: Number(lastValidThreshold) }).catch((error) => {
+      console.error("[QuickTag] Could not save the AI threshold.", error);
+      setAiStatus(`Could not save AI threshold: ${error.message}`, "error");
+    });
     if (Array.isArray(rawAiTagsObj)) updateThresholdStatus();
     else if (Object.keys(rawAiTagsObj).length > 0) {
       renderAiChips();
@@ -1301,7 +1158,7 @@
     aiContainer.innerHTML = "";
     analyzeImageButton.disabled = true;
     analyzeImageButton.setAttribute("aria-busy", "true");
-    analyzeImageButton.querySelector("span").textContent = "Analizowanie…";
+    analyzeImageButton.querySelector("span").textContent = "Analyzing…";
     setAiStatus("Connecting to ComfyUI...", "working");
 
     chrome.runtime.sendMessage(
@@ -1315,7 +1172,7 @@
         const runtimeError = chrome.runtime.lastError;
         analyzeImageButton.disabled = false;
         analyzeImageButton.removeAttribute("aria-busy");
-        analyzeImageButton.querySelector("span").textContent = "Analizuj obraz";
+        analyzeImageButton.querySelector("span").textContent = "Analyze image";
         if (analysisId !== activeAnalysisId) return;
         activeAnalysisId = null;
         if (runtimeError) {
@@ -1326,17 +1183,11 @@
           rawAiTagsObj = response.data;
           lastAnalysisThreshold = requestedThreshold;
           renderAiChips();
-          setAiStatus(
-            `Fetched ${response.data.length} tags using threshold ${requestedThreshold.toFixed(2)}.`,
-            "success",
-          );
+          setAiStatus(`Fetched ${response.data.length} tags using threshold ${requestedThreshold.toFixed(2)}.`, "success");
           updateThresholdStatus();
         } else {
           aiContainer.innerHTML = "";
-          setAiStatus(
-            `Analysis failed: ${response?.error || "ComfyUI returned an invalid response."}`,
-            "error",
-          );
+          setAiStatus(`Analysis failed: ${response?.error || "ComfyUI returned an invalid response."}`, "error");
         }
       },
     );
@@ -1348,18 +1199,14 @@
     container.innerHTML = "";
     const currentThreshold = parseFloat(thresholdInput.value);
     const filteredEntries = Array.isArray(rawAiTagsObj)
-      ? rawAiTagsObj
-          .filter((tag) => !tagBlacklist.includes(formatTag(tag)))
-          .map((tag) => [tag, null])
+      ? rawAiTagsObj.filter((tag) => !tagBlacklist.includes(formatTag(tag))).map((tag) => [tag, null])
       : Object.entries(rawAiTagsObj).filter(([tag, score]) => {
-        const clean = formatTag(tag);
-        return score >= currentThreshold && !tagBlacklist.includes(clean);
-      });
+          const clean = formatTag(tag);
+          return score >= currentThreshold && !tagBlacklist.includes(clean);
+        });
 
     if (filteredEntries.length === 0) {
-      container.textContent = Array.isArray(rawAiTagsObj)
-        ? "No tags returned above the WD14 threshold."
-        : "No tags above threshold.";
+      container.textContent = Array.isArray(rawAiTagsObj) ? "No tags returned above the WD14 threshold." : "No tags above threshold.";
       addAllBtn.style.display = "none";
       return;
     }
@@ -1372,9 +1219,7 @@
       chip.className = `lazymod-chip ${isActive ? "active" : ""}`;
       chip.dataset.tag = cleanTag;
       chip.innerHTML = `<span class="icon">${isActive ? "−" : "+"}</span> ${cleanTag}${
-        Number.isFinite(score)
-          ? ` <span class="score">${Math.round(score * 100)}%</span>`
-          : ""
+        Number.isFinite(score) ? ` <span class="score">${Math.round(score * 100)}%</span>` : ""
       }`;
       chip.onclick = () => toggleTagInMain(cleanTag);
       container.appendChild(chip);
@@ -1383,14 +1228,10 @@
     addAllBtn.style.display = "inline-flex";
     addAllBtn.onclick = () => {
       const current = getMainTags();
-      const suggestedTags = [
-        ...new Set(filteredEntries.map(([tag]) => formatTag(tag)).filter(Boolean)),
-      ];
+      const suggestedTags = [...new Set(filteredEntries.map(([tag]) => formatTag(tag)).filter(Boolean))];
       const shouldRemove = suggestedTags.every((tag) => current.includes(tag));
       const suggestedSet = new Set(suggestedTags);
-      const nextTags = shouldRemove
-        ? current.filter((tag) => !suggestedSet.has(tag))
-        : [...current, ...suggestedTags.filter((tag) => !current.includes(tag))];
+      const nextTags = shouldRemove ? current.filter((tag) => !suggestedSet.has(tag)) : [...current, ...suggestedTags.filter((tag) => !current.includes(tag))];
       setMainTags(nextTags);
       updateAiToggleButton();
     };
@@ -1399,9 +1240,7 @@
 
   function updateAiToggleButton() {
     const button = $("#lm-add-all-ai");
-    const tags = [...$("#lm-ai-chips").querySelectorAll(".lazymod-chip")]
-      .map((chip) => chip.dataset.tag)
-      .filter(Boolean);
+    const tags = [...$("#lm-ai-chips").querySelectorAll(".lazymod-chip")].map((chip) => chip.dataset.tag).filter(Boolean);
     if (tags.length === 0) return;
     const mainTags = new Set(getMainTags());
     const allActive = tags.every((tag) => mainTags.has(tag));
@@ -1418,7 +1257,7 @@
     if (input) {
       navigator.clipboard.writeText(input.value);
       alert("Skopiowano tagi do schowka!");
-    } else     alert("Target tag input field not found.");
+    } else alert("Target tag input field not found.");
   };
 
   $("#lm-clear-all").onclick = () => {
@@ -1457,13 +1296,10 @@
       field.textContent = value || "Not configured";
       field.title = value || "Not configured";
     });
-    $("#lm-blacklist-count").textContent =
-      `${tagBlacklist.length} ${tagBlacklist.length === 1 ? "tag" : "tags"} excluded`;
+    $("#lm-blacklist-count").textContent = `${tagBlacklist.length} ${tagBlacklist.length === 1 ? "tag" : "tags"} excluded`;
     const preview = tagBlacklist.slice(0, 6).join(", ");
     const remainingCount = tagBlacklist.length - 6;
-    $("#lm-blacklist-preview").textContent = preview
-      ? `${preview}${remainingCount > 0 ? `, +${remainingCount} more` : ""}`
-      : "No excluded tags";
+    $("#lm-blacklist-preview").textContent = preview ? `${preview}${remainingCount > 0 ? `, +${remainingCount} more` : ""}` : "No excluded tags";
     $("#lm-blacklist-preview").title = tagBlacklist.join(", ") || "No excluded tags";
   }
 
@@ -1501,9 +1337,7 @@
     if (changes.lazymod_global_ai_blacklist?.newValue) {
       const newBlacklist = changes.lazymod_global_ai_blacklist.newValue;
       if (Array.isArray(newBlacklist)) {
-        tagBlacklist = [
-          ...new Set(newBlacklist.filter((tag) => typeof tag === "string").map(formatTag)),
-        ];
+        tagBlacklist = [...new Set(newBlacklist.filter((tag) => typeof tag === "string").map(formatTag))];
         renderSettingsUI();
         if (Object.keys(rawAiTagsObj).length > 0) renderAiChips();
       }
@@ -1520,10 +1354,7 @@
           setConfigStatus(`Could not load theme: ${error.message}`, "error");
         });
     }
-    if (
-      changes.lazymod_custom_accent?.newValue &&
-      /^#[0-9a-fA-F]{6}$/.test(changes.lazymod_custom_accent.newValue)
-    ) {
+    if (changes.lazymod_custom_accent?.newValue && /^#[0-9a-fA-F]{6}$/.test(changes.lazymod_custom_accent.newValue)) {
       savedCustomAccent = changes.lazymod_custom_accent.newValue;
       applyTheme();
     }
@@ -1598,9 +1429,7 @@
       return (
         isRecord(categories) &&
         Object.keys(categories).length > 0 &&
-        Object.values(categories).every(
-          (tags) => Array.isArray(tags) && tags.every((tag) => typeof tag === "string"),
-        )
+        Object.values(categories).every((tags) => Array.isArray(tags) && tags.every((tag) => typeof tag === "string"))
       );
     });
   }
@@ -1610,18 +1439,9 @@
       pack?.groups ||
       pack?.folders ||
       (isRecord(pack)
-        ? Object.fromEntries(
-            Object.entries(pack).filter(
-              ([key]) =>
-                !["name", "activeFolder", "activeGroup", "activeCategory"].includes(key),
-            ),
-          )
+        ? Object.fromEntries(Object.entries(pack).filter(([key]) => !["name", "activeFolder", "activeGroup", "activeCategory"].includes(key)))
         : null);
-    return (
-      isRecord(pack) &&
-      (typeof pack.name === "undefined" || typeof pack.name === "string") &&
-      isValidPaletteGroups(groups)
-    );
+    return isRecord(pack) && (typeof pack.name === "undefined" || typeof pack.name === "string") && isValidPaletteGroups(groups);
   }
 
   function validateConfigData(data) {
@@ -1631,10 +1451,7 @@
     }
 
     if (data.lazymod_global_ai_blacklist !== undefined) {
-      if (
-        !Array.isArray(data.lazymod_global_ai_blacklist) ||
-        !data.lazymod_global_ai_blacklist.every((tag) => typeof tag === "string")
-      ) {
+      if (!Array.isArray(data.lazymod_global_ai_blacklist) || !data.lazymod_global_ai_blacklist.every((tag) => typeof tag === "string")) {
         throw new Error("The AI blacklist in this backup is invalid.");
       }
     }
@@ -1646,10 +1463,7 @@
         !Object.values(configs).every(
           (config) =>
             isRecord(config) &&
-            ["urlPattern", "tagInputSelector", "imgSelector", "linkSelector"].every(
-              (key) =>
-                config[key] === undefined || typeof config[key] === "string",
-            ) &&
+            ["urlPattern", "tagInputSelector", "imgSelector", "linkSelector"].every((key) => config[key] === undefined || typeof config[key] === "string") &&
             (config.isXPath === undefined || typeof config.isXPath === "boolean"),
         )
       ) {
@@ -1678,64 +1492,39 @@
       }
     }
 
-    const booleanSettings = [
-      "lazymod_enabled",
-      "lazymod_docked",
-      "lazymod_ghost_mode",
-      "lazymod_ghost_hold_mode",
-    ];
+    const booleanSettings = ["lazymod_enabled", "lazymod_docked", "lazymod_ghost_mode", "lazymod_ghost_hold_mode"];
     booleanSettings.forEach((key) => {
       if (data[key] !== undefined && typeof data[key] !== "boolean") {
         throw new Error(`The ${key} setting in this backup is invalid.`);
       }
     });
 
-    if (
-      data.lazymod_domain_mode !== undefined &&
-      !["blacklist", "whitelist"].includes(data.lazymod_domain_mode)
-    ) {
+    if (data.lazymod_domain_mode !== undefined && !["blacklist", "whitelist"].includes(data.lazymod_domain_mode)) {
       throw new Error("The domain access mode in this backup is invalid.");
     }
-    if (
-      data.lazymod_domains !== undefined &&
-      (!Array.isArray(data.lazymod_domains) ||
-        !data.lazymod_domains.every((domain) => typeof domain === "string"))
-    ) {
+    if (data.lazymod_domains !== undefined && (!Array.isArray(data.lazymod_domains) || !data.lazymod_domains.every((domain) => typeof domain === "string"))) {
       throw new Error("The domain list in this backup is invalid.");
     }
     if (
       data.lazymod_site_blacklist !== undefined &&
-      (!Array.isArray(data.lazymod_site_blacklist) ||
-        !data.lazymod_site_blacklist.every((domain) => typeof domain === "string"))
+      (!Array.isArray(data.lazymod_site_blacklist) || !data.lazymod_site_blacklist.every((domain) => typeof domain === "string"))
     ) {
       throw new Error("The per-site blacklist in this backup is invalid.");
     }
 
-    if (
-      data.lazymod_theme !== undefined &&
-      (typeof data.lazymod_theme !== "string" || !themeNames.includes(data.lazymod_theme))
-    ) {
+    if (data.lazymod_theme !== undefined && (typeof data.lazymod_theme !== "string" || !themeNames.includes(data.lazymod_theme))) {
       throw new Error("The selected theme in this backup is invalid.");
     }
 
-    if (
-      data.lazymod_custom_accent !== undefined &&
-      (typeof data.lazymod_custom_accent !== "string" ||
-        !/^#[0-9a-fA-F]{6}$/.test(data.lazymod_custom_accent))
-    ) {
+    if (data.lazymod_custom_accent !== undefined && (typeof data.lazymod_custom_accent !== "string" || !/^#[0-9a-fA-F]{6}$/.test(data.lazymod_custom_accent))) {
       throw new Error("The custom accent color in this backup is invalid.");
     }
 
-    if (
-      data.lazymod_dock_position !== undefined &&
-      !["left", "right", "top", "bottom"].includes(data.lazymod_dock_position)
-    ) {
+    if (data.lazymod_dock_position !== undefined && !["left", "right", "top", "bottom"].includes(data.lazymod_dock_position)) {
       throw new Error("The docking position in this backup is invalid.");
     }
 
-    const layoutKeys = Object.keys(data).filter((key) =>
-      key.startsWith("lazymod_site_layout_"),
-    );
+    const layoutKeys = Object.keys(data).filter((key) => key.startsWith("lazymod_site_layout_"));
     if (
       !layoutKeys.every((key) => {
         const layout = data[key];
@@ -1744,10 +1533,7 @@
           typeof layout.docked === "boolean" &&
           ["left", "right", "top", "bottom"].includes(layout.dockPosition) &&
           (layout.visible === undefined || typeof layout.visible === "boolean") &&
-          (layout.position === undefined ||
-            (isRecord(layout.position) &&
-              typeof layout.position.top === "string" &&
-              typeof layout.position.left === "string"))
+          (layout.position === undefined || (isRecord(layout.position) && typeof layout.position.top === "string" && typeof layout.position.left === "string"))
         );
       })
     ) {
@@ -1772,9 +1558,7 @@
       const shortcut = data.lazymod_ghost_shortcut;
       if (
         !isRecord(shortcut) ||
-        !["ctrl", "alt", "shift", "meta"].every(
-          (key) => typeof shortcut[key] === "boolean",
-        ) ||
+        !["ctrl", "alt", "shift", "meta"].every((key) => typeof shortcut[key] === "boolean") ||
         typeof shortcut.key !== "string" ||
         !shortcut.key
       ) {
@@ -1784,24 +1568,14 @@
 
     if (data.lazymod_win_pos !== undefined) {
       const position = data.lazymod_win_pos;
-      if (
-        !isRecord(position) ||
-        typeof position.top !== "string" ||
-        typeof position.left !== "string"
-      ) {
+      if (!isRecord(position) || typeof position.top !== "string" || typeof position.left !== "string") {
         throw new Error("The window position in this backup is invalid.");
       }
     }
 
     if (data.lazymod_win_size !== undefined) {
       const size = data.lazymod_win_size;
-      if (
-        !isRecord(size) ||
-        !Number.isFinite(size.width) ||
-        size.width <= 0 ||
-        !Number.isFinite(size.height) ||
-        size.height <= 0
-      ) {
+      if (!isRecord(size) || !Number.isFinite(size.width) || size.width <= 0 || !Number.isFinite(size.height) || size.height <= 0) {
         throw new Error("The window size in this backup is invalid.");
       }
     }
@@ -1839,19 +1613,11 @@
     if (!file) return;
     try {
       const backup = JSON.parse(await file.text());
-      if (
-        !isRecord(backup) ||
-        backup.format !== "quicktag-lazymod-backup" ||
-        backup.version !== 1
-      ) {
+      if (!isRecord(backup) || backup.format !== "quicktag-lazymod-backup" || backup.version !== 1) {
         throw new Error("This is not a supported QuickTag configuration backup.");
       }
       validateConfigData(backup.data);
-      if (
-        !confirm(
-          "Import this configuration? It will replace all current QuickTag settings, palettes, and profiles. The current page will reload.",
-        )
-      ) {
+      if (!confirm("Import this configuration? It will replace all current QuickTag settings, palettes, and profiles. The current page will reload.")) {
         return;
       }
 
@@ -1864,9 +1630,7 @@
           await chrome.storage.local.clear();
           await chrome.storage.local.set(previousData);
         } catch (restoreError) {
-          throw new Error(
-            `Import failed (${error.message}), and restoring the previous configuration also failed (${restoreError.message}).`,
-          );
+          throw new Error(`Import failed (${error.message}), and restoring the previous configuration also failed (${restoreError.message}).`);
         }
         throw error;
       }
@@ -1912,14 +1676,10 @@
 
     const candidates = [];
     if (element.getAttribute("name")) {
-      candidates.push(
-        `${element.tagName.toLowerCase()}[name="${element.getAttribute("name").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`,
-      );
+      candidates.push(`${element.tagName.toLowerCase()}[name="${element.getAttribute("name").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`);
     }
     if (element.classList.length) {
-      candidates.push(
-        `${element.tagName.toLowerCase()}${[...element.classList].map((className) => `.${escapeCssIdentifier(className)}`).join("")}`,
-      );
+      candidates.push(`${element.tagName.toLowerCase()}${[...element.classList].map((className) => `.${escapeCssIdentifier(className)}`).join("")}`);
     }
     for (const selector of candidates) {
       try {
@@ -1945,11 +1705,7 @@
         break;
       }
 
-      const siblings = current.parentElement
-        ? [...current.parentElement.children].filter(
-            (sibling) => sibling.tagName === current.tagName,
-          )
-        : [];
+      const siblings = current.parentElement ? [...current.parentElement.children].filter((sibling) => sibling.tagName === current.tagName) : [];
       if (siblings.length > 1) {
         part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
       }
@@ -1967,10 +1723,7 @@
 
   $("#lm-add-current-site").onclick = () => {
     const host = window.location.hostname;
-    const safePath = window.location.pathname.replace(
-      /[-[\]{}()*+?.,\\^$|#\s]/g,
-      "\\$&",
-    );
+    const safePath = window.location.pathname.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     const patternKey = `${host}${safePath}`;
 
     if (!siteConfigs[patternKey]) {
@@ -1984,7 +1737,8 @@
     }
     activeSiteKey = patternKey;
     $("#lm-active-badge").textContent = activeSiteKey;
-    chrome.storage.local.set({ lazymod_global_site_configs: siteConfigs })
+    chrome.storage.local
+      .set({ lazymod_global_site_configs: siteConfigs })
       .then(renderSettingsUI)
       .catch((error) => {
         console.error("[QuickTag] Could not save the current page profile.", error);
@@ -1993,29 +1747,23 @@
   };
 
   $("#lm-edit-site-configs").onclick = () => {
-    chrome.runtime.sendMessage(
-      { action: "open_site_config_editor" },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          alert(`Could not open settings editor: ${chrome.runtime.lastError.message}`);
-        } else if (!response?.success) {
-          alert(`Could not open settings editor: ${response?.error || "Unknown error"}`);
-        }
-      },
-    );
+    chrome.runtime.sendMessage({ action: "open_site_config_editor" }, (response) => {
+      if (chrome.runtime.lastError) {
+        alert(`Could not open settings editor: ${chrome.runtime.lastError.message}`);
+      } else if (!response?.success) {
+        alert(`Could not open settings editor: ${response?.error || "Unknown error"}`);
+      }
+    });
   };
 
   $("#lm-edit-blacklist").onclick = () => {
-    chrome.runtime.sendMessage(
-      { action: "open_ai_blacklist_editor" },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          alert(`Could not open AI blacklist editor: ${chrome.runtime.lastError.message}`);
-        } else if (!response?.success) {
-          alert(`Could not open AI blacklist editor: ${response?.error || "Unknown error"}`);
-        }
-      },
-    );
+    chrome.runtime.sendMessage({ action: "open_ai_blacklist_editor" }, (response) => {
+      if (chrome.runtime.lastError) {
+        alert(`Could not open AI blacklist editor: ${chrome.runtime.lastError.message}`);
+      } else if (!response?.success) {
+        alert(`Could not open AI blacklist editor: ${response?.error || "Unknown error"}`);
+      }
+    });
   };
 
   let elementPickerType = null;
@@ -2043,11 +1791,7 @@
     pickerProfileKey = null;
     if (pickerOriginalCursor) {
       if (pickerOriginalCursor.value) {
-        document.documentElement.style.setProperty(
-          "cursor",
-          pickerOriginalCursor.value,
-          pickerOriginalCursor.priority,
-        );
+        document.documentElement.style.setProperty("cursor", pickerOriginalCursor.value, pickerOriginalCursor.priority);
       } else {
         document.documentElement.style.removeProperty("cursor");
       }
@@ -2094,10 +1838,7 @@
     pickerLabel.textContent = `${pickerTarget.tagName.toLowerCase()}${identifier}${classes}`;
     pickerLabel.style.display = "block";
     const labelWidth = pickerLabel.getBoundingClientRect().width;
-    pickerLabel.style.left = `${Math.max(
-      8,
-      Math.min(rect.left, window.innerWidth - labelWidth - 8),
-    )}px`;
+    pickerLabel.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - labelWidth - 8))}px`;
     pickerLabel.style.top = `${Math.max(8, rect.top - 30)}px`;
   }
 
@@ -2117,11 +1858,7 @@
     const target = event.target;
     if (
       elementPickerType === "tagInputSelector" &&
-      !(
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLInputElement &&
-          ["text", "search"].includes(target.type))
-      )
+      !(target instanceof HTMLTextAreaElement || (target instanceof HTMLInputElement && ["text", "search"].includes(target.type)))
     ) {
       alert("Pick a text or textarea input for the tag field.");
       stopElementPicker();
@@ -2134,11 +1871,7 @@
     }
     if (
       elementPickerType === "linkSelector" &&
-      !(
-        target instanceof HTMLAnchorElement ||
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement
-      )
+      !(target instanceof HTMLAnchorElement || target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)
     ) {
       alert("Pick a link or a source input field.");
       stopElementPicker();
@@ -2155,7 +1888,8 @@
         isXPath: false,
       },
     };
-    chrome.storage.local.set({ lazymod_global_site_configs: siteConfigs })
+    chrome.storage.local
+      .set({ lazymod_global_site_configs: siteConfigs })
       .then(renderSettingsUI)
       .catch((error) => {
         console.error("[QuickTag] Could not save the picked selector.", error);
@@ -2168,9 +1902,7 @@
     stopElementPicker();
     const config = siteConfigs[activeSiteKey] || siteConfigs[".*"];
     if (config.isXPath) {
-      alert(
-        "This profile uses XPath selectors. Change isXPath to false in the profiles JSON editor before using the CSS picker.",
-      );
+      alert("This profile uses XPath selectors. Change isXPath to false in the profiles JSON editor before using the CSS picker.");
       return;
     }
     elementPickerType = selectorType;
@@ -2237,20 +1969,14 @@
     alt: Boolean(savedGhostShortcut?.alt),
     shift: Boolean(savedGhostShortcut?.shift),
     meta: Boolean(savedGhostShortcut?.meta),
-    key: typeof savedGhostShortcut?.key === "string"
-      ? savedGhostShortcut.key.toLowerCase()
-      : "g",
+    key: typeof savedGhostShortcut?.key === "string" ? savedGhostShortcut.key.toLowerCase() : "g",
   };
 
   function updateGhostUI() {
     const enabled = ghostHoldMode ? transientGhostActive : ghostMode;
     windowEl.classList.toggle("ghost-mode", enabled);
     ghostToggle.setAttribute("aria-pressed", String(enabled));
-    ghostToggle.title = ghostHoldMode
-      ? "Hold to activate ghost mode"
-      : enabled
-        ? "Turn off ghost mode"
-        : "Turn on ghost mode";
+    ghostToggle.title = ghostHoldMode ? "Hold to activate ghost mode" : enabled ? "Turn off ghost mode" : "Turn on ghost mode";
   }
 
   function formatGhostShortcut(shortcut) {
@@ -2259,9 +1985,7 @@
     if (shortcut.alt) modifiers.push("Alt");
     if (shortcut.shift) modifiers.push("Shift");
     if (shortcut.meta) modifiers.push("Meta");
-    const key = shortcut.key.length === 1
-      ? shortcut.key.toUpperCase()
-      : shortcut.key.replace(/^Arrow/, "");
+    const key = shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key.replace(/^Arrow/, "");
     return [...modifiers, key].join(" + ");
   }
 
@@ -2291,17 +2015,11 @@
   function setTaggerCollapsed(collapsed) {
     windowEl.classList.toggle("is-collapsed", collapsed);
     collapseButton.setAttribute("aria-expanded", String(!collapsed));
-    collapseButton.setAttribute(
-      "aria-label",
-      collapsed ? "Expand tagger" : "Collapse tagger",
-    );
+    collapseButton.setAttribute("aria-label", collapsed ? "Expand tagger" : "Collapse tagger");
     collapseButton.title = collapsed ? "Expand tagger" : "Collapse tagger";
     const iconPath = collapseButton.querySelector("svg path");
     if (iconPath) {
-      iconPath.setAttribute(
-        "d",
-        collapsed ? "M3 3.5h10v9H3z" : "M3 8h10",
-      );
+      iconPath.setAttribute("d", collapsed ? "M3 3.5h10v9H3z" : "M3 8h10");
     }
     updateDockPageSpace();
   }
@@ -2407,67 +2125,74 @@
     ghostShortcutButton.textContent = "Press shortcut…";
     ghostShortcutButton.focus();
   };
-  document.addEventListener("keydown", (event) => {
-    if (!siteAccessAllowed) return;
-    if (isRecordingGhostShortcut) {
-      event.preventDefault();
-      event.stopPropagation();
-      if (event.key === "Escape") {
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (!siteAccessAllowed) return;
+      if (isRecordingGhostShortcut) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.key === "Escape") {
+          isRecordingGhostShortcut = false;
+          ghostShortcutButton.textContent = formatGhostShortcut(ghostShortcut);
+          return;
+        }
+        if (["Control", "Alt", "Shift", "Meta"].includes(event.key)) return;
+        if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+          ghostShortcutButton.textContent = "Use a modifier + key";
+          return;
+        }
+        ghostShortcut = {
+          ctrl: event.ctrlKey,
+          alt: event.altKey,
+          shift: event.shiftKey,
+          meta: event.metaKey,
+          key: event.key.toLowerCase(),
+        };
         isRecordingGhostShortcut = false;
         ghostShortcutButton.textContent = formatGhostShortcut(ghostShortcut);
+        saveData("lazymod_ghost_shortcut", ghostShortcut);
         return;
       }
-      if (["Control", "Alt", "Shift", "Meta"].includes(event.key)) return;
-      if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
-        ghostShortcutButton.textContent = "Use a modifier + key";
-        return;
+      if (
+        event.ctrlKey === ghostShortcut.ctrl &&
+        event.altKey === ghostShortcut.alt &&
+        event.shiftKey === ghostShortcut.shift &&
+        event.metaKey === ghostShortcut.meta &&
+        event.key.toLowerCase() === ghostShortcut.key
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (ghostHoldMode) {
+          ghostShortcutHeld = true;
+          updateTransientGhostMode();
+        } else {
+          setGhostMode(!ghostMode);
+        }
       }
-      ghostShortcut = {
-        ctrl: event.ctrlKey,
-        alt: event.altKey,
-        shift: event.shiftKey,
-        meta: event.metaKey,
-        key: event.key.toLowerCase(),
-      };
-      isRecordingGhostShortcut = false;
-      ghostShortcutButton.textContent = formatGhostShortcut(ghostShortcut);
-      saveData("lazymod_ghost_shortcut", ghostShortcut);
-      return;
-    }
-    if (
-      event.ctrlKey === ghostShortcut.ctrl &&
-      event.altKey === ghostShortcut.alt &&
-      event.shiftKey === ghostShortcut.shift &&
-      event.metaKey === ghostShortcut.meta &&
-      event.key.toLowerCase() === ghostShortcut.key
-    ) {
-      event.preventDefault();
-      event.stopPropagation();
-      if (ghostHoldMode) {
-        ghostShortcutHeld = true;
+    },
+    true,
+  );
+  document.addEventListener(
+    "keyup",
+    (event) => {
+      if (!siteAccessAllowed || !ghostShortcutHeld) return;
+      const key = event.key.toLowerCase();
+      if (
+        key === ghostShortcut.key ||
+        (ghostShortcut.ctrl && key === "control") ||
+        (ghostShortcut.alt && key === "alt") ||
+        (ghostShortcut.shift && key === "shift") ||
+        (ghostShortcut.meta && key === "meta")
+      ) {
+        ghostShortcutHeld = false;
         updateTransientGhostMode();
-      } else {
-        setGhostMode(!ghostMode);
       }
-    }
-  }, true);
-  document.addEventListener("keyup", (event) => {
-    if (!siteAccessAllowed || !ghostShortcutHeld) return;
-    const key = event.key.toLowerCase();
-    if (
-      key === ghostShortcut.key ||
-      (ghostShortcut.ctrl && key === "control") ||
-      (ghostShortcut.alt && key === "alt") ||
-      (ghostShortcut.shift && key === "shift") ||
-      (ghostShortcut.meta && key === "meta")
-    ) {
-      ghostShortcutHeld = false;
-      updateTransientGhostMode();
-    }
-  }, true);
+    },
+    true,
+  );
   window.addEventListener("blur", releaseGhostMode);
-  collapseButton.onclick = () =>
-    setTaggerCollapsed(!windowEl.classList.contains("is-collapsed"));
+  collapseButton.onclick = () => setTaggerCollapsed(!windowEl.classList.contains("is-collapsed"));
   hideTaggerButton.onclick = hideTaggerToEdge;
   showTaggerButton.onclick = showTaggerFromEdge;
   updateShowTaggerButtonPosition();
@@ -2536,28 +2261,11 @@
     event.preventDefault();
     const maxWidth = Math.max(1, window.innerWidth - 24) / resizeState.scale;
     const maxHeight = Math.max(1, window.innerHeight - 24) / resizeState.scale;
-    const width = Math.max(
-      Math.min(320, maxWidth),
-      Math.min(
-        maxWidth,
-        resizeState.startWidth -
-          (event.clientX - resizeState.startX) / resizeState.scale,
-      ),
-    );
-    const height = Math.max(
-      Math.min(240, maxHeight),
-      Math.min(
-        maxHeight,
-        resizeState.startHeight +
-          (event.clientY - resizeState.startY) / resizeState.scale,
-      ),
-    );
+    const width = Math.max(Math.min(320, maxWidth), Math.min(maxWidth, resizeState.startWidth - (event.clientX - resizeState.startX) / resizeState.scale));
+    const height = Math.max(Math.min(240, maxHeight), Math.min(maxHeight, resizeState.startHeight + (event.clientY - resizeState.startY) / resizeState.scale));
     windowEl.style.width = `${width}px`;
     windowEl.style.height = `${height}px`;
-    windowEl.style.left = `${
-      resizeState.startLeft +
-      (resizeState.startWidth - width)
-    }px`;
+    windowEl.style.left = `${resizeState.startLeft + (resizeState.startWidth - width)}px`;
     windowEl.style.top = `${resizeState.startTop}px`;
     applyWindowScale(resizeState.scale);
   });
@@ -2586,13 +2294,7 @@
     offsetY = 0;
 
   handle.addEventListener("mousedown", (e) => {
-    if (
-      e.target.tagName === "BUTTON" ||
-      e.target.tagName === "INPUT" ||
-      e.target.tagName === "SELECT" ||
-      windowEl.classList.contains("docked")
-    )
-      return;
+    if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || windowEl.classList.contains("docked")) return;
     isDragging = true;
     const rect = windowEl.getBoundingClientRect();
     offsetX = e.clientX - rect.left;

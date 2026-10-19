@@ -1,44 +1,162 @@
+/* ==========================================================================
+   QuickTag LazyMod - Theme: Minimalistic (Ultra-Clean & Compact)
+   ========================================================================== */
+
 #lazymod-window.theme-minimalistic {
-  --lm-bg: #17191c;
-  --lm-surface: #1e2125;
-  --lm-surface-raised: #292d32;
-  --lm-border: #41464d;
-  --lm-text: #f0f2f4;
-  --lm-muted: #bbc1c8;
-  --lm-accent: #e3e7eb;
-  --lm-accent-soft: rgba(227, 231, 235, 0.12);
-  --lm-theme-section: #1e2125;
-  --lm-theme-input: #17191c;
-  --lm-theme-chip: #292d32;
-  --lm-theme-chip-border: #454a51;
-  --lm-theme-hover: #343940;
-  --lm-theme-active: rgba(227, 231, 235, 0.14);
+  --lm-bg: #0d0e11;
+  --lm-surface: #14161b;
+  --lm-surface-raised: #1c1f26;
+  --lm-border: #262a33;
+  --lm-text: #e1e4e8;
+  --lm-muted: #828a96;
+  --lm-accent: #f0f3f6;
+  --lm-accent-soft: rgba(240, 243, 246, 0.08);
+  --lm-theme-section: transparent;
+  --lm-theme-input: #121418;
+  --lm-theme-chip: #181b22;
+  --lm-theme-chip-border: #292e39;
+  --lm-theme-hover: #222731;
+  --lm-theme-active: rgba(240, 243, 246, 0.12);
+
   color-scheme: dark;
-  border-color: var(--lm-border);
   background: var(--lm-bg);
+  border: 1px solid var(--lm-border);
+  border-radius: 10px;
   color: var(--lm-text);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
-#lazymod-window.theme-minimalistic .lazymod-header-bar {
-  border-bottom-color: var(--lm-border);
-  background: var(--lm-bg);
+/* --- 1. SCHOWANIE ALL SCROLLBARÓW --- */
+#lazymod-window.theme-minimalistic *,
+#lazymod-window.theme-minimalistic .lazymod-body,
+#lazymod-window.theme-minimalistic .lazymod-chips {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
+#lazymod-window.theme-minimalistic *::-webkit-scrollbar,
+#lazymod-window.theme-minimalistic .lazymod-body::-webkit-scrollbar,
+#lazymod-window.theme-minimalistic .lazymod-chips::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* --- 2. ELIMINACJA CIEŻKICH RAMEK SEKCJI --- */
 #lazymod-window.theme-minimalistic .lazymod-section {
-  border-color: var(--lm-border);
-  border-radius: 5px;
-  box-shadow: none;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 8px 2px 14px 2px !important;
+  margin-bottom: 6px !important;
 }
 
-#lazymod-window.theme-minimalistic :is(.lazymod-btn, .lazymod-chip, .lazymod-settings-field, .lazymod-settings-summary) {
-  border-radius: 5px;
-  box-shadow: none;
+#lazymod-window.theme-minimalistic .lazymod-section:last-child {
+  border-bottom: none !important;
 }
 
-#lazymod-window.theme-minimalistic #lm-view-main .lazymod-btn-accent,
-#lazymod-window.theme-minimalistic #lm-view-main .lazymod-btn-accent:hover:not(:disabled) {
-  border-color: #aeb5bd;
-  background: rgba(227, 231, 235, 0.14);
+/* --- 3. PRZYCISKI: TYLKO IKONY (UKRYCIE TEKSTÓW W PRZYCISKACH AKCJI) --- */
+#lazymod-window.theme-minimalistic
+  #lm-view-main
+  .lazymod-palette-actions
+  .lazymod-btn {
+  font-size: 0 !important; /* Ukrywa sam tekst */
+  padding: 6px 8px !important;
+  min-width: 32px;
+  justify-content: center;
+}
+
+#lazymod-window.theme-minimalistic
+  #lm-view-main
+  .lazymod-palette-actions
+  .lazymod-btn
+  .lazymod-action-icon {
+  font-size: 13px !important; /* Przywraca widoczność ikony */
+  width: 14px;
+  height: 14px;
+  margin: 0 !important;
+}
+
+/* --- 4. WYGLĄD PRZYCISKÓW ORAZ CHIPSÓW (TAGÓW) --- */
+#lazymod-window.theme-minimalistic .lazymod-btn,
+#lazymod-window.theme-minimalistic #lm-view-main .lazymod-btn {
+  background: var(--lm-surface);
+  border: 1px solid var(--lm-border);
+  border-radius: 6px;
   color: var(--lm-text);
+  transition: all 0.12s ease;
+}
+
+#lazymod-window.theme-minimalistic .lazymod-btn:hover:not(:disabled),
+#lazymod-window.theme-minimalistic
+  #lm-view-main
+  .lazymod-btn:hover:not(:disabled) {
+  background: var(--lm-surface-raised);
+  border-color: #3f4654;
+  color: #ffffff;
+}
+
+#lazymod-window.theme-minimalistic .lazymod-chip {
+  background: var(--lm-theme-chip);
+  border: 1px solid var(--lm-theme-chip-border);
+  border-radius: 5px;
+  color: #c5cad3;
+  padding: 4px 8px;
+}
+
+#lazymod-window.theme-minimalistic .lazymod-chip:hover {
+  background: var(--lm-theme-hover);
+  border-color: #4a5263;
+  color: #ffffff;
+}
+
+#lazymod-window.theme-minimalistic .lazymod-chip.active {
+  background: var(--lm-theme-active);
+  border-color: var(--lm-accent);
+  color: var(--lm-accent);
+  font-weight: 600;
+}
+
+/* --- 5. PUNKTY WEJŚCIOWE (INPUTS) & PANELE --- */
+#lazymod-window.theme-minimalistic .lazymod-chips {
+  background: var(--lm-theme-input);
+  border: 1px solid var(--lm-border);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+#lazymod-window.theme-minimalistic .lazymod-input,
+#lazymod-window.theme-minimalistic .lazymod-threshold-input {
+  background: var(--lm-theme-input);
+  border: 1px solid var(--lm-border);
+  border-radius: 6px;
+  color: var(--lm-text);
+}
+
+#lazymod-window.theme-minimalistic .lazymod-input:focus {
+  border-color: #5a6375;
+  box-shadow: 0 0 0 2px rgba(225, 228, 232, 0.08);
+}
+
+/* --- 6. NAGŁÓWKI I TYTUŁY --- */
+#lazymod-window.theme-minimalistic .lazymod-header-bar {
+  border-bottom: 1px solid var(--lm-border);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+#lazymod-window.theme-minimalistic .lazymod-title {
+  color: var(--lm-muted);
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+#lazymod-window.theme-minimalistic #lm-tag-count-badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--lm-border);
+  color: var(--lm-accent);
+  border-radius: 6px;
 }

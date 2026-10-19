@@ -1,47 +1,509 @@
+/* ==========================================================================
+   QuickTag LazyMod - Theme: Femboy ("Powder Pink Cozy") 🌸
+   Jasny, przytulny motyw: pudrowy róż, kremowa brzoskwinia, lawenda.
+   Miękkie cienie, ściegi na sekcjach, zaokrąglone pigułki, spokojne animacje.
+   Wczytuj PO tagger.css.
+   ========================================================================== */
+
 #lazymod-window.theme-femboy {
-  --lm-bg: #241a28;
-  --lm-surface: #302337;
-  --lm-surface-raised: #403047;
-  --lm-border: #624a69;
-  --lm-text: #fff2fb;
-  --lm-muted: #d9bfd8;
-  --lm-accent: #ffadd8;
-  --lm-accent-soft: rgba(255, 145, 202, 0.17);
-  --lm-theme-section: #302337;
-  --lm-theme-input: #211925;
-  --lm-theme-chip: #3a2b41;
-  --lm-theme-chip-border: #684d70;
-  --lm-theme-hover: #4a3652;
-  --lm-theme-active: rgba(255, 145, 202, 0.2);
-  color-scheme: dark;
-  border-color: var(--lm-border);
-  background:
-    radial-gradient(ellipse at 100% 0%, rgba(226, 119, 187, 0.17), transparent 45%),
-    var(--lm-bg);
+  /* tokeny bazowe używane przez tagger.css */
+  --lm-bg: #fff1f4;
+  --lm-surface: #ffe4eb;
+  --lm-surface-raised: #ffd6e2;
+  --lm-border: #f0bccb;
+  --lm-text: #6b3f52;
+  --lm-muted: #a1738a;
+  --lm-accent: #b8497a;
+  --lm-accent-soft: rgba(232, 130, 168, 0.2);
+  --lm-danger: #c04a64;
+  --lm-success: #3f9972;
+
+  --lm-theme-section: rgba(255, 255, 255, 0.58);
+  --lm-theme-input: #fffafb;
+  --lm-theme-chip: #fff7f9;
+  --lm-theme-chip-border: #f3c6d4;
+  --lm-theme-hover: #ffe8ef;
+  --lm-theme-active: rgba(238, 140, 178, 0.3);
+
+  /* tokeny własne motywu */
+  --pc-rose: #e88aab;
+  --pc-peach: #ffd9c7;
+  --pc-lavender: #d9c7f5;
+  --pc-cream: #fffaf5;
+  --pc-shadow: rgba(196, 110, 140, 0.28);
+  --pc-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  color-scheme: light;
   color: var(--lm-text);
-  box-shadow: 0 18px 48px rgba(10, 4, 13, 0.48);
+  font-family:
+    "Nunito", "Quicksand", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  background:
+    radial-gradient(
+      circle at 92% 6%,
+      rgba(255, 217, 199, 0.75),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 4% 96%,
+      rgba(217, 199, 245, 0.55),
+      transparent 44%
+    ),
+    var(--lm-bg);
+  border: 1.5px solid #f3c3d2;
+  border-radius: 22px;
+  box-shadow:
+    0 20px 46px var(--pc-shadow),
+    0 3px 10px rgba(196, 110, 140, 0.14),
+    inset 0 2px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
 }
 
+#lazymod-window.theme-femboy ::selection {
+  background: rgba(232, 138, 171, 0.35);
+  color: inherit;
+}
+
+/* --- Schowane scrollbary (jak wcześniej) --- */
+#lazymod-window.theme-femboy *,
+#lazymod-window.theme-femboy .lazymod-body,
+#lazymod-window.theme-femboy .lazymod-chips {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+#lazymod-window.theme-femboy *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* --- Nagłówek --- */
 #lazymod-window.theme-femboy .lazymod-header-bar {
-  border-bottom-color: var(--lm-border);
-  background: linear-gradient(110deg, rgba(255, 173, 216, 0.1), transparent 72%);
+  border-bottom: 2px dotted #efb5c6;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-#lazymod-window.theme-femboy .lazymod-section {
-  border-color: var(--lm-border);
-  border-radius: 15px;
-  box-shadow: 0 6px 18px rgba(15, 6, 18, 0.2);
-}
-
-#lazymod-window.theme-femboy .lazymod-chip,
-#lazymod-window.theme-femboy .lazymod-settings-field,
-#lazymod-window.theme-femboy .lazymod-settings-summary {
-  border-radius: 10px;
-}
-
-#lazymod-window.theme-femboy #lm-view-main .lazymod-btn-accent,
-#lazymod-window.theme-femboy #lm-view-main .lazymod-btn-accent:hover:not(:disabled) {
-  border-color: rgba(255, 173, 216, 0.58);
-  background: var(--lm-accent-soft);
+#lazymod-window.theme-femboy .lazymod-app-title {
   color: var(--lm-accent);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+#lazymod-window.theme-femboy .lazymod-app-title::before {
+  content: "✿";
+  color: var(--pc-rose);
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+#lazymod-window.theme-femboy .lazymod-app-title::after {
+  content: "♡";
+  color: var(--pc-rose);
+  font-size: 12px;
+  margin-left: 2px;
+  animation: pc-heartbeat 2.8s ease-in-out infinite;
+}
+
+#lazymod-window.theme-femboy .lazymod-brand-icon {
+  color: var(--pc-rose);
+}
+
+#lazymod-window.theme-femboy .lazymod-win-btn {
+  border-radius: 99px;
+  color: var(--lm-muted);
+}
+
+#lazymod-window.theme-femboy .lazymod-win-btn:hover {
+  background: var(--lm-surface-raised);
+  border-color: #efb5c6;
+  color: var(--lm-accent);
+}
+
+/* --- Sekcje: miękkie kartki ze ściegiem --- */
+#lazymod-window.theme-femboy .lazymod-section {
+  position: relative;
+  padding: 12px 14px;
+  margin-bottom: 11px;
+  background: var(--lm-theme-section);
+  border: 1px solid var(--lm-border);
+  border-radius: 18px;
+  box-shadow:
+    0 6px 16px rgba(196, 110, 140, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  outline: 1.5px dashed rgba(232, 138, 171, 0.38);
+  outline-offset: -6px;
+}
+
+#lazymod-window.theme-femboy .lazymod-title {
+  color: var(--lm-muted);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+#lazymod-window.theme-femboy .lazymod-collapsible-header:hover .lazymod-title {
+  color: var(--lm-accent);
+}
+
+/* --- Zakładki --- */
+#lazymod-window.theme-femboy .lazymod-tabs {
+  border-bottom-color: #f0c2d0;
+}
+
+#lazymod-window.theme-femboy .lazymod-tab {
+  border-radius: 99px;
+  font-weight: 700;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.25s var(--pc-spring);
+}
+
+#lazymod-window.theme-femboy .lazymod-tab:hover {
+  background: var(--lm-theme-hover);
+  color: var(--lm-accent);
+}
+
+#lazymod-window.theme-femboy .lazymod-tab.active {
+  border-color: #efb0c4;
+  background: linear-gradient(180deg, #ffe9f0, #ffd9e5);
+  color: var(--lm-accent);
+  box-shadow: 0 2px 6px rgba(196, 110, 140, 0.18);
+}
+
+#lazymod-window.theme-femboy .lazymod-subtab {
+  border-radius: 99px;
+  border-color: #f0c2d0;
+  background: #fff6f9;
+  color: var(--lm-muted);
+}
+
+#lazymod-window.theme-femboy .lazymod-subtab:hover {
+  background: var(--lm-theme-hover);
+  color: var(--lm-accent);
+}
+
+#lazymod-window.theme-femboy .lazymod-subtab.active {
+  border-color: #efb0c4;
+  background: #ffdfe9;
+  color: var(--lm-accent);
+}
+
+/* --- Przyciski --- */
+#lazymod-window.theme-femboy .lazymod-btn,
+#lazymod-window.theme-femboy #lm-view-main .lazymod-btn {
+  padding: 6px 14px;
+  border: 1px solid #efb5c6;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #fff9fb, #ffe6ee);
+  color: var(--lm-text);
+  font-weight: 700;
+  box-shadow: 0 2px 0 rgba(232, 138, 171, 0.25);
+  transition:
+    transform 0.25s var(--pc-spring),
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+#lazymod-window.theme-femboy .lazymod-btn:hover:not(:disabled),
+#lazymod-window.theme-femboy #lm-view-main .lazymod-btn:hover:not(:disabled) {
+  border-color: var(--pc-rose);
+  background: linear-gradient(180deg, #fff1f6, #ffd9e6);
+  color: var(--lm-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(196, 110, 140, 0.25);
+}
+
+#lazymod-window.theme-femboy .lazymod-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+#lazymod-window.theme-femboy .lazymod-btn-accent,
+#lazymod-window.theme-femboy #lm-view-main .lazymod-btn-accent {
+  border-color: #e88aab;
+  background: linear-gradient(180deg, #ffb9d0, #f799b9);
+  color: #5e2340;
+  box-shadow: 0 2px 0 rgba(184, 73, 122, 0.35);
+}
+
+#lazymod-window.theme-femboy .lazymod-btn-accent:hover:not(:disabled),
+#lazymod-window.theme-femboy
+  #lm-view-main
+  .lazymod-btn-accent:hover:not(:disabled) {
+  border-color: #d9628f;
+  background: linear-gradient(180deg, #ffc6da, #fba3c1);
+  color: #4d1b33;
+  box-shadow: 0 5px 12px rgba(217, 98, 143, 0.4);
+}
+
+#lazymod-window.theme-femboy .lazymod-btn-danger,
+#lazymod-window.theme-femboy #lm-view-main .lazymod-btn-danger {
+  border-color: rgba(192, 74, 100, 0.4);
+  background: linear-gradient(180deg, #fff6f7, #ffe1e6);
+  color: var(--lm-danger);
+}
+
+#lazymod-window.theme-femboy .lazymod-btn-danger:hover:not(:disabled),
+#lazymod-window.theme-femboy
+  #lm-view-main
+  .lazymod-btn-danger:hover:not(:disabled) {
+  border-color: var(--lm-danger);
+  background: #ffd3da;
+  color: #9e2f48;
+  box-shadow: 0 4px 10px rgba(192, 74, 100, 0.22);
+}
+
+/* --- Chipsy: pudrowe pigułki --- */
+#lazymod-window.theme-femboy .lazymod-chips {
+  padding: 9px;
+  border: 1.5px dashed #efb5c6;
+  border-radius: 16px;
+  background: var(--lm-theme-input);
+}
+
+#lazymod-window.theme-femboy .lazymod-chip {
+  padding: 5px 11px;
+  border: 1px solid var(--lm-theme-chip-border);
+  border-radius: 99px;
+  background: var(--lm-theme-chip);
+  color: var(--lm-text);
+  font-weight: 600;
+  box-shadow: 0 1px 0 rgba(232, 138, 171, 0.18);
+  transition:
+    transform 0.25s var(--pc-spring),
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+#lazymod-window.theme-femboy .lazymod-chip:hover {
+  border-color: var(--pc-rose);
+  background: var(--lm-theme-hover);
+  color: var(--lm-accent);
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 9px rgba(196, 110, 140, 0.2);
+}
+
+#lazymod-window.theme-femboy .lazymod-chip.active {
+  border-color: #e47c9f;
+  background: linear-gradient(180deg, #ffd0df, #ffbcd2);
+  color: #6a2347;
+  font-weight: 700;
+  box-shadow: 0 3px 8px rgba(217, 98, 143, 0.28);
+}
+
+#lazymod-window.theme-femboy .lazymod-chip .icon {
+  color: #6fbf9a;
+}
+
+#lazymod-window.theme-femboy .lazymod-chip.active .icon {
+  color: #c04a64;
+}
+
+#lazymod-window.theme-femboy .lazymod-chip .score {
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--lm-muted);
+  opacity: 1;
+}
+
+#lazymod-window.theme-femboy .lazymod-chip.search-highlighted {
+  outline: 2px solid #b79be8;
+  outline-offset: 2px;
+}
+
+/* --- Pola formularzy --- */
+#lazymod-window.theme-femboy .lazymod-input,
+#lazymod-window.theme-femboy .lazymod-threshold-input {
+  border: 1px solid var(--lm-border);
+  border-radius: 14px;
+  background: var(--lm-theme-input);
+  color: var(--lm-text);
+  caret-color: var(--lm-accent);
+}
+
+#lazymod-window.theme-femboy .lazymod-input::placeholder {
+  color: #c99bb0;
+}
+
+#lazymod-window.theme-femboy .lazymod-input:focus,
+#lazymod-window.theme-femboy .lazymod-threshold-input:focus {
+  border-color: var(--pc-rose);
+  box-shadow: 0 0 0 3px rgba(232, 138, 171, 0.25);
+}
+
+#lazymod-window.theme-femboy .lazymod-input option {
+  background: #fffafb;
+  color: var(--lm-text);
+}
+
+#lazymod-window.theme-femboy .lazymod-settings-summary,
+#lazymod-window.theme-femboy .lazymod-settings-field {
+  border-radius: 14px;
+  border-color: var(--lm-border);
+  background: var(--lm-theme-input);
+}
+
+#lazymod-window.theme-femboy .lazymod-settings-row code,
+#lazymod-window.theme-femboy .lazymod-settings-field code,
+#lazymod-window.theme-femboy .lazymod-blacklist-summary code {
+  color: var(--lm-muted);
+}
+
+#lazymod-window.theme-femboy .lazymod-info {
+  border-color: #e3a6bb;
+  color: var(--lm-accent);
+  background: #fff3f7;
+}
+
+#lazymod-window.theme-femboy .lazymod-scale-value {
+  color: var(--lm-accent);
+}
+
+/* --- Status AI --- */
+#lazymod-window.theme-femboy .lazymod-ai-status[data-state="working"] {
+  color: var(--lm-accent);
+}
+
+#lazymod-window.theme-femboy .lazymod-ai-status[data-state="working"]::before {
+  border-color: rgba(232, 138, 171, 0.28);
+  border-top-color: var(--lm-accent);
+}
+
+#lazymod-window.theme-femboy .lazymod-ai-status[data-state="success"],
+#lazymod-window.theme-femboy .lazymod-ai-status[data-state="success"]::before {
+  color: var(--lm-success);
+}
+
+#lazymod-window.theme-femboy .lazymod-ai-status[data-state="error"],
+#lazymod-window.theme-femboy .lazymod-ai-status[data-state="error"]::before {
+  color: var(--lm-danger);
+}
+
+#lazymod-window.theme-femboy .lazymod-config-status[data-state="error"] {
+  color: var(--lm-danger);
+}
+
+#lazymod-window.theme-femboy .lazymod-config-status[data-state="success"] {
+  color: var(--lm-success);
+}
+
+/* --- Licznik tagów --- */
+#lazymod-window.theme-femboy .lazymod-badge,
+#lazymod-window.theme-femboy #lm-view-main #lm-tag-count-badge {
+  border: 1px solid #efb0c4;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #ffe3ec, #f1e3ff);
+  color: var(--lm-accent);
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(196, 110, 140, 0.18);
+}
+
+#lazymod-window.theme-femboy #lm-view-main #lm-tag-count-badge::before {
+  content: "♡ ";
+  margin-right: 3px;
+  color: var(--pc-rose);
+}
+
+/* --- Uchwyt rozmiaru, zakładka krawędzi --- */
+#lazymod-window.theme-femboy .lazymod-resize-handle:hover {
+  border-color: #efb5c6;
+  background: var(--lm-surface-raised);
+  color: var(--lm-accent);
+}
+
+.lazymod-edge-tab {
+  border-color: #efb0c4;
+  background: rgba(255, 241, 244, 0.96);
+  box-shadow: 0 4px 14px rgba(196, 110, 140, 0.3);
+  color: #b8497a;
+}
+
+.lazymod-edge-tab:hover {
+  background: #ffdfe9;
+  color: #8f2f5c;
+}
+
+/* --- Dokowanie: miękkie cienie zamiast ciemnych --- */
+#lazymod-window.theme-femboy.docked {
+  background:
+    radial-gradient(
+      circle at 92% 6%,
+      rgba(255, 217, 199, 0.7),
+      transparent 40%
+    ),
+    var(--lm-bg) !important;
+}
+
+#lazymod-window.theme-femboy.docked-left {
+  border-right: 1.5px solid #f0bccb !important;
+  box-shadow: 8px 0 26px rgba(196, 110, 140, 0.25) !important;
+}
+
+#lazymod-window.theme-femboy.docked-right {
+  border-left: 1.5px solid #f0bccb !important;
+  box-shadow: -8px 0 26px rgba(196, 110, 140, 0.25) !important;
+}
+
+#lazymod-window.theme-femboy.docked-top {
+  border-bottom: 1.5px solid #f0bccb !important;
+  box-shadow: 0 8px 26px rgba(196, 110, 140, 0.25) !important;
+}
+
+#lazymod-window.theme-femboy.docked-bottom {
+  border-top: 1.5px solid #f0bccb !important;
+  box-shadow: 0 -8px 26px rgba(196, 110, 140, 0.25) !important;
+}
+
+/* --- Tryb ghost: jasna, półprzezroczysta mgiełka --- */
+#lazymod-window.theme-femboy.lazymod-float-window.ghost-mode {
+  background: rgba(255, 236, 242, 0.3);
+  background-image: none;
+  border-color: rgba(232, 138, 171, 0.4);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+#lazymod-window.theme-femboy.lazymod-float-window.docked.ghost-mode {
+  background: rgba(255, 236, 242, 0.3) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+#lazymod-window.theme-femboy.ghost-mode .lazymod-section {
+  outline-color: transparent;
+}
+
+/* --- Animacje --- */
+@keyframes pc-heartbeat {
+  0%,
+  60%,
+  100% {
+    transform: scale(1);
+  }
+  70% {
+    transform: scale(1.25);
+  }
+  80% {
+    transform: scale(1);
+  }
+  88% {
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lazymod-window.theme-femboy .lazymod-app-title::after {
+    animation: none;
+  }
+
+  #lazymod-window.theme-femboy .lazymod-btn,
+  #lazymod-window.theme-femboy .lazymod-chip,
+  #lazymod-window.theme-femboy .lazymod-tab {
+    transition: none;
+  }
 }

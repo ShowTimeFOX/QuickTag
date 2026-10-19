@@ -1,7 +1,12 @@
 :root {
   color-scheme: dark;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   color: #dce6f5;
   background: #0b0f16;
@@ -26,9 +31,7 @@ html {
 body {
   min-width: 320px;
   margin: 0;
-  background:
-    radial-gradient(ellipse at 50% -15%, rgba(47, 104, 189, 0.25), transparent 55%),
-    linear-gradient(180deg, #0b0f16 0%, #0d1422 50%, #0b0f16 100%);
+  background: radial-gradient(ellipse at 50% -15%, rgba(47, 104, 189, 0.25), transparent 55%), linear-gradient(180deg, #0b0f16 0%, #0d1422 50%, #0b0f16 100%);
   color: #dce6f5;
   line-height: 1.65;
 }
@@ -58,20 +61,13 @@ a {
 }
 
 .brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid rgba(130, 180, 255, 0.32);
-  border-radius: 10px;
-  background: rgba(66, 137, 245, 0.15);
-  color: #a8ccff;
-}
-
-.brand-mark svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
+  width: 38px;
+  height: 38px;
+  padding: 7px;
+  border: 1px solid rgba(159, 197, 255, 0.24);
+  border-radius: 12px;
+  background: rgba(107, 165, 245, 0.1);
+  object-fit: contain;
 }
 
 .brand-muted,
@@ -195,7 +191,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 7px;
   color: #b3c2d6;
-  font-size: 12px;
+  font-size: 20px;
   text-decoration: none;
 }
 
@@ -332,7 +328,11 @@ pre {
   border-radius: 8px;
   background: #090f19;
   color: #c9dcf5;
-  font: 12px/1.8 "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font:
+    12px/1.8 "Cascadia Code",
+    "SFMono-Regular",
+    Consolas,
+    monospace;
   tab-size: 2;
 }
 
@@ -340,7 +340,11 @@ code {
   border-radius: 4px;
   background: rgba(129, 157, 193, 0.11);
   color: #c6dcfa;
-  font: 0.92em "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font:
+    0.92em "Cascadia Code",
+    "SFMono-Regular",
+    Consolas,
+    monospace;
 }
 
 pre code {
@@ -415,6 +419,13 @@ pre code {
 .numbered-steps pre {
   grid-column: 2;
   margin: 7px 0 0;
+}
+
+.numbered-steps li > strong,
+.numbered-steps li > span,
+.numbered-steps li > pre,
+.numbered-steps li > a {
+  grid-column: 2 / -1;
 }
 
 .faq-list {
