@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "QuickTag LazyMod",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An image-tagging tool with customizable palettes and a floating interface.",
   "icons": {
     "128": "assets/icon.png"
@@ -12,13 +12,7 @@
     "default_icon": "assets/icon.png"
   },
   "permissions": ["storage", "activeTab", "alarms"],
-  "host_permissions": [
-    "<all_urls>",
-    "https://api.github.com/*",
-    "http://127.0.0.1/*",
-    "http://127.0.0.1:7860/*",
-    "http://127.0.0.1:8188/*"
-  ],
+  "host_permissions": ["<all_urls>", "https://api.github.com/*", "http://127.0.0.1/*", "http://127.0.0.1:7860/*", "http://127.0.0.1:8188/*"],
   "background": {
     "service_worker": "scripts/background.js"
   },
