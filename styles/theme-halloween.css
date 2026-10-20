@@ -54,11 +54,12 @@
     var(--lm-bg);
   border: 2px solid #5a3d6b;
   border-radius: 12px;
+  overflow: hidden;
   box-shadow:
     0 22px 60px rgba(4, 1, 7, 0.82),
     0 0 28px rgba(255, 106, 20, 0.16),
     inset 0 -30px 50px -30px rgba(255, 106, 20, 0.18);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
 }
 
 /* --- Schowane scrollbary --- */
@@ -82,14 +83,13 @@
 
 /* ==========================================================================
    ŻARY — cząsteczki ognia unoszące się od dołu
-   9 punktów w 3 warstwach (różny rozmiar kafla = różna prędkość/głębia).
-   Warstwy są przeplecione A,B,C,A,B,C,A,B,C, żeby krótkie listy
-   background-size / background-position poprawnie się zapętlały.
+   9 punktów w 3 warstwach. Tiled surface przesuwa się przez transform,
+   a 1800px przesunięcia zamyka pełny cykl wszystkich trzech kafli.
    ========================================================================== */
 #lazymod-window.theme-halloween::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: 0 0 -1800px;
   z-index: 0;
   border-radius: inherit;
   pointer-events: none;
@@ -153,20 +153,8 @@
     200px 300px,
     120px 180px;
   background-repeat: repeat;
-  -webkit-mask-image: linear-gradient(
-    to top,
-    #000 0%,
-    rgba(0, 0, 0, 0.85) 45%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to top,
-    #000 0%,
-    rgba(0, 0, 0, 0.85) 45%,
-    transparent 100%
-  );
   animation:
-    ho-embers-rise 16s linear infinite,
+    ho-embers-rise 40s linear infinite,
     ho-embers-glow 4.2s ease-in-out infinite alternate;
 }
 
@@ -664,16 +652,10 @@
    ========================================================================== */
 @keyframes ho-embers-rise {
   from {
-    background-position:
-      0 0,
-      0 0,
-      0 0;
+    transform: translate3d(0, 0, 0);
   }
   to {
-    background-position:
-      150px -480px,
-      -200px -300px,
-      120px -720px;
+    transform: translate3d(0, -1800px, 0);
   }
 }
 
@@ -717,16 +699,16 @@
 @keyframes ho-title-flicker {
   0%,
   100% {
-    text-shadow: 0 0 12px rgba(255, 106, 20, 0.6);
+    opacity: 1;
   }
   22% {
-    text-shadow: 0 0 6px rgba(255, 106, 20, 0.35);
+    opacity: 0.94;
   }
   27% {
-    text-shadow: 0 0 16px rgba(255, 150, 40, 0.8);
+    opacity: 1;
   }
   64% {
-    text-shadow: 0 0 9px rgba(255, 106, 20, 0.5);
+    opacity: 0.97;
   }
 }
 

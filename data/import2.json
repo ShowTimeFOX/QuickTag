@@ -1,0 +1,14 @@
+{
+  "name": "Anthro & Fursuit Pack",
+  "groups": {
+    "Subject & Species": {
+      "Species": ["anthro", "feline", "canine", "wolf", "fox", "dragon", "protogen", "bunny", "felinoid"],
+      "Features": ["animal_ears", "tail", "fluffy_tail", "fur", "paws", "claws", "snout", "horns", "wings"],
+      "Expression": ["happy", "playful", "smug", "curious", "gentle", "grinning"]
+    },
+    "Style & Vibe": {
+      "Aesthetic": ["cute", "fluffy", "chibi", "stylized", "expressive_eyes", "soft_shading", "vibrant_colors"],
+      "Setting": ["indoors", "cozy_room", "nature", "forest", "simple_background", "gradient_background"]
+    }
+  }
+}

@@ -9,11 +9,23 @@
   <body>
     <main class="panel">
       <header class="header">
-        <img class="brand-icon" src="../assets/icon.png" alt="" />
-        <div>
-          <h1>QuickTag <span>LazyMod</span></h1>
-          <p>Quick controls</p>
+        <div class="brand-group">
+          <img class="brand-icon" src="../assets/icon.png" alt="" />
+          <div>
+            <h1>
+              QuickTag
+              <span>LazyMod</span>
+            </h1>
+            <p>Quick controls</p>
+          </div>
         </div>
+
+        <a class="about-link" href="about.html" target="_blank" rel="noreferrer">
+          <span>About</span>
+          <svg class="link-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+            <path d="M9 3h4v4M13 3 7 9M11 9v3.5H3.5v-8H7"></path>
+          </svg>
+        </a>
       </header>
 
       <section class="site-card" aria-labelledby="site-title">
@@ -48,14 +60,9 @@
           <span id="update-indicator" class="update-indicator" hidden>NEW</span>
         </div>
         <p id="update-status" class="update-status">Checking GitHub…</p>
-        <button id="update-download" type="button" class="update-button" disabled>
-          Check for updates
-        </button>
+        <button id="update-download" type="button" class="update-button" disabled>Check for updates</button>
         <div class="update-note">
           <span>Downloads open the GitHub release page. Install the update and reload the extension.</span>
-          <a class="about-link" href="about.html" target="_blank" rel="noreferrer" aria-label="About QuickTag LazyMod" title="About QuickTag LazyMod">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path d="M8 7.2v4M8 4.8h.01" /></svg>
-          </a>
         </div>
       </section>
 

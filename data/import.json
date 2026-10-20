@@ -1,27 +1,16 @@
 {
-  "name": "QuickTag starter pack",
+  "name": "Character Portrait Pack",
   "groups": {
     "Character": {
-      "Identity": ["1girl", "solo"],
-      "Expression": ["looking_at_viewer", "smile"],
-      "Appearance": ["long_hair", "blonde_hair", "blue_eyes", "casual_clothing"],
-      "Pose": ["sitting"],
-      "Framing": ["portrait"]
+      "Identity": ["1girl", "1boy", "multiple_girls", "solo"],
+      "Expression": ["smile", "open_mouth", "wink", "serious", "blush", "expressionless", "laughing"],
+      "Appearance": ["long_hair", "short_hair", "twintails", "ponytail", "blonde_hair", "white_hair", "blue_eyes", "heterochromia", "glasses"],
+      "Clothing": ["casual", "school_uniform", "sweater", "hoodie", "jacket", "dress", "suit", "skirt"],
+      "Pose": ["standing", "sitting", "lying", "leaning", "hands_on_hips", "arms_crossed", "looking_at_viewer", "looking_away"]
     },
-    "Scene": {
-      "Environment": ["outdoors", "day", "blue_sky", "nature", "forest"],
-      "Lighting": ["natural_light", "soft_shadows", "warm_tones"],
-      "Mood": ["peaceful", "serene", "happy", "relaxed"]
-    },
-    "Style & composition": {
-      "Art style": [
-        "digital_art",
-        "anime_style",
-        "high_detail",
-        "vibrant_colors",
-        "soft_shading"
-      ],
-      "Camera": ["medium_shot", "eye_level", "centered_composition"]
+    "Composition & Framing": {
+      "Shot type": ["portrait", "close-up", "upper_body", "full_body", "cowboy_shot"],
+      "Angle": ["eye_level", "high_angle", "low_angle", "profile"]
     }
   }
 }
