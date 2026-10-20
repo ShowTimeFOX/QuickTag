@@ -35,6 +35,8 @@
       "resources": [
         "data/import.json",
         "data/import2.json",
+        "data/character.json",
+        "data/anthro.json",
         "pages/popup.html",
         "styles/tagger.css",
         "styles/theme-dark.css",

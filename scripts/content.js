@@ -104,20 +104,9 @@
     },
   };
 
-  const defaultPaletteData = {
-    activePackId: "builtin-import",
-    activeGroup: "Character",
-    activeCategory: "Identity",
-    packs: {
-      "builtin-import": {
-        name: "QuickTag starter pack",
-        groups: {
-          Character: {
-            Identity: ["1girl", "solo"],
-          },
-        },
-      },
-    },
+  const defaultPaletteFiles = {
+    "default-character": "data/character.json",
+    "default-anthro": "data/anthro.json",
   };
 
   /* ==========================================================================
@@ -194,39 +183,44 @@
     };
   }
 
-  // --- Safely load the built-in and saved JSON palettes ---
+  // --- Safely load the default and saved JSON palettes ---
   async function loadInitialPalettes() {
-    let builtInPack = null;
-    try {
-      const jsonUrl = chrome.runtime.getURL("data/import.json");
-      const res = await fetch(jsonUrl);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      builtInPack = normalizePalettePack(await res.json(), "data/import.json");
-    } catch (e) {
-      console.warn("[QuickTag] Could not read import.json; using palettes saved in storage.", e);
-    }
-
-    const builtInOverride = await loadData("lazymod_builtin_palette_override", null);
-    if (builtInOverride) {
+    const defaultPacks = {};
+    for (const [packId, filePath] of Object.entries(defaultPaletteFiles)) {
       try {
-        builtInPack = normalizePalettePack(builtInOverride, "QuickTag starter pack");
+        const response = await fetch(chrome.runtime.getURL(filePath));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        defaultPacks[packId] = normalizePalettePack(await response.json(), filePath);
       } catch (error) {
-        console.warn("[QuickTag] Could not load the edited built-in palette; using the default version.", error);
+        console.warn(`[QuickTag] Could not load ${filePath}.`, error);
       }
     }
 
     const savedPalettes = await loadData("lazymod_global_palettes", null);
     if (savedPalettes && savedPalettes.packs) {
       const packs = { ...savedPalettes.packs };
-      if (builtInPack) packs["builtin-import"] = builtInPack;
-      if (Object.keys(packs).length === 0) {
-        packs["builtin-import"] = defaultPaletteData.packs["builtin-import"];
+      if (savedPalettes.defaultPacksLoaded !== true) {
+        Object.entries(defaultPacks).forEach(([packId, pack]) => {
+          if (!packs[packId]) packs[packId] = pack;
+        });
       }
-      const activePackId = packs[savedPalettes.activePackId] ? savedPalettes.activePackId : Object.keys(packs)[0];
+      const activePackId = packs[savedPalettes.activePackId] ? savedPalettes.activePackId : Object.keys(packs)[0] || "";
+      if (!activePackId) {
+        return {
+          ...savedPalettes,
+          packs,
+          defaultPacksLoaded: true,
+          activePackId: "",
+          activeGroup: "",
+          activeCategory: "",
+        };
+      }
       const activePack = packs[activePackId];
       const initialLocation = firstPaletteLocation(activePack);
       return {
+        ...savedPalettes,
         packs,
+        defaultPacksLoaded: true,
         activePackId,
         activeGroup: activePack.groups[savedPalettes.activeGroup] ? savedPalettes.activeGroup : initialLocation.activeGroup,
         activeCategory: activePack.groups[savedPalettes.activeGroup]?.[savedPalettes.activeCategory]
@@ -235,8 +229,7 @@
       };
     }
 
-    const packs = {};
-    if (builtInPack) packs["builtin-import"] = builtInPack;
+    const packs = { ...defaultPacks };
 
     // Migrate palettes saved by earlier versions into a separate JSON-like pack.
     if (savedPalettes && savedPalettes.folders) {
@@ -245,19 +238,18 @@
       const initialLocation = firstPaletteLocation(legacyPack);
       return {
         packs,
+        defaultPacksLoaded: true,
         activePackId: "legacy-saved",
         activeGroup: legacyPack.groups[savedPalettes.activeFolder] ? savedPalettes.activeFolder : initialLocation.activeGroup,
         activeCategory: initialLocation.activeCategory,
       };
     }
 
-    if (Object.keys(packs).length === 0) {
-      packs["builtin-import"] = defaultPaletteData.packs["builtin-import"];
-    }
-    const activePackId = Object.keys(packs)[0];
-    const initialLocation = firstPaletteLocation(packs[activePackId]);
+    const activePackId = Object.keys(packs)[0] || "";
+    const initialLocation = activePackId ? firstPaletteLocation(packs[activePackId]) : { activeGroup: "", activeCategory: "" };
     return {
       packs,
+      defaultPacksLoaded: true,
       activePackId,
       ...initialLocation,
     };
@@ -616,7 +608,9 @@
   let highlightedSearchResult = 0;
 
   function getVisiblePaletteTags() {
-    const categories = getActivePack().groups[paletteData.activeGroup];
+    const activePack = getActivePack();
+    if (!activePack) return [];
+    const categories = activePack.groups[paletteData.activeGroup];
     const tags = flatView ? Object.values(categories).flat() : categories[paletteData.activeCategory] || [];
     return [...new Set(tags.map(formatTag).filter(Boolean))];
   }
@@ -673,10 +667,11 @@
 
   function getPaletteSearchResults() {
     const query = formatTag(paletteSearchQuery);
-    if (!query) return [];
+    const activePack = getActivePack();
+    if (!query || !activePack) return [];
 
     const results = [];
-    Object.entries(getActivePack().groups).forEach(([groupName, categories]) => {
+    Object.entries(activePack.groups).forEach(([groupName, categories]) => {
       Object.entries(categories).forEach(([categoryName, tags]) => {
         tags.forEach((tag) => {
           const cleanTag = formatTag(tag);
@@ -831,9 +826,7 @@
   }
 
   function renderFoldersUI() {
-    if (!paletteData.packs || Object.keys(paletteData.packs).length === 0) {
-      paletteData = defaultPaletteData;
-    }
+    paletteData.packs = paletteData.packs || {};
     const packSelect = $("#lm-pack-select");
     packSelect.innerHTML = "";
     Object.entries(paletteData.packs).forEach(([packId, pack]) => {
@@ -843,11 +836,23 @@
       option.selected = packId === paletteData.activePackId;
       packSelect.appendChild(option);
     });
-    const deletePackButton = $("#lm-delete-pack");
-    const isBuiltInPack = paletteData.activePackId === "builtin-import";
-    deletePackButton.disabled = isBuiltInPack;
-    deletePackButton.title = isBuiltInPack ? "The built-in starter palette cannot be deleted" : `Delete ${getActivePack().name}`;
     const activePack = getActivePack();
+    const deletePackButton = $("#lm-delete-pack");
+    deletePackButton.disabled = !activePack;
+    deletePackButton.title = activePack ? `Delete ${activePack.name}` : "No tag pack to delete";
+    $("#lm-edit-pack").disabled = !activePack;
+    $("#lm-export-pack").disabled = !activePack;
+    if (!activePack) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No tag packs";
+      option.selected = true;
+      packSelect.appendChild(option);
+      $("#lm-palette-tabs").innerHTML = "";
+      renderCategoriesUI();
+      return;
+    }
+
     const groupNames = Object.keys(activePack.groups);
     if (!groupNames.includes(paletteData.activeGroup)) {
       paletteData.activeGroup = groupNames[0];
@@ -872,7 +877,7 @@
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
     const updatedPalettes = changes.lazymod_global_palettes?.newValue;
-    if (areaName !== "local" || !updatedPalettes || !updatedPalettes.packs || !updatedPalettes.packs[updatedPalettes.activePackId]) {
+    if (areaName !== "local" || !updatedPalettes || !updatedPalettes.packs) {
       return;
     }
     paletteData = updatedPalettes;
@@ -880,14 +885,20 @@
   });
 
   function renderCategoriesUI() {
-    const categories = getActivePack().groups[paletteData.activeGroup];
+    const activePack = getActivePack();
+    const tabsContainer = $("#lm-category-tabs");
+    tabsContainer.hidden = flatView;
+    tabsContainer.innerHTML = "";
+    if (!activePack) {
+      renderUserChips();
+      return;
+    }
+
+    const categories = activePack.groups[paletteData.activeGroup];
     const categoryNames = Object.keys(categories);
     if (!categoryNames.includes(paletteData.activeCategory)) {
       paletteData.activeCategory = categoryNames[0];
     }
-    const tabsContainer = $("#lm-category-tabs");
-    tabsContainer.hidden = flatView;
-    tabsContainer.innerHTML = "";
     if (!flatView) {
       categoryNames.forEach((categoryName) => {
         const tab = document.createElement("button");
@@ -916,7 +927,12 @@
     if (searchResults && searchResults.length === 0) {
       const emptyMessage = document.createElement("span");
       emptyMessage.className = "lazymod-search-empty";
-      emptyMessage.textContent = "No matching tags found.";
+      emptyMessage.textContent = getActivePack() ? "No matching tags found." : "No tag packs. Import a JSON pack to get started.";
+      chipsContainer.appendChild(emptyMessage);
+    } else if (!getActivePack()) {
+      const emptyMessage = document.createElement("span");
+      emptyMessage.className = "lazymod-search-empty";
+      emptyMessage.textContent = "No tag packs. Import a JSON pack to get started.";
       chipsContainer.appendChild(emptyMessage);
     }
 
@@ -943,6 +959,7 @@
   };
 
   $("#lm-edit-pack").onclick = () => {
+    if (!getActivePack()) return;
     chrome.runtime.sendMessage({ action: "open_palette_editor", packId: paletteData.activePackId }, (response) => {
       if (chrome.runtime.lastError) {
         alert(`Could not open the editor: ${chrome.runtime.lastError.message}`);
@@ -965,6 +982,7 @@
   });
 
   $("#lm-pack-select").onchange = (e) => {
+    if (!paletteData.packs[e.target.value]) return;
     paletteData.activePackId = e.target.value;
     const location = firstPaletteLocation(getActivePack());
     paletteData.activeGroup = location.activeGroup;
@@ -975,8 +993,6 @@
 
   $("#lm-delete-pack").onclick = async () => {
     const packId = paletteData.activePackId;
-    if (packId === "builtin-import") return;
-
     const pack = paletteData.packs[packId];
     if (!pack) {
       alert("Could not delete palette: the active palette does not exist.");
@@ -988,12 +1004,9 @@
 
     const packs = { ...paletteData.packs };
     delete packs[packId];
-    if (Object.keys(packs).length === 0) {
-      packs["builtin-import"] = defaultPaletteData.packs["builtin-import"];
-    }
-    const activePackId = Object.keys(packs)[0];
+    const activePackId = Object.keys(packs)[0] || "";
     const activePack = packs[activePackId];
-    const location = firstPaletteLocation(activePack);
+    const location = activePack ? firstPaletteLocation(activePack) : { activeGroup: "", activeCategory: "" };
     const nextPaletteData = {
       ...paletteData,
       packs,
@@ -1045,6 +1058,7 @@
 
   $("#lm-export-pack").onclick = () => {
     const pack = getActivePack();
+    if (!pack) return;
     const json = JSON.stringify({ name: pack.name, groups: pack.groups }, null, 2);
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
     const link = document.createElement("a");
@@ -1463,7 +1477,7 @@
       if (isRecord(palettes?.packs)) {
         if (
           typeof palettes.activePackId !== "string" ||
-          !isRecord(palettes.packs[palettes.activePackId]) ||
+          (Object.keys(palettes.packs).length > 0 && !isRecord(palettes.packs[palettes.activePackId])) ||
           !Object.values(palettes.packs).every(isValidPalettePack)
         ) {
           throw new Error("The palettes in this backup are invalid.");
