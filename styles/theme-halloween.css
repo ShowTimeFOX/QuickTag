@@ -41,16 +41,8 @@
   color: var(--lm-text);
   background:
     var(--ho-web) 0 0 / 120px 120px no-repeat,
-    radial-gradient(
-      ellipse at 50% 112%,
-      rgba(255, 106, 20, 0.2),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 92% 8%,
-      rgba(155, 93, 229, 0.16),
-      transparent 42%
-    ),
+    radial-gradient(ellipse at 50% 112%, rgba(255, 106, 20, 0.2), transparent 55%),
+    radial-gradient(circle at 92% 8%, rgba(155, 93, 229, 0.16), transparent 42%),
     var(--lm-bg);
   border: 2px solid #5a3d6b;
   border-radius: 12px;
@@ -94,60 +86,15 @@
   border-radius: inherit;
   pointer-events: none;
   background-image:
-    radial-gradient(
-      circle at 20px 40px,
-      #ffd28a 0 1.2px,
-      rgba(255, 120, 30, 0.5) 1.2px 2px,
-      transparent 4px
-    ),
-    radial-gradient(
-      circle at 150px 70px,
-      #ffbb66 0 1px,
-      rgba(255, 100, 20, 0.45) 1px 1.7px,
-      transparent 3.4px
-    ),
-    radial-gradient(
-      circle at 40px 30px,
-      #fff0c4 0 0.8px,
-      rgba(255, 150, 50, 0.5) 0.8px 1.4px,
-      transparent 2.8px
-    ),
-    radial-gradient(
-      circle at 100px 130px,
-      #ffc878 0 1px,
-      rgba(255, 110, 25, 0.5) 1px 1.8px,
-      transparent 3.6px
-    ),
-    radial-gradient(
-      circle at 55px 225px,
-      #ffd28a 0 1.3px,
-      rgba(255, 120, 30, 0.45) 1.3px 2.1px,
-      transparent 4.2px
-    ),
-    radial-gradient(
-      circle at 90px 120px,
-      #ffe2a8 0 0.8px,
-      rgba(255, 140, 40, 0.5) 0.8px 1.4px,
-      transparent 2.8px
-    ),
-    radial-gradient(
-      circle at 132px 205px,
-      #ffb866 0 1.1px,
-      rgba(255, 100, 20, 0.5) 1.1px 1.9px,
-      transparent 3.8px
-    ),
-    radial-gradient(
-      circle at 120px 160px,
-      #e4c8ff 0 1px,
-      rgba(160, 90, 240, 0.45) 1px 2px,
-      transparent 4px
-    ),
-    radial-gradient(
-      circle at 14px 150px,
-      #fff0c4 0 0.8px,
-      rgba(255, 150, 50, 0.5) 0.8px 1.4px,
-      transparent 2.8px
-    );
+    radial-gradient(circle at 20px 40px, #ffd28a 0 1.2px, rgba(255, 120, 30, 0.5) 1.2px 2px, transparent 4px),
+    radial-gradient(circle at 150px 70px, #ffbb66 0 1px, rgba(255, 100, 20, 0.45) 1px 1.7px, transparent 3.4px),
+    radial-gradient(circle at 40px 30px, #fff0c4 0 0.8px, rgba(255, 150, 50, 0.5) 0.8px 1.4px, transparent 2.8px),
+    radial-gradient(circle at 100px 130px, #ffc878 0 1px, rgba(255, 110, 25, 0.5) 1px 1.8px, transparent 3.6px),
+    radial-gradient(circle at 55px 225px, #ffd28a 0 1.3px, rgba(255, 120, 30, 0.45) 1.3px 2.1px, transparent 4.2px),
+    radial-gradient(circle at 90px 120px, #ffe2a8 0 0.8px, rgba(255, 140, 40, 0.5) 0.8px 1.4px, transparent 2.8px),
+    radial-gradient(circle at 132px 205px, #ffb866 0 1.1px, rgba(255, 100, 20, 0.5) 1.1px 1.9px, transparent 3.8px),
+    radial-gradient(circle at 120px 160px, #e4c8ff 0 1px, rgba(160, 90, 240, 0.45) 1px 2px, transparent 4px),
+    radial-gradient(circle at 14px 150px, #fff0c4 0 0.8px, rgba(255, 150, 50, 0.5) 0.8px 1.4px, transparent 2.8px);
   background-size:
     150px 240px,
     200px 300px,
@@ -170,16 +117,8 @@
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(
-      ellipse 70% 100% at 30% 118%,
-      rgba(255, 96, 10, 0.34),
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 90% at 72% 120%,
-      rgba(255, 150, 40, 0.26),
-      transparent 70%
-    );
+    radial-gradient(ellipse 70% 100% at 30% 118%, rgba(255, 96, 10, 0.34), transparent 70%),
+    radial-gradient(ellipse 60% 90% at 72% 120%, rgba(255, 150, 40, 0.26), transparent 70%);
   mix-blend-mode: screen;
   transform-origin: bottom center;
   animation: ho-fire-flicker 3.7s ease-in-out infinite;
@@ -205,19 +144,8 @@
   padding: 6px 6px 12px;
   margin-bottom: 14px;
   border-bottom: 2px solid transparent;
-  border-image: linear-gradient(
-      90deg,
-      var(--ho-orange),
-      var(--ho-purple) 60%,
-      transparent
-    )
-    1;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 138, 42, 0.13),
-    rgba(155, 93, 229, 0.08) 60%,
-    transparent
-  );
+  border-image: linear-gradient(90deg, var(--ho-orange), var(--ho-purple) 60%, transparent) 1;
+  background: linear-gradient(90deg, rgba(255, 138, 42, 0.13), rgba(155, 93, 229, 0.08) 60%, transparent);
 }
 
 #lazymod-window.theme-halloween.is-collapsed .lazymod-header-bar {
@@ -321,9 +249,7 @@
   color: var(--ho-purple);
 }
 
-#lazymod-window.theme-halloween
-  .lazymod-collapsible-header:hover
-  .lazymod-title {
+#lazymod-window.theme-halloween .lazymod-collapsible-header:hover .lazymod-title {
   color: var(--ho-ember);
 }
 
@@ -344,11 +270,7 @@
 
 #lazymod-window.theme-halloween .lazymod-tab.active {
   border-color: rgba(255, 138, 42, 0.35);
-  background: linear-gradient(
-    to top,
-    rgba(255, 138, 42, 0.24),
-    rgba(255, 138, 42, 0.05)
-  );
+  background: linear-gradient(to top, rgba(255, 138, 42, 0.24), rgba(255, 138, 42, 0.05));
   color: var(--ho-ember);
   box-shadow:
     inset 0 -2px 0 var(--ho-orange),
@@ -385,9 +307,7 @@
 }
 
 #lazymod-window.theme-halloween .lazymod-btn:hover:not(:disabled),
-#lazymod-window.theme-halloween
-  #lm-view-main
-  .lazymod-btn:hover:not(:disabled) {
+#lazymod-window.theme-halloween #lm-view-main .lazymod-btn:hover:not(:disabled) {
   border-color: var(--ho-orange);
   background: linear-gradient(180deg, #3a2748, #261a31);
   color: #ffd2a0;
@@ -398,25 +318,15 @@
 #lazymod-window.theme-halloween .lazymod-btn-accent,
 #lazymod-window.theme-halloween #lm-view-main .lazymod-btn-accent {
   border-color: rgba(255, 138, 42, 0.7);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 106, 20, 0.34),
-    rgba(255, 106, 20, 0.1)
-  );
+  background: linear-gradient(180deg, rgba(255, 106, 20, 0.34), rgba(255, 106, 20, 0.1));
   color: #ffd9ad;
   text-shadow: 0 0 6px rgba(255, 106, 20, 0.5);
 }
 
 #lazymod-window.theme-halloween .lazymod-btn-accent:hover:not(:disabled),
-#lazymod-window.theme-halloween
-  #lm-view-main
-  .lazymod-btn-accent:hover:not(:disabled) {
+#lazymod-window.theme-halloween #lm-view-main .lazymod-btn-accent:hover:not(:disabled) {
   border-color: var(--ho-ember);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 106, 20, 0.5),
-    rgba(255, 106, 20, 0.18)
-  );
+  background: linear-gradient(180deg, rgba(255, 106, 20, 0.5), rgba(255, 106, 20, 0.18));
   color: #fff;
   box-shadow: 0 0 18px rgba(255, 106, 20, 0.5);
 }
@@ -429,9 +339,7 @@
 }
 
 #lazymod-window.theme-halloween .lazymod-btn-danger:hover:not(:disabled),
-#lazymod-window.theme-halloween
-  #lm-view-main
-  .lazymod-btn-danger:hover:not(:disabled) {
+#lazymod-window.theme-halloween #lm-view-main .lazymod-btn-danger:hover:not(:disabled) {
   border-color: #ff6b7a;
   background: rgba(190, 30, 55, 0.35);
   color: #ffd0d6;
@@ -466,11 +374,7 @@
 
 #lazymod-window.theme-halloween .lazymod-chip.active {
   border-color: var(--ho-orange);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 138, 42, 0.36),
-    rgba(255, 106, 20, 0.16)
-  );
+  background: linear-gradient(180deg, rgba(255, 138, 42, 0.36), rgba(255, 106, 20, 0.16));
   color: #ffd9ad;
   font-weight: 700;
   box-shadow:
@@ -545,15 +449,13 @@
   color: var(--ho-ember);
 }
 
-#lazymod-window.theme-halloween
-  .lazymod-ai-status[data-state="working"]::before {
+#lazymod-window.theme-halloween .lazymod-ai-status[data-state="working"]::before {
   border-color: rgba(255, 138, 42, 0.25);
   border-top-color: var(--ho-orange);
 }
 
 #lazymod-window.theme-halloween .lazymod-ai-status[data-state="success"],
-#lazymod-window.theme-halloween
-  .lazymod-ai-status[data-state="success"]::before {
+#lazymod-window.theme-halloween .lazymod-ai-status[data-state="success"]::before {
   color: var(--ho-slime);
 }
 
@@ -567,11 +469,7 @@
 #lazymod-window.theme-halloween #lm-view-main #lm-tag-count-badge {
   border: 1px solid rgba(255, 138, 42, 0.55);
   border-radius: 8px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 106, 20, 0.3),
-    rgba(155, 93, 229, 0.2)
-  );
+  background: linear-gradient(135deg, rgba(255, 106, 20, 0.3), rgba(155, 93, 229, 0.2));
   color: #ffd9ad;
   font-weight: 800;
   box-shadow: 0 0 12px rgba(255, 106, 20, 0.3);
@@ -599,11 +497,7 @@
 #lazymod-window.theme-halloween.docked {
   background:
     var(--ho-web) 0 0 / 120px 120px no-repeat,
-    radial-gradient(
-      ellipse at 50% 112%,
-      rgba(255, 106, 20, 0.18),
-      transparent 55%
-    ),
+    radial-gradient(ellipse at 50% 112%, rgba(255, 106, 20, 0.18), transparent 55%),
     var(--lm-bg) !important;
 }
 
@@ -650,6 +544,44 @@
 /* ==========================================================================
    ANIMACJE
    ========================================================================== */
+/* ==========================================================================
+   FIREFOX — obejścia znanych problemów z renderowaniem
+   - przesuwana transformem warstwa żarów (+1800px poza oknem) jest w Firefoksie
+     ciężka i potrafi nie przycinać się do zaokrąglonych rogów (overflow+radius),
+     więc tu przesuwamy tło (background-position) na elemencie o rozmiarze okna
+   - mix-blend-mode: screen razem z animacją transform na pseudo-elemencie
+     powoduje w Firefoksie migotanie/puste tło, więc go wyłączamy
+   Chrome/Edge nadal używają oryginalnych reguł powyżej.
+   ========================================================================== */
+@supports (-moz-appearance: none) {
+  #lazymod-window.theme-halloween::before {
+    inset: 0;
+    background-position: 0 0;
+    animation:
+      ho-embers-rise-ff 40s linear infinite,
+      ho-embers-glow 4.2s ease-in-out infinite alternate;
+  }
+
+  #lazymod-window.theme-halloween::after {
+    mix-blend-mode: normal;
+    will-change: opacity;
+  }
+
+  /* przecięcie rogów: nietoperze animują tylko left/translate/scale */
+  #lazymod-window.theme-halloween .lazymod-header-bar {
+    isolation: isolate;
+  }
+}
+
+@keyframes ho-embers-rise-ff {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 -1800px;
+  }
+}
+
 @keyframes ho-embers-rise {
   from {
     transform: translate3d(0, 0, 0);

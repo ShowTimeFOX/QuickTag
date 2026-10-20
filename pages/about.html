@@ -20,7 +20,7 @@
         <span class="version">Extension guide</span>
         <div class="hero-copy" id="top">
           <p class="eyebrow">TAG FASTER</p>
-          <h1>Everything you need for a smoother tagging workflow.</h1>
+          <h1>Tag images faster, right where you browse.</h1>
           <p class="intro">
             QuickTag LazyMod adds a floating tagger to image pages, helping you create, search, and manage tags — including with local AI analysis through
             ComfyUI.
@@ -36,6 +36,7 @@
           <a href="#features">Features</a>
           <a href="#comfyui">ComfyUI CLI</a>
           <a href="#wd14">WD14 Tagger</a>
+          <a href="#tag-packs">Custom Tag Packs</a>
           <a href="#troubleshooting">Troubleshooting</a>
         </nav>
       </header>
@@ -269,6 +270,64 @@ comfy install</code></pre>
         </article>
       </section>
 
+      <section class="section" id="tag-packs">
+        <div class="section-heading">
+          <p class="eyebrow">CUSTOMIZATION</p>
+          <h2>Custom Tag Packs Format</h2>
+          <p>QuickTag LazyMod allows you to organize your workflow using custom JSON tag packs. You can create your own packs or modify existing ones.</p>
+        </div>
+        <article class="setup-card">
+          <ol class="numbered-steps">
+            <li>
+              <strong>JSON Structure</strong>
+              <span>
+                Tag packs are stored as standard JSON files inside the
+                <code>data/</code>
+                directory (e.g.,
+                <code>character.json</code>
+                ,
+                <code>anthro.json</code>
+                ). They rely on categorized tag groups.
+              </span>
+            </li>
+            <li>
+              <strong>Example Format</strong>
+              <span>Here is a valid structure of a custom tag pack based on the default configuration:</span>
+              <pre><code>{
+  "name": "Landscape Pack",
+  "groups": {
+    "Environment": {
+      "Location": ["forest", "mountain", "beach"],
+      "Weather": ["sunny", "rain", "snow"]
+    },
+    "Composition": {
+      "Framing": ["wide_shot", "close-up", "from_above"]
+    }
+  }
+}</code></pre>
+            </li>
+            <li>
+              <strong>Management & Backup</strong>
+              <span>
+                You can freely delete or modify any tag pack from the interface. If you accidentally remove a pre-installed default pack, you can download it
+                again from the
+                <a
+                  class="text-link"
+                  style="display: inline; margin: 0"
+                  href="https://github.com/ShowTimeFOX/QuickTag/tree/main/data"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  GitHub repository (data folder)
+                </a>
+                and import it back into QuickTag.
+                <p class="note">Always keep backups of your custom packs to prevent data loss.</p>
+              </span>
+            </li>
+          </ol>
+        </article>
+      </section>
+
       <section class="section" id="troubleshooting">
         <div class="section-heading">
           <p class="eyebrow">HELP</p>
@@ -302,6 +361,13 @@ comfy install</code></pre>
             <summary>Cannot set an element selector</summary>
             <p>
               Pick an element of the appropriate type: a text field for the tag input, an image, or a source link/text field. Press Escape to cancel picking.
+            </p>
+          </details>
+          <details>
+            <summary>Extension features or tab state not loading after update?</summary>
+            <p>
+              If the side tab doesn't hide properly or extension settings seem stuck after installing or updating to new versions, restart your browser. A quick
+              restart ensures background scripts and local storage instances load the new global state cleanly.
             </p>
           </details>
         </div>
