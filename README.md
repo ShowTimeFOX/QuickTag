@@ -28,6 +28,32 @@ ComfyUI installation with the WD14 Tagger node.
 
 The extension interface and project documentation are in English.
 
+## Custom Tag Packs Format
+
+Custom tag packs are JSON files with a `name` and a `groups` object. Each group
+contains categories, and each category contains an array of tag strings. Use at
+least one group and category; names are labels shown in the tagger.
+
+```json
+{
+  "name": "Landscape Pack",
+  "groups": {
+    "Environment": {
+      "Location": ["forest", "mountain", "beach"],
+      "Weather": ["sunny", "rain", "snow"]
+    },
+    "Composition": {
+      "Framing": ["wide_shot", "close-up", "from_above"]
+    }
+  }
+}
+```
+
+`name` is the pack’s display name. `groups` organizes tags into top-level
+sections; each group’s properties are category names, and each category’s
+value must be an array of strings. Save the file as `.json`, then choose
+**Import** in the tagger to add it.
+
 ## Requirements
 
 - Chrome or Firefox with Manifest V3 support.

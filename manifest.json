@@ -33,8 +33,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "data/import.json",
-        "data/import2.json",
         "data/character.json",
         "data/anthro.json",
         "pages/popup.html",

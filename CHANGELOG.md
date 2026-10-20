@@ -1,34 +1,27 @@
-# Changelog
-
-Notable changes to QuickTag LazyMod are documented here.
-
-## [Unreleased]
-
-### Fixed
-
-- The palette editor now resets its scroll position to the top when content is
-  loaded or replaced.
-- Word-wrap mode now keeps line numbers and current-line highlighting visible
-  and aligns them with wrapped lines.
-- Restored type-to-search in the tagger and prevented page inputs, including
-  inputs inside open shadow roots, from being intercepted.
-- Replaced the toolbar's global enable and whitelist/blacklist controls with a
-  current-site override that hides or shows QuickTag without reloading tabs.
-- Compacted the toolbar popup, removed the domain-list controls, and moved the
-  About link into its update banner as an information icon.
-
-### Changed
-
-- Renamed the project guide to `PROJECT.md` and translated it into English.
-- Split the Manifest V3 background configuration for Chrome and Firefox and
-  added a browser-specific packaging script.
-- Organized extension files into `scripts/`, `pages/`, `styles/`, `data/`, and
-  `assets/` while keeping `manifest.json` at the project root.
-- Renamed the shared tagger stylesheet to `styles/tagger.css`.
+## [1.1.0] - 2026-10-20
 
 ### Added
 
+- Global Visibility Toggle: Extension visibility state is now stored in `chrome.storage.local` and synchronized in real-time across all browser tabs without page reloads.
 - Added a word-wrap toggle to the palette editor.
-- Added this changelog and documented the source layout and development checks
-  in the README.
+- Added clear JSON format guidelines and examples to `README.md`.
+- Added this changelog, documented the source layout, and added development checks in the README.
 - Added the MIT license in `LICENCE`.
+
+### Changed
+
+- Users can now delete any tag pack, including pre-installed default packs.
+- Combined separate manifest.json files into a single file shared across all browsers.
+- Organized extension files into `scripts/`, `pages/`, `styles/`, `data/`, and `assets/` while keeping `manifest.json` at the project root.
+- Renamed the shared tagger stylesheet to `styles/tagger.css`.
+- Compacted the toolbar popup and moved the About link into its banner.
+- Improved 'theme-halloween' CSS performance for Firefox.
+
+### Fixed
+
+- The palette editor now resets its scroll position to the top when content is loaded or replaced.
+- Word-wrap mode now keeps line numbers and current-line highlighting visible and aligns them with wrapped lines.
+
+### Removed
+
+- Per-site Blacklist/Whitelist System: Removed the old per-site filtering logic in favor of the new simplified Global Visibility Toggle.
