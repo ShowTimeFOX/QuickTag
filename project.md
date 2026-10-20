@@ -26,10 +26,10 @@ installation with the WD14 Tagger node.
   values after the page is reloaded.
 - **Site profiles:** Configure CSS selectors for tag fields, images, and
   source links. The element picker highlights the selected element.
-- **Toolbar popup:** Disable or re-enable the tagger on the current site, check
-  the ComfyUI connection and available updates, and open the About page. The
-  per-site override hides or shows QuickTag immediately without reloading
-  other sites. A newer version is indicated by a "NEW" badge.
+- **Toolbar popup:** Show or hide the tagger across all pages, check the
+  ComfyUI connection and available updates, and open the About page. Global
+  visibility changes apply immediately without reloading pages. A newer
+  version is indicated by a "NEW" badge.
 - **Palette editor:** Edit palette JSON with formatting support, word wrapping,
   or the easier-to-read easyJson format.
 - **Interface controls:** Move, resize, dock, collapse, or hide the tagger.
@@ -139,7 +139,7 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `scripts/background.js` | Handles extension messages, opens editor and information pages, and integrates with ComfyUI and WD14. |
 | `scripts/content.js` | Injects and manages the tagger, palettes, site profiles, search, tag state, and interface settings. |
-| `scripts/extension-popup.js` | Handles per-site overrides, ComfyUI connectivity, and update checks in the toolbar popup. |
+| `scripts/extension-popup.js` | Handles global visibility, ComfyUI connectivity, and update checks in the toolbar popup. |
 | `scripts/palette-editor.js` | Loads, validates, converts, and saves palettes, site profiles, and the AI blacklist. |
 | `pages/extension-popup.html` | Toolbar popup for global controls, domain rules, ComfyUI status, and the About link. |
 | `pages/palette-editor.html` | Palette and settings editor page. |
@@ -175,12 +175,11 @@ if you need help.
   supported by both target browsers.
 - Settings, site profiles, palettes, and the AI blacklist are stored locally
   with `chrome.storage.local`.
-- The toolbar's per-site override stores disabled hostnames in
-  `lazymod_site_blacklist`. Content scripts hide or show the existing tagger
-  when this setting changes; the popup does not reload tabs. The previous
-  global enabled setting (`lazymod_enabled`) and domain rules
-  (`lazymod_domain_mode`, `lazymod_domains`) are still honored for
-  compatibility with existing settings and configuration backups.
+-   The toolbar's global visibility toggle stores a single boolean in
+  `lazymod_enabled`. Content scripts hide or show the existing tagger across
+  pages when this setting changes; the popup does not reload tabs. Older
+  per-site blacklist and domain-rule values may remain in stored configuration
+  backups, but they no longer control visibility.
 - Update checks fetch `update.json` from the public Gist
   `ShowTimeFOX/1c601aab8d8a4b7540b34fc3e273d74f`, compare its version with the
   manifest, and set a "NEW" badge through the browser action API. Checks run at

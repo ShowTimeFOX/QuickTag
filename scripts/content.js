@@ -21,35 +21,18 @@
     } catch (e) {}
   }
 
-  const accessSettingsKeys = ["lazymod_enabled", "lazymod_domain_mode", "lazymod_domains", "lazymod_site_blacklist"];
+  const accessSettingsKeys = ["lazymod_enabled"];
   let originalBodyMargins = null;
   let extensionHost = null;
   let extensionReady = false;
-  let siteAccessAllowed = true;
+  let extensionEnabled = true;
 
-  function isPageAllowedBySettings(enabled, mode, domains, siteBlacklist = []) {
-    if (!enabled) return false;
-    const hostname = window.location.hostname.toLowerCase();
-    const matchesDomain = (domain) => {
-      const normalizedDomain = domain.toLowerCase();
-      return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
-    };
-    const isBlockedBySiteOverride = siteBlacklist.some(matchesDomain);
-    if (isBlockedBySiteOverride) return false;
-    const matchesConfiguredDomain = domains.some(matchesDomain);
-    return mode === "whitelist" ? matchesConfiguredDomain : !matchesConfiguredDomain;
-  }
-
-  function applySiteAccessSettings(settings) {
-    const enabled = settings.lazymod_enabled !== false;
-    const mode = settings.lazymod_domain_mode === "whitelist" ? "whitelist" : "blacklist";
-    const domains = Array.isArray(settings.lazymod_domains) ? settings.lazymod_domains.filter((domain) => typeof domain === "string") : [];
-    const siteBlacklist = Array.isArray(settings.lazymod_site_blacklist) ? settings.lazymod_site_blacklist.filter((domain) => typeof domain === "string") : [];
-    siteAccessAllowed = isPageAllowedBySettings(enabled, mode, domains, siteBlacklist);
+  function applyGlobalVisibility(settings) {
+    extensionEnabled = settings.lazymod_enabled !== false;
     if (!extensionHost) return;
 
-    extensionHost.style.display = siteAccessAllowed ? "" : "none";
-    if (!siteAccessAllowed && document.body && originalBodyMargins) {
+    extensionHost.style.display = extensionEnabled ? "" : "none";
+    if (!extensionEnabled && document.body && originalBodyMargins) {
       Object.assign(document.body.style, originalBodyMargins);
       if (extensionReady) {
         if (elementPickerType) stopElementPicker();
@@ -59,27 +42,21 @@
           ghostShortcutButton.textContent = formatGhostShortcut(ghostShortcut);
         }
       }
-    } else if (siteAccessAllowed && extensionReady) {
+    } else if (extensionEnabled && extensionReady) {
       updateDockPageSpace();
     }
   }
 
+  let accessSettingsRevision = 0;
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== "local" || !accessSettingsKeys.some((key) => Object.hasOwn(changes, key))) {
-      return;
-    }
-    chrome.storage.local
-      .get(accessSettingsKeys)
-      .then((settings) => {
-        applySiteAccessSettings(settings);
-      })
-      .catch((error) => {
-        console.error("[QuickTag] Could not apply global access settings.", error);
-      });
+    if (areaName !== "local" || !Object.hasOwn(changes, "lazymod_enabled")) return;
+    accessSettingsRevision += 1;
+    applyGlobalVisibility({ lazymod_enabled: changes.lazymod_enabled.newValue });
   });
 
+  const initialAccessSettingsRevision = accessSettingsRevision;
   const accessSettings = await chrome.storage.local.get(accessSettingsKeys);
-  applySiteAccessSettings(accessSettings);
+  if (initialAccessSettingsRevision === accessSettingsRevision) applyGlobalVisibility(accessSettings);
   if (document.body) {
     originalBodyMargins = {
       marginLeft: document.body.style.marginLeft,
@@ -360,7 +337,7 @@
   const hostDiv = document.createElement("div");
   hostDiv.id = "quicktag-extension-root";
   hostDiv.style.visibility = "hidden";
-  hostDiv.style.display = siteAccessAllowed ? "" : "none";
+  hostDiv.style.display = extensionEnabled ? "" : "none";
   extensionHost = hostDiv;
   document.documentElement.appendChild(hostDiv);
   const shadowRoot = hostDiv.attachShadow({ mode: "open" });
@@ -452,7 +429,7 @@
 
   function updateDockPageSpace() {
     Object.assign(document.body.style, originalBodyMargins);
-    if (!siteAccessAllowed || !windowEl.classList.contains("docked") || windowEl.hidden) return;
+    if (!extensionEnabled || !windowEl.classList.contains("docked") || windowEl.hidden) return;
 
     const rect = windowEl.getBoundingClientRect();
     const margin = `${Math.ceil(activeDockPosition === "left" || activeDockPosition === "right" ? rect.width : rect.height)}px`;
@@ -737,7 +714,7 @@
       const eventPath = event.composedPath();
       if (
         event.isComposing ||
-        !siteAccessAllowed ||
+        !extensionEnabled ||
         windowEl.hidden ||
         event.ctrlKey ||
         event.altKey ||
@@ -2123,7 +2100,7 @@
   document.addEventListener(
     "keydown",
     (event) => {
-      if (!siteAccessAllowed) return;
+      if (!extensionEnabled) return;
       if (isRecordingGhostShortcut) {
         event.preventDefault();
         event.stopPropagation();
@@ -2171,7 +2148,7 @@
   document.addEventListener(
     "keyup",
     (event) => {
-      if (!siteAccessAllowed || !ghostShortcutHeld) return;
+      if (!extensionEnabled || !ghostShortcutHeld) return;
       const key = event.key.toLowerCase();
       if (
         key === ghostShortcut.key ||
@@ -2336,5 +2313,5 @@
   renderFoldersUI();
   extensionReady = true;
   hostDiv.style.visibility = "visible";
-  if (siteAccessAllowed) updateDockPageSpace();
+  if (extensionEnabled) updateDockPageSpace();
 })();
