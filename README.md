@@ -62,22 +62,12 @@ value must be an array of strings. Save the file as `.json`, then choose
   [ComfyUI-WD14-Tagger](https://github.com/pythongosssss/ComfyUI-WD14-Tagger)
   custom node installed.
 
-## Build and install
+## Install
 
-The browsers use different Manifest V3 background formats. Build a package
-with the matching manifest before loading it:
-
-```powershell
-.\build-extension.ps1 -Browser chrome
-.\build-extension.ps1 -Browser firefox
-```
-
-The output is written to `dist/chrome` or `dist/firefox`.
-
-- **Chrome:** open `chrome://extensions`, enable **Developer mode**, and select
-  **Load unpacked**. Choose `dist/chrome`.
-- **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load
-  Temporary Add-on...**, and select `dist/firefox/manifest.json`.
+- **Chrome (Unpacked):** open `chrome://extensions`, enable **Developer mode**, click Load unpacked, and select the unpacked extension folder. Updates require clicking the reload button after rebuilding.
+- **Firefox (Signed .xpi):** install the final signed .xpi file (downloaded from GitHub Releases or generated via Mozilla AMO) directly by dragging it into Firefox or using Install Add-on From File....
+- **Firefox (Temporary debugging):** open `about:debugging#/runtime/this-firefox`, choose **Load
+  Temporary Add-on...**, and select downloaded package (temporary add-ons are removed when Firefox closes).
 
 Click the QuickTag LazyMod toolbar icon to open its control panel.
 
