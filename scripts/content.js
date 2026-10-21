@@ -395,9 +395,16 @@
     await loadThemeStyles(savedTheme);
 
     const htmlRes = await fetch(chrome.runtime.getURL("pages/popup.html"));
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = await htmlRes.text();
-    shadowRoot.appendChild(tempDiv.firstElementChild);
+    const htmlText = await htmlRes.text();
+
+    // Bezpieczne parsowanie HTML bez użycia innerHTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, "text/html");
+    const rootElement = doc.body.firstElementChild;
+
+    if (rootElement) {
+      shadowRoot.appendChild(rootElement);
+    }
   } catch (err) {
     console.error("[QuickTag] Could not load extension resources:", err);
     return;
@@ -815,8 +822,15 @@
     const visibleTags = getVisiblePaletteTags();
     const mainTags = getMainTags();
     const allSelected = visibleTags.length > 0 && visibleTags.every((tag) => mainTags.includes(tag));
+
     button.querySelector("span").textContent = allSelected ? "Remove tags" : "Add tags";
-    button.querySelector("svg").innerHTML = allSelected ? '<path d="M2.5 8h11" />' : '<path d="M8 2.5v11M2.5 8h11" />';
+
+    // Bezpieczna podmiana atrybutu ścieżki SVG zamiast innerHTML
+    const svgPath = button.querySelector("svg path");
+    if (svgPath) {
+      svgPath.setAttribute("d", allSelected ? "M2.5 8h11" : "M8 2.5v11M2.5 8h11");
+    }
+
     button.classList.toggle("lazymod-btn-danger", allSelected);
     button.classList.toggle("lazymod-btn-accent", !allSelected);
   }
@@ -936,13 +950,23 @@
       const isActive = mainTags.includes(cleanTag);
       const chip = document.createElement("div");
       const isHighlighted = searchResults && index === highlightedSearchResult;
+
       chip.className = `lazymod-chip ${isActive ? "active" : ""} ${isHighlighted ? "search-highlighted" : ""}`;
       chip.dataset.tag = cleanTag;
-      chip.innerHTML = `<span class="icon">${isActive ? "−" : "+"}</span> ${cleanTag}`;
+
+      // Bezpieczne tworzenie struktury DOM zamiast innerHTML
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "icon";
+      iconSpan.textContent = isActive ? "−" : "+";
+
+      chip.appendChild(iconSpan);
+      chip.appendChild(document.createTextNode(` ${cleanTag}`));
+
       if (searchResults) {
         const result = searchResults[index];
         chip.title = `${result.groupName} / ${result.categoryName}`;
       }
+
       chip.onclick = () => toggleTagInMain(cleanTag);
       chipsContainer.appendChild(chip);
     });
@@ -1209,9 +1233,24 @@
       const chip = document.createElement("div");
       chip.className = `lazymod-chip ${isActive ? "active" : ""}`;
       chip.dataset.tag = cleanTag;
-      chip.innerHTML = `<span class="icon">${isActive ? "−" : "+"}</span> ${cleanTag}${
-        Number.isFinite(score) ? ` <span class="score">${Math.round(score * 100)}%</span>` : ""
-      }`;
+
+      // 1. Bezpieczna ikonka
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "icon";
+      iconSpan.textContent = isActive ? "−" : "+";
+      chip.appendChild(iconSpan);
+
+      // 2. Nazwa tagu
+      chip.appendChild(document.createTextNode(` ${cleanTag}`));
+
+      // 3. Opcjonalny wynik (score)
+      if (Number.isFinite(score)) {
+        const scoreSpan = document.createElement("span");
+        scoreSpan.className = "score";
+        scoreSpan.textContent = ` ${Math.round(score * 100)}%`;
+        chip.appendChild(scoreSpan);
+      }
+
       chip.onclick = () => toggleTagInMain(cleanTag);
       container.appendChild(chip);
     });
