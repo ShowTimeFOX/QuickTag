@@ -186,18 +186,40 @@ h1 {
 }
 
 .page-nav a {
+  display: inline-flex;
+  align-items: center;
   flex: 0 0 auto;
-  padding: 6px 10px;
+  padding: 8px 14px;
   border: 1px solid var(--line);
-  border-radius: 7px;
-  color: #b3c2d6;
-  font-size: 20px;
+  border-radius: 9px;
+  /* Delikatny, nowoczesny gradient tła, żeby nie były płaskie */
+  background: linear-gradient(180deg, rgba(23, 33, 49, 0.6) 0%, rgba(17, 24, 36, 0.8) 100%);
+  color: #aebdd1;
+  font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .page-nav a:hover {
-  border-color: rgba(130, 180, 255, 0.45);
-  color: #e5f0ff;
+  /* Wyraźniejsze uniesienie i rozświetlenie */
+  transform: translateY(-2px);
+  border-color: rgba(124, 175, 255, 0.6);
+  background: linear-gradient(180deg, rgba(31, 45, 68, 0.8) 0%, rgba(21, 31, 46, 0.95) 100%);
+  color: #f2f7ff;
+  box-shadow: 0 4px 12px rgba(79, 143, 238, 0.2);
+}
+
+.page-nav a:active {
+  /* Efekt wciśnięcia przy kliknięciu */
+  transform: translateY(0px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.page-nav a:focus-visible {
+  outline: 2px solid #7cafff;
+  outline-offset: 2px;
 }
 
 .section {
