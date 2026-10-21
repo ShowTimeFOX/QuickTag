@@ -90,7 +90,26 @@
        3. TAG OPERATIONS (Page tag formatting and operations)
        ========================================================================== */
 
-  const defaultTagBlacklist = ["uncensored", "censored", "explicit", "questionable", "realistic", "sensitive"];
+  const defaultTagBlacklist = [
+    "uncensored",
+    "censored",
+    "furry_with_furry",
+    "explicit",
+    "yaoi",
+    "bara",
+    "questionable",
+    "hetero",
+    "realistic",
+    "sensitive",
+    "two-tone_fur",
+    "watermark",
+    "artist_name",
+    "pubic_hair",
+    "loli",
+    "interspecies",
+    "furry_with_non-furry",
+    "english_text",
+  ];
 
   let tagBlacklist = await loadData("lazymod_global_ai_blacklist", defaultTagBlacklist);
   if (!Array.isArray(tagBlacklist)) {
