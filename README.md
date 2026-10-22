@@ -108,11 +108,7 @@ require a JavaScript package manager or build step. See
 
 ## Source layout
 
-- `manifest.json` is the Chrome Manifest V3 source manifest.
-- `manifests/firefox.json` contains the Firefox Manifest V3 background-script
-  variant.
-- `build-extension.ps1` packages the shared files with the selected browser's
-  manifest.
+- `manifest.json` is the Manifest V3 source manifest for Chrome and Firefox.
 - `scripts/` contains the background worker, content script, and page scripts.
 - `pages/` contains the extension pages and the tagger interface template.
 - `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and
