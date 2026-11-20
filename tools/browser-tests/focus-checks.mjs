@@ -7,8 +7,54 @@ const FOCUS = `${ROOT}.querySelector("#lm-focus-root")`;
 const FIELD = `document.getElementById("tags")`;
 const press = (target, init) =>
   `(() => { ${target}.dispatchEvent(new KeyboardEvent("keydown", Object.assign({ bubbles: true, cancelable: true, composed: true }, ${JSON.stringify(init)}))); return true; })()`;
+const keyEvent = (type, target, init) =>
+  `(() => { ${target}.dispatchEvent(new KeyboardEvent(${JSON.stringify(type)}, Object.assign({ bubbles: true, cancelable: true, composed: true }, ${JSON.stringify(init)}))); return true; })()`;
+// Where a real key event goes: the focused element, inside the shadow root too.
+const FOCUSED = `(${ROOT}.activeElement || document.activeElement || document.body)`;
 const ALT_A = { key: "a", code: "KeyA", altKey: true };
 const ESC = { key: "Escape", code: "Escape" };
+
+const IMAGE_FIT_STATE = `(() => {
+  const focus = ${FOCUS};
+  const viewport = focus.querySelector(".lm-focus-image-viewport");
+  const image = viewport.querySelector(".lm-focus-image");
+  const box = (element) => { const r = element.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
+  return {
+    zoom: viewport.dataset.zoom,
+    meta: focus.querySelector(".lm-focus-image-panel .lm-focus-meta").textContent,
+    natural: [image.naturalWidth, image.naturalHeight],
+    image: box(image),
+    viewport: box(viewport),
+    panel: box(focus.querySelector(".lm-focus-image-panel")),
+    tags: box(focus.querySelector(".lm-focus-tags-panel")),
+    scrolls: viewport.scrollHeight > viewport.clientHeight + 1 || viewport.scrollWidth > viewport.clientWidth + 1,
+  };
+})()`;
+const showPageImage = (src) => `(() => {
+  document.getElementById("image").src = ${JSON.stringify(src)};
+  ${FOCUS}.querySelector(".lm-focus-image-panel .lm-focus-icon-btn").click();
+  return true;
+})()`;
+const clickImageZoom = (label) =>
+  `(() => { [...${FOCUS}.querySelectorAll(".lm-focus-image-panel button")].find((button) => button.textContent.trim() === ${JSON.stringify(label)}).click(); return true; })()`;
+
+/** Fit: whole image inside the viewport, aspect ratio kept, tags tile not pushed. */
+function fitsInside(fit) {
+  const t = 1.5;
+  const [naturalWidth, naturalHeight] = fit.natural;
+  return (
+    fit.zoom === "fit" &&
+    naturalWidth > 0 &&
+    fit.image.left >= fit.viewport.left - t &&
+    fit.image.top >= fit.viewport.top - t &&
+    fit.image.right <= fit.viewport.right + t &&
+    fit.image.bottom <= fit.viewport.bottom + t &&
+    Math.abs(fit.image.width / fit.image.height - naturalWidth / naturalHeight) < 0.03 &&
+    fit.viewport.height > 40 &&
+    fit.panel.bottom <= fit.tags.top + t &&
+    !fit.scrolls
+  );
+}
 
 const FOCUS_STATE = `(() => {
   const focus = ${FOCUS};
@@ -106,10 +152,67 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   );
   check("Focus Mode: image preview loads the page image with its dimensions", /\/img\.png$/.test(opened.imageSrc) && /1 × 1 px/.test(opened.imageMeta), opened);
 
+  // A real press: after keydown opens the overlay, focus is inside it, so the
+  // keyup (Alt still held) and auto-repeat keydowns go to the overlay. None of
+  // them may toggle Focus Mode again.
+  const focusInside = await evaluate(page, `${FOCUS}.contains(${ROOT}.activeElement)`);
+  await evaluate(page, keyEvent("keyup", FOCUSED, ALT_A));
+  await evaluate(page, keyEvent("keydown", FOCUSED, { ...ALT_A, repeat: true }));
+  await evaluate(page, keyEvent("keydown", FOCUSED, { ...ALT_A, repeat: true }));
+  await evaluate(page, keyEvent("keyup", FOCUSED, ALT_A));
+  await evaluate(page, keyEvent("keyup", FOCUSED, { key: "Alt", code: "AltLeft" }));
+  await sleep(300);
+  const stillOpen = await evaluate(page, FOCUS_STATE);
+  check("Focus Mode: one Alt+A press stays open (keyup and key repeat inside the overlay do not toggle)", focusInside && stillOpen.open, { focusInside, open: stillOpen.open });
+
+  // Fit / 1:1 with images much larger than the tile.
+  await evaluate(page, clickImageZoom("Fit"));
+  await evaluate(page, showPageImage("/tall.svg"));
+  const tallFit = await waitFor(evaluate, page, IMAGE_FIT_STATE, (state) => /300 × 3000 px/.test(state.meta));
+  check("Focus image: Fit scales a tall image to fit inside its tile without pushing the tags tile", fitsInside(tallFit), tallFit);
+  await evaluate(page, clickImageZoom("1:1"));
+  const tallActual = await evaluate(page, IMAGE_FIT_STATE);
+  check(
+    "Focus image: 1:1 shows the natural size and scrolls inside the tile (tags tile unchanged)",
+    tallActual.zoom === "actual" &&
+      Math.abs(tallActual.image.height - 3000) < 2 &&
+      tallActual.scrolls &&
+      tallActual.panel.bottom <= tallActual.tags.top + 1.5 &&
+      Math.abs(tallActual.tags.top - tallFit.tags.top) < 1.5,
+    tallActual,
+  );
+  await evaluate(page, clickImageZoom("Fit"));
+  await evaluate(page, showPageImage("/wide.svg"));
+  const wideFit = await waitFor(evaluate, page, IMAGE_FIT_STATE, (state) => /3000 × 300 px/.test(state.meta));
+  check("Focus image: Fit scales a wide image to fit inside its tile", fitsInside(wideFit), wideFit);
+  await evaluate(page, showPageImage("/img.png"));
+  await waitFor(evaluate, page, IMAGE_FIT_STATE, (state) => /1 × 1 px/.test(state.meta));
+
   // Tag management with live two-way sync.
   await evaluate(page, typeIntoAddInput("long_hair blue_eyes"));
   const added = await waitFor(evaluate, page, FOCUS_STATE, (state) => state.badges.length === 2);
   check("Focus tags: inline input adds tags and live-syncs the page field", added.badges.join(" ") === "long_hair blue_eyes" && added.field === "long_hair blue_eyes", added);
+
+  const sizes = await evaluate(
+    page,
+    `(() => {
+      const focus = ${FOCUS};
+      const height = (selector) => focus.querySelector(selector).getBoundingClientRect().height;
+      const remove = focus.querySelector(".lm-focus-badge-remove").getBoundingClientRect();
+      return {
+        addInput: height(".lm-focus-add-input"),
+        filter: height(".lm-focus-filter"),
+        badgeFont: parseFloat(getComputedStyle(focus.querySelector(".lm-focus-badge-toggle")).fontSize),
+        badge: height(".lm-focus-badge"),
+        remove: [remove.width, remove.height],
+      };
+    })()`,
+  );
+  check(
+    "Focus tags: compact inputs (add tags, palette search) and larger badges with a 32px × target",
+    sizes.addInput <= 32 && sizes.filter <= 32 && sizes.badgeFont >= 14 && sizes.badge >= 32 && sizes.remove[0] >= 31.5 && sizes.remove[1] >= 31.5,
+    sizes,
+  );
 
   await evaluate(page, clickBadge("long_hair", "toggle"));
   const muted = await evaluate(page, FOCUS_STATE);
@@ -165,10 +268,12 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   );
 
   // Esc closes the topmost menu first, then Focus Mode.
+  // The keyup of the same Esc press must not exit as well.
   await evaluate(page, clickButtonByText("Sort"));
   await evaluate(page, press(FOCUS, ESC));
+  await evaluate(page, keyEvent("keyup", FOCUS, ESC));
   const escMenu = await evaluate(page, FOCUS_STATE);
-  check("Focus Mode: Esc closes an open menu first and stays in Focus Mode", escMenu.open && !escMenu.menuOpen, escMenu);
+  check("Focus Mode: Esc closes an open menu first and stays in Focus Mode (keyup included)", escMenu.open && !escMenu.menuOpen, escMenu);
 
   // Layout JSON dialog: view, apply a preset change, reject an invalid layout.
   await evaluate(page, clickButtonByText("Layout"));

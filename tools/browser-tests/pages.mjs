@@ -16,6 +16,13 @@ export function startServer() {
       res.writeHead(200, { "Content-Type": "image/png" });
       return res.end(PNG);
     }
+    // Large images for the Focus Mode Fit / 1:1 checks.
+    const svgSize = { "/tall.svg": [300, 3000], "/wide.svg": [3000, 300] }[req.url.split("?")[0]];
+    if (svgSize) {
+      const [width, height] = svgSize;
+      res.writeHead(200, { "Content-Type": "image/svg+xml" });
+      return res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="#4f8fee"/></svg>`);
+    }
     if (req.url.startsWith("/hostile")) {
       // Inherited text properties cross the Shadow DOM boundary; `div` also
       // matches the extension's host element and beats its :host rules.

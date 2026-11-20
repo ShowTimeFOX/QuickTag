@@ -189,7 +189,10 @@ function syncTheme() {
 
 function isolateKeyboard(event) {
   // Keys typed inside Focus Mode never reach page shortcuts (bubble phase).
-  handleShortcutKey(event, true);
+  // Only keydown runs shortcuts: opening Focus Mode moves focus into the
+  // overlay, so the keyup of the same Alt+A press (or Esc) lands here and
+  // must not toggle again.
+  if (event.type === "keydown") handleShortcutKey(event, true);
   event.stopPropagation();
 }
 
@@ -285,7 +288,7 @@ export function toggleFocusMode() {
  * Inside the overlay, keys are handled by the overlay itself either way.
  */
 function handleShortcutKey(event, fromOverlay = false) {
-  if (handledEvents.has(event) || event.isComposing || !state.extensionEnabled || state.recordingShortcut || state.elementPickerActive) return;
+  if (event.type !== "keydown" || handledEvents.has(event) || event.isComposing || !state.extensionEnabled || state.recordingShortcut || state.elementPickerActive) return;
   if (!fromOverlay && !focus.settings.strictCapture && event.defaultPrevented) return;
   const isToggle = matchesShortcut(event, focus.settings.toggleShortcut);
   const isClose = !isToggle && state.focusModeActive && matchesShortcut(event, focus.settings.closeShortcut);
@@ -295,6 +298,8 @@ function handleShortcutKey(event, fromOverlay = false) {
   event.preventDefault();
   event.stopPropagation();
   if (focus.settings.strictCapture) event.stopImmediatePropagation();
+  // A held key repeats keydown; one press must toggle (or close) only once.
+  if (event.repeat) return;
   if (isToggle) toggleFocusMode();
   else handleCloseShortcut();
 }

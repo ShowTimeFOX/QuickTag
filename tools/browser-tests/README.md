@@ -34,7 +34,7 @@ $env:FIREFOX_PATH = "C:\path\to\firefox.exe"
 
 | File | Purpose |
 | --- | --- |
-| `pages.mjs` | Local HTTP server with a plain page and a strict-CSP page (`default-src 'none'` and Trusted Types), plus the probe expressions evaluated in pages. |
+| `pages.mjs` | Local HTTP server with a plain page, a strict-CSP page (`default-src 'none'` and Trusted Types), and tall and wide SVG images for the Focus Mode Fit checks, plus the probe expressions evaluated in pages. |
 | `chrome.mjs` | Starts Chrome with `--remote-debugging-pipe --enable-unsafe-extension-debugging` and loads the repository with the DevTools `Extensions.loadUnpacked` command (branded Chrome no longer accepts `--load-extension`). |
 | `firefox.mjs` | Starts Firefox with WebDriver BiDi and installs a temporary add-on with `webExtension.install`. |
 | `config.mjs` | Browser paths, temporary directories, the Firefox test copy, and result reporting. |

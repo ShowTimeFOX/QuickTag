@@ -233,7 +233,10 @@ if you need help.
   bubble-phase `document` listener that skips events the page already
   handled; with it on, by a capture-phase `window` listener that stops the
   event. Page listeners registered on `window` in the capture phase before
-  QuickTag loaded still run first.
+  QuickTag loaded still run first. Shortcuts act only on `keydown` and ignore
+  auto-repeat (`event.repeat`): opening Focus Mode moves focus into the
+  overlay, so the `keyup` of the same press arrives there and must not toggle
+  again.
 - The Focus Mode tag model (`content/focus-tags.js`) keeps muted tags in
   memory only. The page's tag field always holds the active tags in list
   order; with live sync on, changes are written immediately and page edits
