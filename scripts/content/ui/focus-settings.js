@@ -6,8 +6,11 @@ import { $ } from "./shell.js";
 import { setConfigStatus } from "./status.js";
 import { createShortcutRecorder } from "./shortcut-recorder.js";
 
-export function initFocusSettings({ open, openLayoutDialog, getSettings, saveSettings }) {
+export function initFocusSettings({ open, openLayoutDialog, getSettings, saveSettings, getScale, getWindowScale, setScale }) {
   const strictInput = $("#lm-focus-strict");
+  const scaleFollow = $("#lm-focus-scale-window");
+  const scaleSlider = $("#lm-focus-scale");
+  const scaleValue = $("#lm-focus-scale-value");
 
   async function update(changes, successMessage) {
     const next = { ...getSettings(), ...changes };
@@ -37,11 +40,30 @@ export function initFocusSettings({ open, openLayoutDialog, getSettings, saveSet
     requireModifier: false,
   });
 
+  function renderScale() {
+    const follows = getScale() === "window";
+    const scale = follows ? getWindowScale() : getScale();
+    scaleFollow.checked = follows;
+    scaleSlider.disabled = follows;
+    scaleSlider.value = String(scale);
+    scaleValue.textContent = `${Math.round(scale * 100)}%`;
+  }
+
   function render() {
+    renderScale();
     strictInput.checked = getSettings().strictCapture;
     toggleRecorder.render();
     closeRecorder.render();
   }
+
+  scaleFollow.addEventListener("change", () => {
+    setScale(scaleFollow.checked ? "window" : parseFloat(scaleSlider.value));
+    renderScale();
+  });
+  scaleSlider.addEventListener("input", () => {
+    scaleValue.textContent = `${Math.round(parseFloat(scaleSlider.value) * 100)}%`;
+  });
+  scaleSlider.addEventListener("change", () => setScale(parseFloat(scaleSlider.value)));
 
   $("#lm-focus-open").addEventListener("click", open);
   $("#lm-focus-edit-layout").addEventListener("click", openLayoutDialog);

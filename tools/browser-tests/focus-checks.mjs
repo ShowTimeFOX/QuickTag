@@ -124,6 +124,42 @@ const toggleStrictCapture = `(() => {
   return root.querySelector("#lm-focus-strict").checked;
 })()`;
 
+const EDIT_STATE = `(() => {
+  const focus = ${FOCUS};
+  const grid = focus.querySelector(".lm-focus-grid");
+  const strip = (panel) => focus.querySelector(\`.lm-focus-edit-strip[data-panel="\${panel}"]\`);
+  const button = (panel, selector) => strip(panel)?.querySelector(selector);
+  return {
+    editing: focus.dataset.editing === "true",
+    stripsVisible: [...focus.querySelectorAll(".lm-focus-edit-strip")].filter((item) => !item.hidden).length,
+    areas: grid.style.gridTemplateAreas,
+    columns: grid.style.gridTemplateColumns,
+    imageRight: button("image", '[data-direction="right"]')?.disabled === false,
+    imageLeft: button("image", '[data-direction="left"]')?.disabled === false,
+    topbarWider: button("topbar", '[data-axis="columns"][data-step="1"]')?.disabled === false,
+    options: [...focus.querySelectorAll(".lm-focus-preset option")].map((option) => option.value + ":" + option.textContent),
+    preset: focus.querySelector(".lm-focus-preset").value,
+    open: !focus.hidden,
+  };
+})()`;
+const clickStrip = (panel, selector) => `(() => { ${FOCUS}.querySelector('.lm-focus-edit-strip[data-panel="${panel}"] ${selector}').click(); return true; })()`;
+const SCALE_STATE = `(() => {
+  const focus = ${FOCUS};
+  const rect = focus.getBoundingClientRect();
+  const topbar = focus.querySelector(".lm-focus-topbar").getBoundingClientRect();
+  return { zoom: focus.style.zoom, scale: focus.dataset.scale, width: rect.width, height: rect.height, right: rect.right, bottom: rect.bottom, innerWidth, innerHeight, topbarHeight: topbar.height };
+})()`;
+const SHOW_SETTINGS = `(() => {
+  const root = ${ROOT};
+  if (root.querySelector("#lazymod-window").hidden) root.querySelector("#lm-show-tagger").click();
+  root.querySelector("#lm-tab-btn-sites").click();
+  return true;
+})()`;
+const setRange = (selector, value) =>
+  `(() => { const input = ${ROOT}.querySelector(${JSON.stringify(selector)}); input.value = ${JSON.stringify(String(value))}; input.dispatchEvent(new Event("input", { bubbles: true })); input.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`;
+const setCheckbox = (selector, checked) =>
+  `(() => { const input = ${ROOT}.querySelector(${JSON.stringify(selector)}); if (input.checked !== ${checked}) input.click(); return input.checked; })()`;
+
 export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   const page = await open(`${origin}/plain`);
   await waitFor(evaluate, page, READY, Boolean, 10000);
@@ -136,6 +172,24 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   await evaluate(page, press("document.body", ghostShortcut));
   const ghostOff = await evaluate(page, GHOST);
   check("Ghost mode: Ctrl+Shift+G toggles on and off (shared shortcut module)", ghostOn === true && ghostOff === false, { ghostOn, ghostOff });
+
+  // Header button next to ghost mode, and the brand mark in Focus Mode.
+  const header = await evaluate(
+    page,
+    `(() => { const root = ${ROOT}; if (root.querySelector("#lazymod-window").hidden) root.querySelector("#lm-show-tagger").click(); const button = root.querySelector("#lm-focus-header"); const previous = button.previousElementSibling?.id; button.click(); return previous; })()`,
+  );
+  const byButton = await waitFor(evaluate, page, FOCUS_STATE, (state) => state.open);
+  const brand = await evaluate(
+    page,
+    `(() => { const focus = ${FOCUS}; const brand = focus.querySelector(".lm-focus-brand"); const topbar = focus.querySelector(".lm-focus-topbar"); return { text: brand?.textContent, first: brand.parentElement.classList.contains("lm-focus-site") && brand.parentElement.firstElementChild === brand, leftGap: brand.getBoundingClientRect().left - topbar.getBoundingClientRect().left, icon: Boolean(brand.querySelector("svg")) }; })()`,
+  );
+  await evaluate(page, press(FOCUS, ESC));
+  const closedAgain = await waitFor(evaluate, page, FOCUS_STATE, (state) => !state.open);
+  check(
+    "Focus Mode: the header button next to ghost mode opens it; the top-left shows the QuickTag mark and \"Focus Mode\"",
+    header === "lm-ghost-toggle" && byButton.open && brand.text === "QuickTagFocus Mode" && brand.first && brand.icon && brand.leftGap < 40 && !closedAgain.open,
+    { header, open: byButton.open, brand },
+  );
 
   // Open with the default Alt+A (the tagger window may be hidden at the edge).
   await evaluate(page, press("document.body", ALT_A));
@@ -294,6 +348,64 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   await evaluate(page, press(FOCUS, ESC));
   const escDialog = await evaluate(page, FOCUS_STATE);
   check("Focus Mode: Esc closes the layout dialog before Focus Mode", escDialog.open && !escDialog.dialogOpen && escDialog.preset === "default", escDialog);
+  // Customize: move and resize panels, save as a new layout; Esc leaves it first.
+  await evaluate(page, clickIn(".lm-focus-customize"));
+  const editing = await evaluate(page, EDIT_STATE);
+  await evaluate(page, clickStrip("image", '[data-direction="right"]'));
+  const moved = await waitFor(evaluate, page, EDIT_STATE, (state) => state.areas !== editing.areas);
+  await evaluate(page, clickStrip("image", '[data-axis="columns"][data-step="1"]'));
+  const resized = await waitFor(evaluate, page, EDIT_STATE, (state) => state.columns !== moved.columns);
+  await evaluate(page, `(() => { const input = ${FOCUS}.querySelector(".lm-focus-layout-name"); input.value = "Test Layout"; return true; })()`);
+  await evaluate(page, clickButtonByText("Save as new layout"));
+  const saved = await waitFor(evaluate, page, EDIT_STATE, (state) => state.preset === "test-layout");
+  await evaluate(page, press(FOCUS, ESC));
+  const leftEditing = await evaluate(page, EDIT_STATE);
+  check(
+    "Focus layout: Customize moves a panel (swap), resizes it, disables impossible sizes, and saves a new layout",
+    editing.editing &&
+      editing.stripsVisible === 4 &&
+      editing.imageRight &&
+      !editing.imageLeft &&
+      !editing.topbarWider &&
+      /"topbar topbar" "palette image" "tags image"/.test(moved.areas) &&
+      resized.columns !== moved.columns &&
+      saved.options.includes("test-layout:Test Layout") &&
+      saved.columns === resized.columns &&
+      !leftEditing.editing &&
+      leftEditing.open,
+    { editing, moved: moved.areas, columns: [moved.columns, resized.columns], options: saved.options, leftEditing },
+  );
+  await evaluate(page, `(() => { const select = ${FOCUS}.querySelector(".lm-focus-preset"); select.value = "default"; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`);
+  await waitFor(evaluate, page, FOCUS_STATE, (state) => state.preset === "default");
+
+  // Scale: a fixed Focus Mode scale, then following Settings › Window scale.
+  const unscaled = await evaluate(page, SCALE_STATE);
+  await evaluate(page, press(FOCUS, ESC));
+  await evaluate(page, SHOW_SETTINGS);
+  await evaluate(page, setCheckbox("#lm-focus-scale-window", false));
+  await evaluate(page, setRange("#lm-focus-scale", 1.25));
+  await evaluate(page, press("document.body", ALT_A));
+  const fixed = await waitFor(evaluate, page, SCALE_STATE, (state) => state.zoom === "1.25");
+  await evaluate(page, press(FOCUS, ESC));
+  await evaluate(page, setCheckbox("#lm-focus-scale-window", true));
+  await evaluate(page, setRange("#lm-scale-slider", 1.2));
+  await evaluate(page, press("document.body", ALT_A));
+  const followed = await waitFor(evaluate, page, SCALE_STATE, (state) => state.zoom === "1.2");
+  await evaluate(page, setRange("#lm-scale-slider", 1));
+  const reset = await waitFor(evaluate, page, SCALE_STATE, (state) => state.zoom === "");
+  const fills = (state) => Math.abs(state.width - state.innerWidth) < 3 && Math.abs(state.height - state.innerHeight) < 3 && state.right <= state.innerWidth + 1;
+  check(
+    "Focus Mode scale: a fixed scale or the window scale zooms the workspace, which still fills the viewport",
+    fixed.zoom === "1.25" &&
+      fixed.topbarHeight > unscaled.topbarHeight * 1.1 &&
+      fills(fixed) &&
+      followed.zoom === "1.2" &&
+      fills(followed) &&
+      reset.zoom === "" &&
+      fills(unscaled),
+    { unscaled, fixed, followed, reset: reset.zoom },
+  );
+
   await evaluate(page, press(FOCUS, ESC));
   const closed = await waitFor(evaluate, page, FOCUS_STATE, (state) => !state.open);
   check("Focus Mode: Esc with nothing open exits and restores page scrolling", !closed.open && closed.pageOverflow === "", closed);

@@ -8,7 +8,7 @@
 // - The close shortcut first dismisses the topmost open menu or dialog
 //   (see pushDismissable), and only then exits Focus Mode.
 // - Panels get an `api` object instead of importing this module.
-import { LOG_PREFIX, STORAGE_KEYS, DEFAULT_FOCUS_SETTINGS, DEFAULT_FOCUS_PREFS, FOCUS_TAG_VIEWS, FOCUS_IMAGE_ZOOMS } from "../../shared/constants.js";
+import { LOG_PREFIX, STORAGE_KEYS, DEFAULT_FOCUS_SETTINGS, DEFAULT_FOCUS_PREFS, FOCUS_TAG_VIEWS, FOCUS_IMAGE_ZOOMS, FOCUS_SCALE_RANGE } from "../../shared/constants.js";
 import { loadData, saveData, onLocalStorageChange } from "../../shared/storage.js";
 import { isRecord } from "../../shared/validation.js";
 import { matchesShortcut, normalizeShortcut } from "../../shared/shortcuts.js";
@@ -16,13 +16,14 @@ import { FOCUS_PANELS, createDefaultFocusLayout, normalizeFocusLayout } from "..
 import { state } from "../state.js";
 import { emit, on, EVENTS } from "../events.js";
 import { initFocusTags, loadFromPage } from "../focus-tags.js";
-import { shell } from "./shell.js";
+import { $, shell } from "./shell.js";
 import { el } from "./dom.js";
 import { createFocusTopbar } from "./focus-topbar.js";
 import { createFocusImagePanel } from "./focus-image.js";
 import { createFocusTagsPanel } from "./focus-tags-panel.js";
 import { createFocusPalettePanel } from "./focus-palette.js";
 import { createLayoutDialog } from "./focus-layout-dialog.js";
+import { createLayoutEditor } from "./focus-layout-editor.js";
 import { initFocusSettings } from "./focus-settings.js";
 
 // Theme tokens copied from the tagger window, whose theme rules are scoped to
@@ -52,6 +53,7 @@ const focus = {
   grid: null,
   panels: {},
   dialog: null,
+  editor: null,
   dismissStack: [],
   previousOverflow: null,
   previousFocus: null,
@@ -78,7 +80,37 @@ function normalizePrefs(raw) {
     liveSync: typeof prefs.liveSync === "boolean" ? prefs.liveSync : DEFAULT_FOCUS_PREFS.liveSync,
     tagView: FOCUS_TAG_VIEWS.includes(prefs.tagView) ? prefs.tagView : DEFAULT_FOCUS_PREFS.tagView,
     imageZoom: FOCUS_IMAGE_ZOOMS.includes(prefs.imageZoom) ? prefs.imageZoom : DEFAULT_FOCUS_PREFS.imageZoom,
+    scale: isValidFocusScale(prefs.scale) ? prefs.scale : DEFAULT_FOCUS_PREFS.scale,
   };
+}
+
+function isValidFocusScale(value) {
+  return value === "window" || (typeof value === "number" && value >= FOCUS_SCALE_RANGE.min && value <= FOCUS_SCALE_RANGE.max);
+}
+
+// --- Scale ---
+
+/** The tagger's Window scale (Settings), which Focus Mode follows by default. */
+function getWindowScale() {
+  const value = parseFloat($("#lm-scale-slider")?.value);
+  return Number.isFinite(value) ? value : 1;
+}
+
+function getFocusScale() {
+  return focus.prefs.scale === "window" ? getWindowScale() : focus.prefs.scale;
+}
+
+/** CSS zoom scales the whole overlay (text, controls, gaps) while it still fills the viewport. */
+function applyScale() {
+  if (!focus.root) return;
+  const scale = getFocusScale();
+  focus.root.style.zoom = scale === 1 ? "" : String(scale);
+  focus.root.dataset.scale = String(scale);
+}
+
+function setFocusScale(value) {
+  setPref("scale", isValidFocusScale(value) ? value : DEFAULT_FOCUS_PREFS.scale);
+  applyScale();
 }
 
 function readLayout(raw) {
@@ -143,6 +175,7 @@ function applyLayout() {
     panel.element.hidden = !preset.panels[panelId].visible;
   });
   focus.panels.topbar.setLayout(focus.layout);
+  focus.editor?.refresh();
 }
 
 // --- Status line (top bar) ---
@@ -224,6 +257,9 @@ function buildOverlay() {
     palette: createFocusPalettePanel(api),
   };
   FOCUS_PANELS.forEach((panelId) => focus.grid.appendChild(focus.panels[panelId].element));
+  focus.editor = createLayoutEditor(api, focus.panels);
+  focus.panels.topbar.actions.prepend(focus.editor.button);
+  focus.panels.topbar.element.appendChild(focus.editor.toolbar);
   focus.dialog = createLayoutDialog(api);
   focus.root.appendChild(focus.dialog.element);
 
@@ -249,6 +285,7 @@ export function openFocusMode() {
   if (!focus.root) buildOverlay();
   state.focusModeActive = true;
   syncTheme();
+  applyScale();
   applyLayout();
   loadFromPage();
   focus.panels.image.refresh();
@@ -329,6 +366,17 @@ export async function initFocusMode() {
     },
     getSettings: getFocusSettings,
     saveSettings: saveFocusSettings,
+    getScale: () => focus.prefs.scale,
+    getWindowScale,
+    setScale: setFocusScale,
+  });
+
+  // Header button next to ghost mode.
+  $("#lm-focus-header").addEventListener("click", openFocusMode);
+  // Follow the Window scale slider live (and its saved value from other tabs).
+  $("#lm-scale-slider").addEventListener("input", () => {
+    if (focus.prefs.scale === "window") applyScale();
+    settingsUi.render();
   });
 
   on(EVENTS.themeChanged, syncTheme);
@@ -343,6 +391,21 @@ export async function initFocusMode() {
     if (changes[STORAGE_KEYS.focusLayout]) {
       focus.layout = readLayout(changes[STORAGE_KEYS.focusLayout].newValue);
       applyLayout();
+    }
+    // Only the scale follows other tabs. Adopting every stored pref would let
+    // the late echo of this tab's own earlier write (e.g. image zoom "1:1")
+    // undo a newer change made here ("Fit").
+    if (changes[STORAGE_KEYS.focusPrefs]) {
+      const { scale } = normalizePrefs(changes[STORAGE_KEYS.focusPrefs].newValue);
+      if (scale !== focus.prefs.scale) {
+        focus.prefs = { ...focus.prefs, scale };
+        applyScale();
+        settingsUi.render();
+      }
+    }
+    if (changes[STORAGE_KEYS.scale]) {
+      applyScale();
+      settingsUi.render();
     }
   });
 }

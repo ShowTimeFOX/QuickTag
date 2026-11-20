@@ -79,8 +79,9 @@ pack installed from File Hub can also be uninstalled from its card in the
 
 ## Focus Mode
 
-Press `Alt+A` on any page, or select **Open** under **Settings › Focus Mode**,
-to open a full-screen workspace:
+Press `Alt+A` on any page, select the Focus Mode button next to the ghost
+mode button in the tagger header, or select **Open** under **Settings › Focus
+Mode**, to open a full-screen workspace:
 
 - **Top bar:** the page host and site profile, the layout preset, the number
   of active and muted tags, the **Live sync** switch, and **Exit**.
@@ -103,6 +104,20 @@ be changed in **Settings › Focus Mode**. By default the page handles keys
 first, and QuickTag skips a shortcut the page already uses; turn on **Strict
 shortcut capture** to let QuickTag handle its shortcuts before the page.
 On macOS, `Option+A` works for the default `Alt+A`.
+
+**Focus Mode scale** (Settings › Focus Mode) follows **Window scale** by
+default; turn off **Match window scale** to give Focus Mode its own size.
+
+### Customizing the layout
+
+Select **Customize** in the Focus Mode top bar. Each panel shows arrows that
+move it (it swaps places with the panel in that direction) and **Width −/+**
+and **Height −/+** buttons; a size button is disabled where the layout cannot
+change that size (for example, a panel that spans the full width). Changes are
+saved to the selected layout right away. Type a name and select **Save as new
+layout** to add the arrangement to the **Layout** list. `Esc` or **Done**
+stops customizing. **Reset to defaults** in the layout JSON dialog restores
+the built-in layouts.
 
 ### Focus Mode layout JSON
 
@@ -147,7 +162,9 @@ or description, filter by category, and sort by update date, newest, score,
 downloads, or name. **Install** adds the pack to your tag packs and selects
 it; an installed pack shows **Installed**, and **Update** appears when File
 Hub has a newer version (select it twice: updating replaces the installed
-pack, including your edits to it).
+pack, including your edits to it). **Preview** shows the groups, categories,
+and first tags of a package before you install it; **Show in Hub** opens File
+Hub filtered to QuickTag packages in the same category.
 
 QuickTag contacts File Hub only when you open the Assets tab or select
 **Refresh**. Package files are checked before anything is saved: at most

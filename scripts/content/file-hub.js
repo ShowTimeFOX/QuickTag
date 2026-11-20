@@ -30,6 +30,15 @@ export async function fetchHubCatalogue({ force = false } = {}) {
   return (await sendMessage({ action: MESSAGE_ACTIONS.fileHubCatalogue, force })).catalogue;
 }
 
+/**
+ * Downloads and validates a package (same checks as installing) without
+ * saving anything; resolves to `{ pack, verified }` for a contents preview.
+ */
+export async function previewHubPackage(item) {
+  const { pack, verified } = await sendMessage({ action: MESSAGE_ACTIONS.fileHubDownload, packageId: item.id });
+  return { pack, verified };
+}
+
 /** Saved install records, without malformed entries. */
 export async function loadHubInstalls() {
   const saved = await loadData(STORAGE_KEYS.hubPackages, {});

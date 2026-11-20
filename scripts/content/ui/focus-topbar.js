@@ -22,12 +22,22 @@ export function createFocusTopbar(api) {
   const layoutButton = button("Layout", { iconPath: ICONS.layout, title: "View, edit, import, or export the layout JSON" });
   const exitButton = button("Exit", { iconPath: ICONS.close, className: "lazymod-btn lm-focus-exit", title: "Exit Focus Mode" });
   const status = el("div", { className: "lm-focus-status", attrs: { role: "status", "aria-live": "polite" }, hidden: true });
+  // The controller adds the layout editor's Customize button here.
+  const actions = el("div", { className: "lm-focus-topbar-group lm-focus-topbar-end" }, [layoutButton, exitButton]);
 
   const element = el("header", { className: "lm-focus-panel lm-focus-topbar" }, [
-    el("div", { className: "lm-focus-topbar-group lm-focus-site" }, [icon(ICONS.focus, "lazymod-action-icon lm-focus-brand"), host, profile]),
+    el("div", { className: "lm-focus-topbar-group lm-focus-site" }, [
+      el("span", { className: "lm-focus-brand", title: "QuickTag Focus Mode" }, [
+        icon(ICONS.brand, "lazymod-action-icon lm-focus-brand-icon"),
+        el("span", { className: "lm-focus-brand-name", text: "QuickTag" }),
+        el("span", { className: "lm-focus-brand-title", text: "Focus Mode" }),
+      ]),
+      host,
+      profile,
+    ]),
     el("label", { className: "lm-focus-topbar-group" }, [el("span", { className: "lm-focus-label", text: "Layout" }), presetSelect]),
     el("div", { className: "lm-focus-topbar-group" }, [counts, liveSyncLabel, dirtyNote, applyButton, reloadButton]),
-    el("div", { className: "lm-focus-topbar-group lm-focus-topbar-end" }, [layoutButton, exitButton]),
+    actions,
     status,
   ]);
 
@@ -72,6 +82,7 @@ export function createFocusTopbar(api) {
 
   return {
     element,
+    actions,
     setLayout(layout) {
       presetSelect.replaceChildren(
         ...Object.entries(layout.presets).map(([presetId, preset]) => el("option", { text: preset.name, attrs: { value: presetId, selected: presetId === layout.activePreset } })),

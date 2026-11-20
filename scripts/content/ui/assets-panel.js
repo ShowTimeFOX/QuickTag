@@ -5,9 +5,9 @@
 // run in the background script; see content/file-hub.js.
 import { LOG_PREFIX, STORAGE_KEYS, FILE_HUB_BASE_URL } from "../../shared/constants.js";
 import { onLocalStorageChange } from "../../shared/storage.js";
-import { HUB_SORT_MODES, filterHubPackages, sortHubPackages } from "../../shared/file-hub.js";
+import { HUB_SORT_MODES, filterHubPackages, hubPackageUrl, isInstallableHubPackage, sortHubPackages, summarizePack } from "../../shared/file-hub.js";
 import { on, EVENTS } from "../events.js";
-import { fetchHubCatalogue, getHubInstallStatus, installHubPackage, loadHubInstalls } from "../file-hub.js";
+import { fetchHubCatalogue, getHubInstallStatus, installHubPackage, loadHubInstalls, previewHubPackage } from "../file-hub.js";
 import { uninstallPack, undoUninstall } from "../pack-manager.js";
 import { $ } from "./shell.js";
 import { el } from "./dom.js";
@@ -23,6 +23,8 @@ const view = {
   installing: new Set(),
   /** Per-package result line: { text, state }. */
   results: new Map(),
+  /** Contents previews by package id: { open, state: loading|ready|error, version, summary, verified, error }. */
+  previews: new Map(),
   /** Package id whose Update button waits for a second click. */
   confirmingUpdate: "",
 };
@@ -35,6 +37,10 @@ const ACTION_LABELS = {
 };
 
 let elements;
+
+function plural(count, singular, pluralForm = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
+}
 
 function formatSize(bytes) {
   if (!bytes) return "";
@@ -106,6 +112,21 @@ function packageCard(item) {
         installedNote ? el("span", { className: "lazymod-asset-installed", text: installedNote }) : null,
       ]),
       el("div", { className: "lazymod-asset-actions" }, [
+        el("a", {
+          className: "lazymod-btn lazymod-asset-hub",
+          text: "Show in Hub",
+          title: "Open File Hub, filtered to QuickTag packages in this category",
+          attrs: { href: hubPackageUrl(item), target: "_blank", rel: "noopener noreferrer" },
+        }),
+        isInstallableHubPackage(item)
+          ? el("button", {
+              className: "lazymod-btn lazymod-asset-preview",
+              text: view.previews.get(item.id)?.open ? "Hide contents" : "Preview",
+              title: "Show the groups, categories, and tags in this package before installing",
+              attrs: { type: "button", "aria-expanded": String(Boolean(view.previews.get(item.id)?.open)) },
+              on: { click: () => togglePreview(item) },
+            })
+          : null,
         status === "installed" || status === "update"
           ? el("button", {
               className: "lazymod-btn lazymod-asset-uninstall",
@@ -118,6 +139,7 @@ function packageCard(item) {
         actionButton(item, status),
       ]),
     ]),
+    previewBlock(item),
     result
       ? el("div", { className: "lazymod-asset-result", dataset: { state: result.state }, attrs: { role: "status" } }, [
           el("span", { text: result.text }),
@@ -125,6 +147,55 @@ function packageCard(item) {
         ])
       : null,
   ]);
+}
+
+function previewBlock(item) {
+  const preview = view.previews.get(item.id);
+  if (!preview?.open) return null;
+  const block = (children, previewState) => el("div", { className: "lazymod-asset-preview-block", dataset: { state: previewState } }, children);
+  if (preview.state === "loading") return block([el("span", { text: "Loading package contents…" })], "loading");
+  if (preview.state === "error") return block([el("span", { text: `Could not preview: ${preview.error}` })], "error");
+  const { summary } = preview;
+  return block(
+    [
+      el("div", {
+        className: "lazymod-asset-preview-summary",
+        text: `"${summary.name}": ${plural(summary.groupCount, "group")} · ${plural(summary.categoryCount, "category", "categories")} · ${plural(summary.tagCount, "tag")}${preview.verified ? " · SHA-256 verified" : ""}`,
+      }),
+      ...summary.categories.map(({ group, category, count, tags }) =>
+        el("div", { className: "lazymod-asset-preview-category" }, [
+          el("span", { className: "lazymod-asset-preview-path", text: `${group} › ${category} (${count})` }),
+          el("span", { className: "lazymod-asset-preview-tags", text: `${tags.join(", ")}${count > tags.length ? `, +${count - tags.length} more` : ""}` }),
+        ]),
+      ),
+      summary.hiddenCategories ? el("div", { className: "lazymod-asset-preview-more", text: `+${summary.hiddenCategories} more categories` }) : null,
+    ],
+    "ready",
+  );
+}
+
+/** Downloads and validates the package once per version; nothing is saved. */
+async function togglePreview(item) {
+  const current = view.previews.get(item.id);
+  if (current?.open) {
+    view.previews.set(item.id, { ...current, open: false });
+    renderList();
+    return;
+  }
+  if (current && current.state !== "error" && current.version === item.version) {
+    view.previews.set(item.id, { ...current, open: true });
+    renderList();
+    return;
+  }
+  view.previews.set(item.id, { open: true, state: "loading", version: item.version });
+  renderList();
+  try {
+    const { pack, verified } = await previewHubPackage(item);
+    view.previews.set(item.id, { open: view.previews.get(item.id)?.open !== false, state: "ready", version: item.version, summary: summarizePack(pack), verified });
+  } catch (error) {
+    view.previews.set(item.id, { open: true, state: "error", version: item.version, error: error.message });
+  }
+  renderList();
 }
 
 function renderList() {

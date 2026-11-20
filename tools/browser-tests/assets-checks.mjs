@@ -36,6 +36,34 @@ const OPEN_ASSETS = `(() => {
 const clickAction = (id) => `(() => { ${ROOT}.querySelector('#lm-assets-list [data-package-id="${id}"] .lazymod-asset-action').click(); return true; })()`;
 const setControl = (selector, value, type) =>
   `(() => { const control = ${ROOT}.querySelector(${JSON.stringify(selector)}); control.value = ${JSON.stringify(value)}; control.dispatchEvent(new Event(${JSON.stringify(type)}, { bubbles: true })); return true; })()`;
+const CLICK_PREVIEW = (id) => `(() => { ${ROOT}.querySelector('#lm-assets-list [data-package-id="${id}"] .lazymod-asset-preview').click(); return true; })()`;
+const PREVIEW_STATE = (id) => `(() => {
+  const card = ${ROOT}.querySelector('#lm-assets-list [data-package-id="${id}"]');
+  const block = card?.querySelector(".lazymod-asset-preview-block");
+  return block ? { state: block.dataset.state, text: block.textContent, button: card.querySelector(".lazymod-asset-preview").textContent } : { state: "none", button: card?.querySelector(".lazymod-asset-preview")?.textContent };
+})()`;
+const POLISH_STATE = `(() => {
+  const root = ${ROOT};
+  // Label centering: the text box center vs. the button center.
+  const site = root.querySelector("#lm-assets-site");
+  const range = document.createRange();
+  range.selectNodeContents(site);
+  const text = range.getBoundingClientRect();
+  const box = site.getBoundingClientRect();
+  const hub = root.querySelector('#lm-assets-list [data-package-id="good"] .lazymod-asset-hub');
+  const profiles = root.querySelector("#lm-edit-site-configs");
+  const lineHeight = parseFloat(getComputedStyle(profiles).lineHeight) || 16;
+  return {
+    siteLabel: site.textContent.trim(),
+    dx: Math.abs(text.left + text.width / 2 - (box.left + box.width / 2)),
+    dy: Math.abs(text.top + text.height / 2 - (box.top + box.height / 2)),
+    hubHref: hub?.getAttribute("href"),
+    hubTarget: hub?.getAttribute("target"),
+    hubRel: hub?.getAttribute("rel"),
+    profilesLabel: profiles.textContent.trim(),
+    profilesLines: Math.round(profiles.querySelector("span").getBoundingClientRect().height / lineHeight),
+  };
+})()`;
 const CLICK_REFRESH = `(() => { ${ROOT}.querySelector("#lm-assets-refresh").click(); return true; })()`;
 
 const ids = (state) => state.cards.map((card) => card.id);
@@ -66,6 +94,48 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
     { ids: ids(listed), viewOverflow: listed.viewOverflow },
   );
   check("Assets: ZIP packages are shown as not supported", card(listed, "zipped").action === "Not supported" && card(listed, "zipped").disabled, card(listed, "zipped"));
+
+  // Polish: centered Website label, Show in Hub link, short profile button label.
+  const polish = await evaluate(page, POLISH_STATE);
+  check(
+    "Assets: Website label is centered; Show in Hub opens File Hub filtered to QuickTag and the category in a new tab",
+    polish.siteLabel === "Website" &&
+      polish.dx <= 1.5 &&
+      polish.dy <= 1.5 &&
+      polish.hubHref === `${origin}/hub/index.html?app=quicktag&category=tags` &&
+      polish.hubTarget === "_blank" &&
+      /noopener/.test(polish.hubRel),
+    polish,
+  );
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-tab-btn-sites").click(); return true; })()`);
+  const profiles = await evaluate(page, POLISH_STATE);
+  await evaluate(page, OPEN_ASSETS);
+  check('Settings: the profile editor button reads "Edit profiles" on one line', profiles.profilesLabel === "Edit profiles" && profiles.profilesLines === 1, profiles);
+
+  // Contents preview: validated like an install, but nothing is saved.
+  await evaluate(page, CLICK_PREVIEW("good"));
+  const preview = await waitFor(evaluate, page, PREVIEW_STATE("good"), (state) => state.state === "ready" || state.state === "error", 10000);
+  const afterPreview = await evaluate(page, ASSETS_STATE);
+  await evaluate(page, CLICK_PREVIEW("good"));
+  const hidden = await evaluate(page, PREVIEW_STATE("good"));
+  await evaluate(page, CLICK_PREVIEW("tampered"));
+  const tamperedPreview = await waitFor(evaluate, page, PREVIEW_STATE("tampered"), (state) => state.state === "ready" || state.state === "error", 10000);
+  await evaluate(page, CLICK_PREVIEW("tampered"));
+  check(
+    "Assets: Preview shows groups, categories, and tags (verified) without installing; bad files show the error",
+    preview.state === "ready" &&
+      /1 group · 1 category · 2 tags · SHA-256 verified/.test(preview.text) &&
+      /Hub Group › Hub Category \(2\)/.test(preview.text) &&
+      /hub_tag_one, hub_tag_two/.test(preview.text) &&
+      preview.button === "Hide contents" &&
+      card(afterPreview, "good").status === "available" &&
+      !afterPreview.packs.includes("Mock Hub Pack") &&
+      hidden.state === "none" &&
+      hidden.button === "Preview" &&
+      tamperedPreview.state === "error" &&
+      /SHA-256/.test(tamperedPreview.text),
+    { preview, status: card(afterPreview, "good").status, hidden, tamperedPreview },
+  );
 
   // Search (name, author, description), category, sort.
   await evaluate(page, setControl("#lm-assets-search", "alice", "input"));

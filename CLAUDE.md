@@ -56,6 +56,7 @@ scripts/
       dom.js            el()/icon()/button() — the safe way to build UI from JS
       shortcut-recorder.js  reusable "press a shortcut" buttons
       focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
+      focus-layout-editor.js  Customize: move/resize panels, save as new layout
       assets-panel.js   Assets tab (File Hub browse/install)
       pack-browser.js   pack switcher dropdown: search, ghost scroll, uninstall with undo
   background.js         background entry (registers listeners synchronously)
@@ -66,6 +67,7 @@ scripts/
     file-hub.js         File Hub catalogue/pack validation (unsafe keys, limits, sha256)
   editor/               palette editor components
   extension-popup.js, palette-editor.js   page entry modules (<script type="module">)
+docs/                   project documents that are not part of the extension (v1.2.0-todo.html checklist)
 ```
 
 - Feature modules talk through `state.js` and `events.js` instead of importing

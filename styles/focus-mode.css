@@ -274,8 +274,37 @@
   overflow: hidden;
 }
 
+/* Brand mark: QuickTag logo, name, and "Focus Mode" (top-left). */
 #lm-focus-root .lm-focus-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding-right: 10px;
+  border-right: 1px solid var(--lm-border, #253246);
+  white-space: nowrap;
+}
+
+#lm-focus-root .lm-focus-brand-icon {
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
   color: var(--lm-accent, #7cafff);
+  fill: color-mix(in srgb, var(--lm-accent, #7cafff) 25%, transparent);
+}
+
+#lm-focus-root .lm-focus-brand-name {
+  color: var(--lm-text, #e2eaf5);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#lm-focus-root .lm-focus-brand-title {
+  color: var(--lm-accent, #7cafff);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 #lm-focus-root .lm-focus-host,
@@ -672,6 +701,62 @@
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   line-height: 1.5;
   white-space: pre;
+}
+
+/* --- Customize (layout editor, focus-layout-editor.js) --- */
+#lm-focus-root .lm-focus-edit-toolbar {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--lm-border, #253246);
+}
+
+#lm-focus-root .lm-focus-edit-hint {
+  flex: 1 1 200px;
+}
+
+#lm-focus-root .lm-focus-layout-name {
+  flex: 0 1 200px;
+  height: 30px;
+}
+
+#lm-focus-root[data-editing="true"] .lm-focus-panel {
+  outline: 2px dashed color-mix(in srgb, var(--lm-accent, #7cafff) 55%, transparent);
+  outline-offset: -2px;
+}
+
+#lm-focus-root .lm-focus-edit-strip {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 8px;
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-radius: 8px;
+}
+
+#lm-focus-root .lm-focus-edit-label {
+  margin-right: auto;
+  font-size: 12px;
+}
+
+#lm-focus-root .lm-focus-edit-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#lm-focus-root .lm-focus-edit-move,
+#lm-focus-root .lm-focus-edit-size {
+  justify-content: center;
+  min-width: 30px;
+  min-height: 26px;
+  padding: 2px 8px;
+  font-size: 12px;
 }
 
 /* Narrow viewports: stack every panel regardless of the preset. */

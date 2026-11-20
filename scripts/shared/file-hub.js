@@ -166,6 +166,39 @@ const SORTERS = {
   name: byName,
 };
 
+/**
+ * File Hub page for a package. The hub has no per-package address yet, so
+ * this opens its list filtered to QuickTag and the package's category, where
+ * the package is listed. Change only this function when a deep link exists.
+ */
+export function hubPackageUrl(item, hubBaseUrl = FILE_HUB_BASE_URL) {
+  const url = new URL("index.html", hubBaseUrl);
+  url.searchParams.set("app", FILE_HUB.appId);
+  if (item.category) url.searchParams.set("category", item.category);
+  return url.href;
+}
+
+/**
+ * A short outline of a validated pack for previews: groups, categories, tag
+ * counts, and the first tags of each category.
+ */
+export function summarizePack(pack, { categories: maxCategories = 24, tags: maxTags = 12 } = {}) {
+  const groups = Object.entries(pack.groups).map(([group, categories]) => ({ group, categories: Object.entries(categories) }));
+  const summary = { name: pack.name, groupCount: groups.length, categoryCount: 0, tagCount: 0, categories: [], hiddenCategories: 0 };
+  for (const { group, categories } of groups) {
+    for (const [category, tags] of categories) {
+      summary.categoryCount += 1;
+      summary.tagCount += tags.length;
+      if (summary.categories.length < maxCategories) {
+        summary.categories.push({ group, category, count: tags.length, tags: tags.slice(0, maxTags) });
+      } else {
+        summary.hiddenCategories += 1;
+      }
+    }
+  }
+  return summary;
+}
+
 export function sortHubPackages(packages, mode) {
   return [...packages].sort(SORTERS[mode] || SORTERS.updated);
 }

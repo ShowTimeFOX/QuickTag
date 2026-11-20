@@ -10,6 +10,14 @@
   Badges and Raw text views and can be sorted (A–Z, Z–A, added order, by pack
   group), deduplicated, copied as one string, or cleared. The page's tag field
   stays in sync both ways while Live sync is on.
+- A Focus Mode button in the tagger header, next to the ghost mode button, and
+  the QuickTag mark with the "Focus Mode" title in the top-left corner of
+  Focus Mode.
+- Customize in Focus Mode: move panels (swap with a neighbor), make them wider,
+  narrower, taller, or shorter, and save the arrangement as a new layout in the
+  Layout list.
+- Focus Mode scale: follows Settings › Window scale, or a separate scale from
+  75% to 150%.
 - Focus Mode settings: toggle and close shortcuts (defaults `Alt+A` and
   `Esc`; `Esc` closes open menus and dialogs first), and strict shortcut
   capture, which lets QuickTag handle its shortcuts before the page.
@@ -36,6 +44,9 @@
   (no motion with reduced-motion settings).
 - Uninstall with Undo for installed packs on their Assets cards; the card
   offers Install again afterwards.
+- Assets cards: Preview shows a package's groups, categories, and first tags
+  before installing (validated like an install, nothing is saved), and Show
+  in Hub opens File Hub filtered to QuickTag packages in its category.
 - Automated browser tests in `tools/browser-tests/` that load the extension
   into installed Chrome and Firefox (headless, no dependencies) and check the
   tagger, background script, popup, and editor on a plain page and a
@@ -74,6 +85,9 @@
 - Long tags and lists no longer overflow horizontally: tag lists stay within
   the window, chip text wraps, and a side-docked window never exceeds the
   viewport width at larger window scales.
+- Settings › Current page profile: the profile editor button reads "Edit
+  profiles" and no longer wraps; the Assets "Website" button label is
+  centered.
 - Translated the remaining Polish interface text (copy confirmation and the AI
   blacklist editor title) to English.
 - On a fresh install, editing a default tag pack failed with "The selected
@@ -94,6 +108,8 @@
 ### Documentation
 
 - Renamed `project.md` to `PROJECT.md` to match the links in `README.md`.
+- Added `docs/v1.2.0-todo.html`, an interactive checklist of the remaining
+  manual checks, known issues, polish, and release steps.
 - Documented browser loading, `web_accessible_resources`, Firefox CSP
   behavior, and the release and update-metadata workflow in `PROJECT.md`.
 

@@ -1952,8 +1952,14 @@
   gap: 6px;
 }
 
+/* An <a> styled as a button: center its label like the <button>s. */
 #lm-view-assets .lazymod-assets-site {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   text-decoration: none;
+  line-height: 1;
 }
 
 #lm-view-assets .lazymod-assets-search {
@@ -2360,9 +2366,62 @@
 
 .lazymod-asset-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+  min-width: 0;
+}
+
+/* "Show in Hub" is an <a> styled as a button. */
+.lazymod-asset-hub {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* Package contents preview (Assets cards). */
+.lazymod-asset-preview-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  padding: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--lm-bg, #0b0f16);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 7px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.lazymod-asset-preview-block[data-state="error"] {
+  color: var(--lm-danger, #f85149);
+}
+
+.lazymod-asset-preview-summary {
+  color: var(--lm-text, #e2eaf5);
+  font-weight: 600;
+}
+
+.lazymod-asset-preview-category {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lazymod-asset-preview-path {
+  color: var(--lm-accent, #7cafff);
+  overflow-wrap: anywhere;
+}
+
+.lazymod-asset-preview-tags,
+.lazymod-asset-preview-more {
+  color: var(--lm-muted, #91a0b5);
+  overflow-wrap: anywhere;
 }
 
 .lazymod-asset-result {

@@ -14,6 +14,11 @@
           <circle cx="8" cy="8" r="2" />
         </svg>
       </button>
+      <button type="button" class="lazymod-win-btn" id="lm-focus-header" title="Open Focus Mode (Alt + A)" aria-label="Open Focus Mode">
+        <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M2.5 5.5v-3h3m5 0h3v3m0 5v3h-3m-5 0h-3v-3" />
+        </svg>
+      </button>
       <button type="button" class="lazymod-win-btn" id="lm-toggle-body" title="Collapse tagger" aria-label="Collapse tagger" aria-expanded="true">
         <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M3 8h10" />
@@ -249,7 +254,7 @@
             <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
               <path d="m3 11.5-.5 2 2-.5 8-8-1.5-1.5zM9.5 4.5 11 6" />
             </svg>
-            <span>Edit profiles JSON</span>
+            <span>Edit profiles</span>
           </button>
           <button type="button" class="lazymod-btn" id="lm-add-current-site">＋ Add current page profile</button>
         </div>
@@ -397,6 +402,18 @@
             <p>Closes an open menu or dialog first, then exits Focus Mode.</p>
           </div>
           <button type="button" class="lazymod-btn" id="lm-focus-close-shortcut" title="Click, then press a key (Esc cancels recording)">Esc</button>
+        </div>
+        <div class="lazymod-settings-control lazymod-settings-control-separated">
+          <div>
+            <strong>Focus Mode scale</strong>
+            <p>Size of the Focus Mode workspace. By default it follows the window scale.</p>
+            <label class="lazymod-checkbox-option" for="lm-focus-scale-window">
+              <input type="checkbox" id="lm-focus-scale-window" />
+              <span>Match window scale</span>
+            </label>
+          </div>
+          <input type="range" class="lazymod-slider" id="lm-focus-scale" min="0.75" max="1.5" step="0.05" value="1" aria-label="Focus Mode scale" />
+          <output class="lazymod-scale-value" id="lm-focus-scale-value" for="lm-focus-scale">100%</output>
         </div>
         <div class="lazymod-settings-control lazymod-settings-control-separated">
           <div>

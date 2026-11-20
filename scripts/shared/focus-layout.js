@@ -167,3 +167,114 @@ export function isValidFocusLayout(raw) {
     return false;
   }
 }
+
+// --- Layout editing (Focus Mode "Customize") ---
+// Pure functions on a normalized preset; each returns a new preset, or null
+// when the edit is not possible. Results stay valid layouts: swapping two
+// panel names keeps every area a rectangle, and resizing only scales `fr`
+// factors (minimums in minmax() are kept).
+
+const FR_FACTOR = 1.25;
+const FR_RANGE = Object.freeze({ min: 0.25, max: 8 });
+const DIRECTIONS = Object.freeze({ left: [0, -1], right: [0, 1], up: [-1, 0], down: [1, 0] });
+
+/** Top-level tracks of a track list: "minmax(0, 1fr) 2fr" → ["minmax(0, 1fr)", "2fr"]. */
+export function splitTrackList(value) {
+  const tracks = [];
+  let depth = 0;
+  let current = "";
+  for (const char of value.trim()) {
+    if (char === "(") depth += 1;
+    if (char === ")") depth -= 1;
+    if (/\s/.test(char) && depth === 0) {
+      if (current) tracks.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  if (current) tracks.push(current);
+  return tracks;
+}
+
+const areaGrid = (preset) => preset.areas.map((row) => row.split(" "));
+
+/** Row/column bounds of a placed panel, or null. */
+export function panelBounds(preset, panelId) {
+  let box = null;
+  areaGrid(preset).forEach((cells, row) =>
+    cells.forEach((cell, column) => {
+      if (cell !== panelId) return;
+      box ||= { top: row, bottom: row, left: column, right: column };
+      box.top = Math.min(box.top, row);
+      box.bottom = Math.max(box.bottom, row);
+      box.left = Math.min(box.left, column);
+      box.right = Math.max(box.right, column);
+    }),
+  );
+  return box;
+}
+
+/** The visible panel next to `panelId` in a direction (left/right/up/down), or null. */
+export function neighborPanel(preset, panelId, direction) {
+  const box = panelBounds(preset, panelId);
+  const step = DIRECTIONS[direction];
+  if (!box || !step) return null;
+  const grid = areaGrid(preset);
+  const row = step[0] < 0 ? box.top - 1 : step[0] > 0 ? box.bottom + 1 : Math.floor((box.top + box.bottom) / 2);
+  const column = step[1] < 0 ? box.left - 1 : step[1] > 0 ? box.right + 1 : Math.floor((box.left + box.right) / 2);
+  const cell = grid[row]?.[column];
+  return cell && cell !== "." && cell !== panelId && preset.panels[cell]?.visible ? cell : null;
+}
+
+/** Swaps the places of two panels. */
+export function swapPanels(preset, first, second) {
+  if (!first || !second || first === second || !panelBounds(preset, first) || !panelBounds(preset, second)) return null;
+  const areas = areaGrid(preset).map((cells) => cells.map((cell) => (cell === first ? second : cell === second ? first : cell)).join(" "));
+  return { ...structuredClone(preset), areas };
+}
+
+/**
+ * Makes a panel larger (+1) or smaller (-1) along "columns" (width) or
+ * "rows" (height) by scaling the fr factors of the tracks it spans. Not
+ * possible when the panel spans every track, the tracks have no fr factor,
+ * or the list uses repeat().
+ */
+export function resizePanel(preset, panelId, axis, direction) {
+  const box = panelBounds(preset, panelId);
+  if (!box || (axis !== "columns" && axis !== "rows")) return null;
+  const tracks = splitTrackList(preset[axis]);
+  const [start, end] = axis === "columns" ? [box.left, box.right] : [box.top, box.bottom];
+  const count = axis === "columns" ? areaGrid(preset)[0].length : preset.areas.length;
+  if (tracks.length !== count || tracks.some((track) => /^repeat\(/i.test(track)) || end - start + 1 >= count) return null;
+  let changed = false;
+  const next = tracks.map((track, index) => {
+    if (index < start || index > end) return track;
+    return track.replace(/(\d*\.?\d+)fr/i, (match, number) => {
+      const scaled = Math.round(Math.min(FR_RANGE.max, Math.max(FR_RANGE.min, Number(number) * (direction > 0 ? FR_FACTOR : 1 / FR_FACTOR))) * 100) / 100;
+      if (scaled !== Number(number)) changed = true;
+      return `${scaled}fr`;
+    });
+  });
+  return changed ? { ...structuredClone(preset), [axis]: next.join(" ") } : null;
+}
+
+/** A preset id derived from `name` that is not used in `layout` yet. */
+export function uniquePresetId(layout, name) {
+  const base =
+    String(name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 32) || "custom";
+  let id = /^[a-z0-9]/.test(base) ? base : `layout-${base}`.slice(0, 32);
+  for (let suffix = 2; layout.presets[id]; suffix += 1) id = `${base.slice(0, 32)}-${suffix}`;
+  return id;
+}
+
+/** Adds `preset` under a new name and selects it; returns the new layout. */
+export function addPresetCopy(layout, preset, name) {
+  const trimmed = String(name || "").trim().slice(0, 60) || "Custom layout";
+  const presetId = uniquePresetId(layout, trimmed);
+  return normalizeFocusLayout({ ...layout, activePreset: presetId, presets: { ...layout.presets, [presetId]: { ...structuredClone(preset), name: trimmed } } });
+}

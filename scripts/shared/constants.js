@@ -73,11 +73,15 @@ export const DEFAULT_FOCUS_SETTINGS = Object.freeze({
 
 export const DEFAULT_FOCUS_PREFS = Object.freeze({
   liveSync: true,
+  // "window" follows the tagger's Window scale; a number is a fixed scale.
+  scale: "window",
   tagView: "badges",
   imageZoom: "fit",
 });
 export const FOCUS_TAG_VIEWS = Object.freeze(["badges", "raw"]);
 export const FOCUS_IMAGE_ZOOMS = Object.freeze(["fit", "actual"]);
+// Mirrors the min/max of #lm-focus-scale in pages/popup.html.
+export const FOCUS_SCALE_RANGE = Object.freeze({ min: 0.75, max: 1.5 });
 
 export const FALLBACK_SITE_KEY = ".*";
 export const SITE_SELECTOR_KEYS = Object.freeze(["tagInputSelector", "imgSelector", "linkSelector"]);

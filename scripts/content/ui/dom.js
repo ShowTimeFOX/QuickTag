@@ -58,4 +58,6 @@ export const ICONS = Object.freeze({
   fit: "M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10",
   actual: "M3 3h10v10H3zM6.5 6.5h3v3h-3z",
   focus: "M2.5 5.5v-3h3m5 0h3v3m0 5v3h-3m-5 0h-3v-3",
+  // QuickTag brand mark (same as the tagger header).
+  brand: "M9.5 1.5 3.5 8h4L7 14.5 12.5 7h-4z",
 });

@@ -39,7 +39,9 @@ source directory; `manifest.json` contains the shared browser configuration.
   deduplication, copy, and clear, and a full-height palette. The page's tag
   field follows live (two-way) unless Live sync is off. `Esc` closes menus and
   dialogs first, then Focus Mode. Shortcuts, strict capture, and a JSON grid
-  layout with presets are configurable.
+  layout with presets are configurable. A header button next to ghost mode
+  opens it. **Customize** moves and resizes panels and saves arrangements as
+  new layouts. Its scale follows Window scale or a separate setting.
 - **Pack switcher:** The pack selector opens a dropdown panel that searches
   every installed pack (name, File Hub metadata, groups, categories, tags),
   switches packs, and uninstalls them with Undo. Scrolling the list shows a
@@ -138,7 +140,7 @@ if you need help.
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
 | `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-settings.js`. |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
 | `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
@@ -237,7 +239,8 @@ if you need help.
 - Focus Mode stores `lazymod_focus_settings` (toggle and close shortcuts,
   `strictCapture`), `lazymod_focus_layout` (the layout JSON, validated by
   `shared/focus-layout.js`), and `lazymod_focus_prefs` (live sync, tag view,
-  image zoom). With `strictCapture` off, shortcuts are handled by a
+  image zoom, and `scale`: `"window"` to follow Window scale, or a number from
+  0.75 to 1.5). With `strictCapture` off, shortcuts are handled by a
   bubble-phase `document` listener that skips events the page already
   handled; with it on, by a capture-phase `window` listener that stops the
   event. Page listeners registered on `window` in the capture phase before
@@ -245,6 +248,21 @@ if you need help.
   auto-repeat (`event.repeat`): opening Focus Mode moves focus into the
   overlay, so the `keyup` of the same press arrives there and must not toggle
   again.
+- **Focus Mode scale** is CSS `zoom` on `#lm-focus-root`, so text,
+  controls, and gaps scale together while the overlay still fills the
+  viewport (Firefox supports `zoom` since version 126). The tagger window's
+  own scale stays a `transform`. Focus Mode follows the Window scale slider
+  live; only the `scale` pref is adopted from storage changes, so an echo of
+  this tab's own earlier write can never undo a newer view change.
+- **Customize** (`ui/focus-layout-editor.js`) uses pure preset transforms in
+  `shared/focus-layout.js`: `swapPanels` swaps two panel names in `areas`
+  (both stay rectangles), `neighborPanel` finds the panel to swap with in a
+  direction, and `resizePanel` multiplies or divides the `fr` factors of the
+  tracks a panel spans by 1.25 (clamped to 0.25–8; `minmax()` minimums are
+  kept). Tracks without `fr`, `repeat()` lists, and panels spanning every
+  track cannot be resized, and their buttons are disabled. Edits are saved to
+  the active preset; `addPresetCopy` saves a named copy with a unique id.
+  `Esc` leaves Customize before it exits Focus Mode (dismiss stack).
 - The Focus Mode tag model (`content/focus-tags.js`) keeps muted tags in
   memory only. The page's tag field always holds the active tags in list
   order; with live sync on, changes are written immediately and page edits
@@ -277,6 +295,13 @@ if you need help.
     the pack after a second confirmation click.
   - Only `json` packages for `targetApp: "quicktag"` can be installed; other
     file types are listed as not supported.
+  - **Preview** uses the same background download and validation as an
+    install, but saves nothing; the card shows `summarizePack()` (groups,
+    categories, tag counts, the first tags per category). Previews are cached
+    per package version.
+  - **Show in Hub** links to `hubPackageUrl()`. File Hub has no per-package
+    address yet, so it opens the hub list filtered to QuickTag and the
+    package's category.
 - **Pack switcher** (`ui/pack-browser.js`). The Tagging view's pack selector
   is a button (`#lm-pack-switcher`) that opens a dropdown panel, not a native
   `<select>`: browsers close a native select popup whenever an ancestor
