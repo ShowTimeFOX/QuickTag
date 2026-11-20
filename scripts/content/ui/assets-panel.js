@@ -10,7 +10,7 @@ import { on, EVENTS } from "../events.js";
 import { fetchHubCatalogue, getHubInstallStatus, installHubPackage, loadHubInstalls, previewHubPackage } from "../file-hub.js";
 import { uninstallPack, undoUninstall } from "../pack-manager.js";
 import { $ } from "./shell.js";
-import { el } from "./dom.js";
+import { el, icon, ICONS } from "./dom.js";
 
 const view = {
   packages: null,
@@ -112,21 +112,17 @@ function packageCard(item) {
         installedNote ? el("span", { className: "lazymod-asset-installed", text: installedNote }) : null,
       ]),
       el("div", { className: "lazymod-asset-actions" }, [
-        el("a", {
-          className: "lazymod-btn lazymod-asset-hub",
-          text: "Show in Hub",
-          title: "Open File Hub, filtered to QuickTag packages in this category",
-          attrs: { href: hubPackageUrl(item), target: "_blank", rel: "noopener noreferrer" },
-        }),
-        isInstallableHubPackage(item)
-          ? el("button", {
-              className: "lazymod-btn lazymod-asset-preview",
-              text: view.previews.get(item.id)?.open ? "Hide contents" : "Preview",
-              title: "Show the groups, categories, and tags in this package before installing",
-              attrs: { type: "button", "aria-expanded": String(Boolean(view.previews.get(item.id)?.open)) },
-              on: { click: () => togglePreview(item) },
-            })
-          : null,
+        // Compact icon buttons; Install keeps its text label.
+        el(
+          "a",
+          {
+            className: "lazymod-btn lazymod-icon-btn lazymod-asset-hub",
+            title: "Show in Hub: open File Hub filtered to QuickTag packages in this category (new tab)",
+            attrs: { href: hubPackageUrl(item), target: "_blank", rel: "noopener noreferrer", "aria-label": `Show ${item.name} in File Hub` },
+          },
+          [icon(ICONS.external)],
+        ),
+        isInstallableHubPackage(item) ? previewButton(item) : null,
         status === "installed" || status === "update"
           ? el("button", {
               className: "lazymod-btn lazymod-asset-uninstall",
@@ -147,6 +143,21 @@ function packageCard(item) {
         ])
       : null,
   ]);
+}
+
+function previewButton(item) {
+  const open = Boolean(view.previews.get(item.id)?.open);
+  const label = open ? "Hide contents" : "Preview contents";
+  return el(
+    "button",
+    {
+      className: "lazymod-btn lazymod-icon-btn lazymod-asset-preview",
+      title: open ? "Hide contents" : "Preview contents: groups, categories, and tags before installing",
+      attrs: { type: "button", "aria-label": label, "aria-expanded": String(open), "aria-pressed": String(open) },
+      on: { click: () => togglePreview(item) },
+    },
+    [icon(ICONS.eye)],
+  );
 }
 
 function previewBlock(item) {

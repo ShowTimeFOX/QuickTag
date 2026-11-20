@@ -456,8 +456,23 @@
         <div class="lazymod-sub-header lazymod-section-heading">
           <div class="lazymod-title">File Hub</div>
           <div class="lazymod-section-actions">
-            <a class="lazymod-btn lazymod-assets-site" id="lm-assets-site" target="_blank" rel="noopener noreferrer">Website</a>
-            <button type="button" class="lazymod-btn" id="lm-assets-refresh" title="Reload the package list from File Hub">Refresh</button>
+            <a class="lazymod-btn lazymod-assets-site" id="lm-assets-site" target="_blank" rel="noopener noreferrer" title="Open the File Hub website in a new tab">
+              <span>Website</span>
+              <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M9 3h4v4M13 3 7 9M11 9v3.5H3.5v-8H7" />
+              </svg>
+            </a>
+            <button
+              type="button"
+              class="lazymod-btn lazymod-icon-btn"
+              id="lm-assets-refresh"
+              title="Refresh: reload the package list from File Hub"
+              aria-label="Refresh the package list"
+            >
+              <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3 8a5 5 0 0 1 8.5-3.5L13 6M13 2.5V6H9.5M13 8a5 5 0 0 1-8.5 3.5L3 10M3 13.5V10h3.5" />
+              </svg>
+            </button>
           </div>
         </div>
         <p class="lazymod-settings-hint">Community tag packs from File Hub. Installing adds the pack to your tag packs and selects it.</p>

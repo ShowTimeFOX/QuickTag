@@ -1952,14 +1952,45 @@
   gap: 6px;
 }
 
-/* An <a> styled as a button: center its label like the <button>s. */
-#lm-view-assets .lazymod-assets-site {
+/* Buttons and button-styled links with icons in Settings and Assets: icon and
+   label on one line (the icon is display: block), like the Tagging view. */
+#lm-view-sites .lazymod-btn,
+#lm-view-assets .lazymod-btn {
+  /* <a> controls default to content-box; match the <button>s' border-box. */
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  line-height: 1;
   text-align: center;
   text-decoration: none;
-  line-height: 1;
+  white-space: nowrap;
+}
+
+/* File Hub header: Website link and Refresh share one 30px height. */
+#lm-view-assets .lazymod-section-actions .lazymod-btn {
+  height: 30px;
+  min-height: 30px;
+  padding-block: 0;
+}
+
+#lm-view-assets .lazymod-assets-site {
+  padding-inline: 10px;
+}
+
+/* Icon-only buttons (Refresh, card actions); `title` and `aria-label` name them. */
+.lazymod-icon-btn {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+}
+
+.lazymod-asset-preview[aria-pressed="true"] {
+  border-color: var(--lm-accent, #7cafff);
+  color: var(--lm-accent, #7cafff);
 }
 
 #lm-view-assets .lazymod-assets-search {
@@ -2397,14 +2428,6 @@
   justify-content: flex-end;
   gap: 6px;
   min-width: 0;
-}
-
-/* "Show in Hub" is an <a> styled as a button. */
-.lazymod-asset-hub {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
 }
 
 /* Package contents preview (Assets cards). */

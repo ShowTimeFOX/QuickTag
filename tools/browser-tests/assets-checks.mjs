@@ -40,7 +40,7 @@ const CLICK_PREVIEW = (id) => `(() => { ${ROOT}.querySelector('#lm-assets-list [
 const PREVIEW_STATE = (id) => `(() => {
   const card = ${ROOT}.querySelector('#lm-assets-list [data-package-id="${id}"]');
   const block = card?.querySelector(".lazymod-asset-preview-block");
-  return block ? { state: block.dataset.state, text: block.textContent, button: card.querySelector(".lazymod-asset-preview").textContent } : { state: "none", button: card?.querySelector(".lazymod-asset-preview")?.textContent };
+  return block ? { state: block.dataset.state, text: block.textContent, button: card.querySelector(".lazymod-asset-preview").getAttribute("aria-label") } : { state: "none", button: card?.querySelector(".lazymod-asset-preview")?.getAttribute("aria-label") };
 })()`;
 const POLISH_STATE = `(() => {
   const root = ${ROOT};
@@ -53,7 +53,31 @@ const POLISH_STATE = `(() => {
   const hub = root.querySelector('#lm-assets-list [data-package-id="good"] .lazymod-asset-hub');
   const profiles = root.querySelector("#lm-edit-site-configs");
   const lineHeight = parseFloat(getComputedStyle(profiles).lineHeight) || 16;
+  const rectOf = (element) => element.getBoundingClientRect();
+  const center = (rect) => rect.top + rect.height / 2;
+  // An icon-only control: an icon, no visible text, and a name for tooltips and screen readers.
+  const iconOnly = (element) => ({
+    icon: Boolean(element?.querySelector("svg")),
+    text: element?.textContent.trim() || "",
+    label: element?.getAttribute("aria-label") || "",
+    title: element?.getAttribute("title") || "",
+    width: Math.round(element ? rectOf(element).width : 0),
+  });
+  const profilesIcon = profiles.querySelector("svg");
+  const profilesLabel = profiles.querySelector("span");
+  const siteIcon = site.querySelector("svg");
+  const siteText = site.querySelector("span");
+  const preview = root.querySelector('#lm-assets-list [data-package-id="good"] .lazymod-asset-preview');
+  const install = root.querySelector('#lm-assets-list [data-package-id="good"] .lazymod-asset-action');
   return {
+    profilesIconLeft: Boolean(profilesIcon) && rectOf(profilesIcon).right <= rectOf(profilesLabel).left && Math.abs(center(rectOf(profilesIcon)) - center(rectOf(profilesLabel))) <= 2,
+    profilesHeight: Math.round(rectOf(profiles).height),
+    siteIconRight: Boolean(siteIcon) && rectOf(siteIcon).left >= rectOf(siteText).right && Math.abs(center(rectOf(siteIcon)) - center(rectOf(siteText))) <= 2,
+    refresh: iconOnly(root.querySelector("#lm-assets-refresh")),
+    headerHeights: [site, root.querySelector("#lm-assets-refresh")].map((element) => Math.round(rectOf(element).height)),
+    hub: iconOnly(hub),
+    preview: iconOnly(preview),
+    installText: install?.textContent.trim(),
     siteLabel: site.textContent.trim(),
     dx: Math.abs(text.left + text.width / 2 - (box.left + box.width / 2)),
     dy: Math.abs(text.top + text.height / 2 - (box.top + box.height / 2)),
@@ -100,6 +124,7 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
   check(
     "Assets: Website label is centered; Show in Hub opens File Hub filtered to QuickTag and the category in a new tab",
     polish.siteLabel === "Website" &&
+      polish.siteIconRight &&
       polish.dx <= 1.5 &&
       polish.dy <= 1.5 &&
       polish.hubHref === `${origin}/hub/index.html?app=quicktag&category=tags` &&
@@ -107,10 +132,20 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
       /noopener/.test(polish.hubRel),
     polish,
   );
+  const compact = (control) => control.icon && !control.text && Boolean(control.label) && Boolean(control.title) && control.width <= 32;
+  check(
+    "Assets: Refresh, Show in Hub, and Preview are compact icon buttons with tooltips and labels; Install keeps its text",
+    compact(polish.refresh) && compact(polish.hub) && compact(polish.preview) && polish.installText === "Install" && polish.headerHeights[0] === polish.headerHeights[1],
+    { headerHeights: polish.headerHeights, refresh: polish.refresh, hub: polish.hub, preview: polish.preview, install: polish.installText },
+  );
   await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-tab-btn-sites").click(); return true; })()`);
   const profiles = await evaluate(page, POLISH_STATE);
   await evaluate(page, OPEN_ASSETS);
-  check('Settings: the profile editor button reads "Edit profiles" on one line', profiles.profilesLabel === "Edit profiles" && profiles.profilesLines === 1, profiles);
+  check(
+    'Settings: "Edit profiles" has its icon on the left, on one line',
+    profiles.profilesLabel === "Edit profiles" && profiles.profilesLines === 1 && profiles.profilesIconLeft && profiles.profilesHeight <= 34,
+    { label: profiles.profilesLabel, lines: profiles.profilesLines, iconLeft: profiles.profilesIconLeft, height: profiles.profilesHeight },
+  );
 
   // Contents preview: validated like an install, but nothing is saved.
   await evaluate(page, CLICK_PREVIEW("good"));
@@ -131,7 +166,7 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
       card(afterPreview, "good").status === "available" &&
       !afterPreview.packs.includes("Mock Hub Pack") &&
       hidden.state === "none" &&
-      hidden.button === "Preview" &&
+      hidden.button === "Preview contents" &&
       tamperedPreview.state === "error" &&
       /SHA-256/.test(tamperedPreview.text),
     { preview, status: card(afterPreview, "good").status, hidden, tamperedPreview },

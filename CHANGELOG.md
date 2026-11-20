@@ -95,8 +95,10 @@
   the window, chip text wraps, and a side-docked window never exceeds the
   viewport width at larger window scales.
 - Settings › Current page profile: the profile editor button reads "Edit
-  profiles" and no longer wraps; the Assets "Website" button label is
-  centered.
+  profiles", with its icon on the left on one line (the icon used to sit on
+  its own line above the label in Settings and Assets).
+- Assets: the Website link has an open-in-new-tab icon; Refresh, Show in Hub,
+  and Preview are compact icon buttons with tooltips and accessible names.
 - Translated the remaining Polish interface text (copy confirmation and the AI
   blacklist editor title) to English.
 - On a fresh install, editing a default tag pack failed with "The selected

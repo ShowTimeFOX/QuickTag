@@ -166,9 +166,11 @@ or description, filter by category, and sort by update date, newest, score,
 downloads, or name. **Install** adds the pack to your tag packs and selects
 it; an installed pack shows **Installed**, and **Update** appears when File
 Hub has a newer version (select it twice: updating replaces the installed
-pack, including your edits to it). **Preview** shows the groups, categories,
-and first tags of a package before you install it; **Show in Hub** opens File
-Hub filtered to QuickTag packages in the same category.
+pack, including your edits to it). On each card, the eye button (**Preview
+contents**) shows the groups, categories, and first tags of a package before
+you install it, and the open-in-new-tab button (**Show in Hub**) opens File
+Hub filtered to QuickTag packages in the same category. The refresh button
+next to **Website** reloads the package list.
 
 QuickTag contacts File Hub only when you open the Assets tab or select
 **Refresh**. Package files are checked before anything is saved: at most
