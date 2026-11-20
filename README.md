@@ -72,10 +72,11 @@ larger and named in an overlay, and the others are dimmed. Scrolling the list
 never scrolls the tagger or the page. `Esc` or a click outside closes the
 list.
 
-**Uninstall** removes a pack right away and offers **Undo** for 10 seconds.
-If the removed pack was selected, the next pack in the list is selected. A
-pack installed from File Hub can also be uninstalled from its card in the
-**Assets** tab, which then offers **Install** again.
+**Uninstall** (in the list, or **Uninstall** in the palette header for the
+selected pack) removes a pack right away and offers **Undo** for 10 seconds
+below the pack selector. If the removed pack was selected, the next pack in
+the list is selected. A pack installed from File Hub can also be uninstalled
+from its card in the **Assets** tab, which then offers **Install** again.
 
 ## Focus Mode
 
@@ -115,9 +116,12 @@ move it (it swaps places with the panel in that direction) and **Width −/+**
 and **Height −/+** buttons; a size button is disabled where the layout cannot
 change that size (for example, a panel that spans the full width). Changes are
 saved to the selected layout right away. Type a name and select **Save as new
-layout** to add the arrangement to the **Layout** list. `Esc` or **Done**
-stops customizing. **Reset to defaults** in the layout JSON dialog restores
-the built-in layouts.
+layout** to add the arrangement to the **Layout** list. **Delete layout**
+removes the selected saved layout (select it twice) and shows **Default**
+again; the built-in layouts cannot be deleted. `Esc` or **Done** stops
+customizing. **Reset to defaults** in the layout JSON dialog restores the
+built-in layouts. Messages appear as a small notice at the bottom of the
+screen and never move the panels.
 
 ### Focus Mode layout JSON
 

@@ -2163,6 +2163,31 @@
   transform: rotate(180deg);
 }
 
+/* Uninstall result (Undo) and errors, under the pack switcher. */
+.lazymod-pack-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 5px 8px;
+  background: color-mix(in srgb, var(--lm-success, #3fb950) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lm-success, #3fb950) 35%, transparent);
+  border-radius: 7px;
+  color: var(--lm-success, #3fb950);
+  font-size: 11px;
+}
+
+.lazymod-pack-notice[hidden] {
+  display: none;
+}
+
+.lazymod-pack-notice[data-state="error"] {
+  background: color-mix(in srgb, var(--lm-danger, #f85149) 10%, transparent);
+  border-color: color-mix(in srgb, var(--lm-danger, #f85149) 35%, transparent);
+  color: var(--lm-danger, #f85149);
+}
+
 .lazymod-pack-browser {
   display: flex;
   flex-direction: column;

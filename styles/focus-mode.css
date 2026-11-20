@@ -334,8 +334,33 @@
   margin-left: auto;
 }
 
-#lm-focus-root .lm-focus-topbar .lm-focus-status {
-  flex: 1 0 100%;
+/* Status toast (focus-mode.js setStatus): an overlay, so messages never
+   resize the top bar or shift panels. */
+#lm-focus-root .lm-focus-toast {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  z-index: 20;
+  max-width: min(640px, calc(100% - 48px));
+  padding: 8px 14px;
+  background: var(--lm-surface-raised, #172131);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 9px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  color: var(--lm-text, #e2eaf5);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+#lm-focus-root .lm-focus-toast[data-state="success"] {
+  border-color: color-mix(in srgb, var(--lm-success, #3fb950) 55%, transparent);
+}
+
+#lm-focus-root .lm-focus-toast[data-state="error"] {
+  border-color: var(--lm-danger, #f85149);
+  color: var(--lm-danger, #f85149);
 }
 
 /* --- Image --- */

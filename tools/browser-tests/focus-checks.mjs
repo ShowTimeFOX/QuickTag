@@ -137,6 +137,7 @@ const EDIT_STATE = `(() => {
     imageRight: button("image", '[data-direction="right"]')?.disabled === false,
     imageLeft: button("image", '[data-direction="left"]')?.disabled === false,
     topbarWider: button("topbar", '[data-axis="columns"][data-step="1"]')?.disabled === false,
+    deleteLayout: (() => { const button = focus.querySelector(".lm-focus-delete-layout"); return { label: button.textContent.trim(), disabled: button.disabled }; })(),
     options: [...focus.querySelectorAll(".lm-focus-preset option")].map((option) => option.value + ":" + option.textContent),
     preset: focus.querySelector(".lm-focus-preset").value,
     open: !focus.hidden,
@@ -358,6 +359,22 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   await evaluate(page, `(() => { const input = ${FOCUS}.querySelector(".lm-focus-layout-name"); input.value = "Test Layout"; return true; })()`);
   await evaluate(page, clickButtonByText("Save as new layout"));
   const saved = await waitFor(evaluate, page, EDIT_STATE, (state) => state.preset === "test-layout");
+  // Delete the saved layout (two clicks); built-in layouts cannot be deleted.
+  await evaluate(page, clickIn(".lm-focus-delete-layout"));
+  const armed = await evaluate(page, EDIT_STATE);
+  await evaluate(page, clickIn(".lm-focus-delete-layout"));
+  const deleted = await waitFor(evaluate, page, EDIT_STATE, (state) => !state.options.includes("test-layout:Test Layout"));
+  check(
+    "Focus layout: a saved layout can be deleted (asks once more) and falls back to Default; built-in layouts cannot",
+    editing.deleteLayout.disabled &&
+      !saved.deleteLayout.disabled &&
+      armed.deleteLayout.label === "Confirm delete" &&
+      armed.options.includes("test-layout:Test Layout") &&
+      deleted.preset === "default" &&
+      deleted.deleteLayout.disabled &&
+      deleted.deleteLayout.label === "Delete layout",
+    { before: editing.deleteLayout, saved: saved.deleteLayout, armed: armed.deleteLayout, deleted: { preset: deleted.preset, options: deleted.options, button: deleted.deleteLayout } },
+  );
   await evaluate(page, press(FOCUS, ESC));
   const leftEditing = await evaluate(page, EDIT_STATE);
   check(
@@ -377,6 +394,20 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   );
   await evaluate(page, `(() => { const select = ${FOCUS}.querySelector(".lm-focus-preset"); select.value = "default"; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`);
   await waitFor(evaluate, page, FOCUS_STATE, (state) => state.preset === "default");
+
+  // Notices are a toast overlay: showing one moves no panel or control.
+  const PANEL_RECTS = `(() => [...${FOCUS}.querySelectorAll(".lm-focus-grid > .lm-focus-panel, .lm-focus-preset, .lm-focus-exit")].map((element) => { const r = element.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)].join(","); }).join("|"))()`;
+  const TOAST = `(() => { const toast = ${FOCUS}.querySelector(".lm-focus-toast"); return { visible: !toast.hidden && toast.getBoundingClientRect().height > 0, text: toast.textContent, pointerEvents: getComputedStyle(toast).pointerEvents, position: getComputedStyle(toast).position }; })()`;
+  // Deduplicate with no duplicates shows a notice and changes nothing else.
+  const rectsBefore = await evaluate(page, PANEL_RECTS);
+  await evaluate(page, clickButtonByText("Deduplicate"));
+  const toast = await waitFor(evaluate, page, TOAST, (state) => state.visible && /duplicate/.test(state.text));
+  const rectsWithToast = await evaluate(page, PANEL_RECTS);
+  check(
+    "Focus Mode notices: shown as a toast overlay that shifts no panels or controls",
+    toast.visible && /duplicate/.test(toast.text) && toast.position === "absolute" && toast.pointerEvents === "none" && rectsWithToast === rectsBefore,
+    { toast, rectsBefore, rectsWithToast },
+  );
 
   // Scale: a fixed Focus Mode scale, then following Settings › Window scale.
   const unscaled = await evaluate(page, SCALE_STATE);

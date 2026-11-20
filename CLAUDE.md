@@ -65,8 +65,9 @@ scripts/
     constants.js        storage keys, message actions, defaults — single source of truth
     shortcuts.js        shortcut match/format (macOS Option fallback); focus-layout.js = layout JSON schema
     file-hub.js         File Hub catalogue/pack validation (unsafe keys, limits, sha256)
+    ghost-scroll.js     ghost scroll (pack switcher, About demo); DOM only inside its functions
   editor/               palette editor components
-  extension-popup.js, palette-editor.js   page entry modules (<script type="module">)
+  extension-popup.js, palette-editor.js, about-page.js   page entry modules (<script type="module">)
 docs/                   project documents that are not part of the extension (v1.2.0-todo.html checklist)
 ```
 

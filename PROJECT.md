@@ -135,13 +135,14 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `data/character.json` | Default Character Portrait tag pack. |
 | `data/anthro.json` | Default Anthro & Fursuit tag pack. |
-| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema and presets), `file-hub.js` (File Hub catalogue and pack validation), and `validation.js`. No DOM access at module level. |
+| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema, presets, and layout editing), `file-hub.js` (File Hub catalogue and pack validation), `ghost-scroll.js` (ghost scroll for the pack switcher and the About page demo), and `validation.js`. No DOM access at module level. |
 | `scripts/background.js` | Background entry module; registers event listeners. |
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
 | `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
 | `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
+| `scripts/about-page.js` | About page module: the "What's new" demos, built on the shared ghost scroll, Focus Mode layout transforms, and pack summary, with sample data and no storage access. |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
 | `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
 | `pages/extension-popup.html` | Toolbar popup for global visibility, ComfyUI status, updates, and the About link. |
@@ -263,6 +264,12 @@ if you need help.
   track cannot be resized, and their buttons are disabled. Edits are saved to
   the active preset; `addPresetCopy` saves a named copy with a unique id.
   `Esc` leaves Customize before it exits Focus Mode (dismiss stack).
+  `removePreset` deletes a user-saved preset (two clicks on **Delete
+  layout**); built-in presets (`BUILT_IN_PRESET_IDS`) and the last preset are
+  kept, and an active deleted preset falls back to `default`.
+- **Focus Mode notices** (`setStatus`) are a toast on `#lm-focus-root`
+  (absolute, `pointer-events: none`), so a message never resizes the top bar
+  or moves panels; errors stay 8 seconds, other messages 3.5 seconds.
 - The Focus Mode tag model (`content/focus-tags.js`) keeps muted tags in
   memory only. The page's tag field always holds the active tags in list
   order; with live sync on, changes are written immediately and page edits
@@ -320,11 +327,16 @@ if you need help.
   else none); it returns what `restorePack` needs to put the pack back at the
   same position. Uninstall also removes the pack's `lazymod_hub_packages`
   record, and Undo restores both. Uninstall acts immediately; Undo is offered
-  for 10 seconds instead of a blocking confirmation. Views learn about changes
+  for 10 seconds instead of a blocking confirmation. It is the only way to
+  remove a pack: the palette header's **Uninstall** (formerly a Delete
+  button with `confirm()`) runs the same flow on the selected pack, and its
+  Undo appears in `#lm-pack-notice` under the switcher, visible whether the
+  list is open or not. Views learn about changes
   through `paletteChanged` (sources `packs` and `assets`) and storage change
   events. Search matches case-insensitive substrings against a per-pack index
   cached by pack object (a `WeakMap`), and never modifies packs.
-- **Ghost scroll.** The pack list listens only to its own passive `scroll`
+- **Ghost scroll** (`shared/ghost-scroll.js`, also used by the About page
+  demo). The pack list listens only to its own passive `scroll`
   events (no wheel handlers, no `preventDefault`), so page scrolling is never
   captured; `overscroll-behavior: contain` keeps a wheel at the end of the
   list from scrolling the tagger body. While it scrolls, the item nearest the list's center is marked,

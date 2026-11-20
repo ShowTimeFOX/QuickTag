@@ -3,7 +3,7 @@
 // the result as a new named layout. Edits are saved to the active preset in
 // the layout JSON (`lazymod_focus_layout`); the pure transforms live in
 // shared/focus-layout.js. Receives the controller's `api`.
-import { FOCUS_PANELS, addPresetCopy, neighborPanel, resizePanel, swapPanels } from "../../shared/focus-layout.js";
+import { FOCUS_PANELS, addPresetCopy, isCustomPreset, neighborPanel, removePreset, resizePanel, swapPanels } from "../../shared/focus-layout.js";
 import { el, button, ICONS } from "./dom.js";
 
 const PANEL_LABELS = Object.freeze({ topbar: "Top bar", image: "Image", tags: "Tags", palette: "Palette" });
@@ -13,6 +13,8 @@ const MOVES = Object.freeze([
   ["down", "↓", "Move down"],
   ["right", "→", "Move right"],
 ]);
+/** How long "Confirm delete" stays armed after the first click. */
+const DELETE_CONFIRM_MS = 4000;
 const SIZES = Object.freeze([
   ["columns", -1, "Width −", "Narrower"],
   ["columns", 1, "Width +", "Wider"],
@@ -23,6 +25,8 @@ const SIZES = Object.freeze([
 export function createLayoutEditor(api, panels) {
   let editing = false;
   let unregisterDismiss = null;
+  let deleteArmedFor = "";
+  let deleteTimer = null;
 
   const customizeButton = button("Customize", {
     iconPath: ICONS.layout,
@@ -35,9 +39,10 @@ export function createLayoutEditor(api, panels) {
     attrs: { type: "text", maxlength: "60", placeholder: "Layout name", "aria-label": "Name for the new layout", spellcheck: "false" },
   });
   const saveButton = button("Save as new layout", { iconPath: ICONS.download, className: "lazymod-btn lazymod-btn-accent", title: "Add the current arrangement to the layout list" });
+  const deleteButton = button("Delete layout", { iconPath: ICONS.trash, className: "lazymod-btn lazymod-btn-danger lm-focus-delete-layout" });
   const doneButton = button("Done", { className: "lazymod-btn", title: "Stop customizing (Esc)" });
   const hint = el("span", { className: "lm-focus-hint lm-focus-edit-hint" });
-  const toolbar = el("div", { className: "lm-focus-edit-toolbar", hidden: true }, [hint, nameInput, saveButton, doneButton]);
+  const toolbar = el("div", { className: "lm-focus-edit-toolbar", hidden: true }, [hint, nameInput, saveButton, deleteButton, doneButton]);
 
   const strips = {};
   FOCUS_PANELS.forEach((panelId) => {
@@ -98,11 +103,47 @@ export function createLayoutEditor(api, panels) {
     }
   }
 
+  function disarmDelete() {
+    clearTimeout(deleteTimer);
+    deleteArmedFor = "";
+  }
+
+  /** Deletes the active user-saved layout; the first click only asks. */
+  async function deleteActive() {
+    const { layout, preset } = activePreset();
+    const presetId = layout.activePreset;
+    if (!isCustomPreset(presetId)) return;
+    if (deleteArmedFor !== presetId) {
+      deleteArmedFor = presetId;
+      clearTimeout(deleteTimer);
+      deleteTimer = setTimeout(() => {
+        disarmDelete();
+        refresh();
+      }, DELETE_CONFIRM_MS);
+      refresh();
+      return;
+    }
+    disarmDelete();
+    const next = removePreset(layout, presetId);
+    if (!next) return;
+    try {
+      await api.saveLayout(next);
+      api.setStatus(`Deleted layout "${preset.name}". Showing "${next.presets[next.activePreset].name}".`, "success");
+    } catch (error) {
+      api.setStatus(`Could not delete the layout: ${error.message}`, "error");
+    }
+  }
+
   /** Updates which moves and sizes are possible for the active preset. */
   function refresh() {
     if (!editing) return;
-    const { preset } = activePreset();
+    const { layout, preset } = activePreset();
     hint.textContent = `Changes are saved to "${preset.name}".`;
+    const custom = isCustomPreset(layout.activePreset);
+    if (deleteArmedFor && deleteArmedFor !== layout.activePreset) disarmDelete();
+    deleteButton.disabled = !custom;
+    deleteButton.lastElementChild.textContent = deleteArmedFor ? "Confirm delete" : "Delete layout";
+    deleteButton.title = custom ? `Delete "${preset.name}" (click twice)` : "Built-in layouts cannot be deleted; Reset to defaults restores them";
     FOCUS_PANELS.forEach((panelId) => {
       const { moveButtons, sizeButtons } = strips[panelId];
       moveButtons.forEach((moveButton) => {
@@ -132,6 +173,7 @@ export function createLayoutEditor(api, panels) {
       unregisterDismiss = api.pushDismissable(() => setEditing(false));
       refresh();
     } else {
+      disarmDelete();
       unregisterDismiss?.();
       unregisterDismiss = null;
     }
@@ -140,6 +182,7 @@ export function createLayoutEditor(api, panels) {
   customizeButton.addEventListener("click", () => setEditing(!editing));
   doneButton.addEventListener("click", () => setEditing(false));
   saveButton.addEventListener("click", saveAsNew);
+  deleteButton.addEventListener("click", deleteActive);
   nameInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") saveAsNew();
   });

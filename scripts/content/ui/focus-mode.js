@@ -54,6 +54,7 @@ const focus = {
   panels: {},
   dialog: null,
   editor: null,
+  toast: null,
   dismissStack: [],
   previousOverflow: null,
   previousFocus: null,
@@ -178,14 +179,20 @@ function applyLayout() {
   focus.editor?.refresh();
 }
 
-// --- Status line (top bar) ---
+// --- Status toast ---
+// An overlay on the Focus Mode root (absolute, pointer-events: none), so a
+// message never resizes the top bar or shifts the panels and controls.
+
+const STATUS_MS = { info: 3500, success: 3500, error: 8000 };
 
 function setStatus(message, statusState = "info") {
-  focus.panels.topbar?.setStatus(message, statusState);
+  const { toast } = focus;
+  if (!toast) return;
   clearTimeout(focus.statusTimer);
-  if (message && statusState !== "error") {
-    focus.statusTimer = setTimeout(() => focus.panels.topbar?.setStatus("", "info"), 3500);
-  }
+  toast.textContent = message;
+  toast.dataset.state = statusState;
+  toast.hidden = !message;
+  if (message) focus.statusTimer = setTimeout(() => setStatus(""), STATUS_MS[statusState] || STATUS_MS.info);
 }
 
 // --- Dismiss stack (menus and dialogs close before Focus Mode exits) ---
@@ -261,7 +268,8 @@ function buildOverlay() {
   focus.panels.topbar.actions.prepend(focus.editor.button);
   focus.panels.topbar.element.appendChild(focus.editor.toolbar);
   focus.dialog = createLayoutDialog(api);
-  focus.root.appendChild(focus.dialog.element);
+  focus.toast = el("div", { className: "lm-focus-toast", hidden: true, attrs: { role: "status", "aria-live": "polite" } });
+  focus.root.append(focus.dialog.element, focus.toast);
 
   ["keydown", "keyup", "keypress"].forEach((type) => focus.root.addEventListener(type, isolateKeyboard));
 }

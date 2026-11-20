@@ -20,67 +20,70 @@ import { emit, on, EVENTS } from "../events.js";
 import { selectPack } from "../palettes.js";
 import { loadHubInstalls } from "../file-hub.js";
 import { hubRecordsByPack, searchInstalledPacks, uninstallPack, undoUninstall } from "../pack-manager.js";
+import { attachGhostScroll } from "../../shared/ghost-scroll.js";
 import { $, shell } from "./shell.js";
 import { el } from "./dom.js";
 
 const SOURCE = "packs";
-/** Idle time after the last scroll event before the ghost overlay fades out. */
-export const GHOST_IDLE_MS = 500;
 const UNDO_TIMEOUT_MS = 10000;
 const MATCH_LABELS = { source: "", group: "group", category: "category", tag: "tag" };
 
 const view = {
   open: false,
   hubRecords: new Map(),
-  ghostTimer: null,
   undoTimer: null,
   removal: null,
   busy: false,
   /** Last error, shown until the next action or search. */
   error: "",
-  /** scrollTop the code set last; its scroll event is not a user scroll. */
-  programmaticScrollTop: null,
 };
 
 let elements;
+let ghostScroll;
 
 function plural(count, word) {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
 
-// --- Status line (counts, undo) ---
+// --- Panel status (counts) and the notice under the switcher (undo, errors) ---
 
 function clearUndo() {
   clearTimeout(view.undoTimer);
   view.removal = null;
 }
 
-function setStatus(children, statusState = "info") {
-  elements.status.replaceChildren(...children);
-  elements.status.dataset.state = statusState;
+function renderCountStatus(shown, total, query) {
+  let text;
+  if (!total) text = "No tag packs installed. Import one or install one from Assets.";
+  else if (!shown) text = `No pack matches "${query}".`;
+  else text = query ? `${shown} of ${plural(total, "pack")}` : plural(total, "pack");
+  elements.status.textContent = text;
 }
 
-function renderCountStatus(shown, total, query) {
-  if (view.removal) return;
-  if (view.error) {
-    setStatus([el("span", { text: view.error })], "error");
-    return;
+/**
+ * Undo and errors show under the switcher, so they stay visible whether the
+ * uninstall came from the list or the palette header's Uninstall button.
+ */
+function renderNotice() {
+  const { notice } = elements;
+  if (view.removal) {
+    notice.replaceChildren(
+      el("span", { text: `Uninstalled "${view.removal.pack.name}".` }),
+      el("button", { className: "lazymod-btn lazymod-pack-undo", id: "lm-pack-undo", text: "Undo", attrs: { type: "button", disabled: view.busy }, on: { click: handleUndo } }),
+    );
+    notice.dataset.state = "success";
+  } else if (view.error) {
+    notice.replaceChildren(el("span", { text: view.error }));
+    notice.dataset.state = "error";
+  } else {
+    notice.replaceChildren();
   }
-  if (!total) setStatus([el("span", { text: "No tag packs installed. Import one or install one from Assets." })]);
-  else if (!shown) setStatus([el("span", { text: `No pack matches "${query}".` })]);
-  else setStatus([el("span", { text: query ? `${shown} of ${plural(total, "pack")}` : plural(total, "pack") })]);
+  notice.hidden = !view.removal && !view.error;
 }
 
 function showUndo(removal) {
   clearUndo();
   view.removal = removal;
-  setStatus(
-    [
-      el("span", { text: `Uninstalled "${removal.pack.name}".` }),
-      el("button", { className: "lazymod-btn lazymod-pack-undo", id: "lm-pack-undo", text: "Undo", attrs: { type: "button" }, on: { click: handleUndo } }),
-    ],
-    "success",
-  );
   view.undoTimer = setTimeout(() => {
     view.removal = null;
     render();
@@ -126,12 +129,15 @@ function render() {
   const activePack = packs[state.paletteData?.activePackId];
   elements.current.textContent = activePack ? activePack.name : "No tag packs";
   elements.toggle.title = activePack ? `${activePack.name}: switch, search, or uninstall tag packs` : "No tag packs installed";
+  elements.uninstall.disabled = !activePack || view.busy;
+  elements.uninstall.title = activePack ? `Uninstall ${activePack.name} (Undo is available for 10 seconds)` : "No tag pack to uninstall";
   const query = elements.search.value;
   const results = searchInstalledPacks(query, view.hubRecords);
   elements.list.replaceChildren(...results.map(packRow));
   elements.list.dataset.total = String(Object.keys(packs).length);
   renderCountStatus(results.length, Object.keys(packs).length, query.trim());
-  endGhostScroll();
+  renderNotice();
+  ghostScroll.end();
 }
 
 async function refreshHubRecords() {
@@ -143,56 +149,13 @@ async function refreshHubRecords() {
   render();
 }
 
-// --- Ghost scroll ---
+// --- Ghost scroll (shared/ghost-scroll.js) ---
 
-function updateCenteredItem() {
-  const items = [...elements.list.children];
-  if (!items.length) return;
-  const listRect = elements.list.getBoundingClientRect();
-  const centerY = listRect.top + listRect.height / 2;
-  let centered = items[0];
-  let bestDistance = Infinity;
-  for (const item of items) {
-    const rect = item.getBoundingClientRect();
-    const distance = Math.abs(rect.top + rect.height / 2 - centerY);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      centered = item;
-    }
-  }
-  items.forEach((item) => item.classList.toggle("is-centered", item === centered));
-  const name = centered.querySelector(".lazymod-pack-item-name")?.textContent || "";
-  elements.ghost.replaceChildren(
-    el("span", { className: "lazymod-pack-ghost-name", text: name }),
-    el("span", { className: "lazymod-pack-ghost-position", text: `${items.indexOf(centered) + 1} / ${items.length}` }),
-  );
-}
-
-/** Scrolls the list from code (open, search) without triggering ghost scroll. */
-function setListScrollTop(value) {
-  const list = elements.list;
-  const target = Math.round(Math.max(0, Math.min(value, list.scrollHeight - list.clientHeight)));
-  if (Math.abs(list.scrollTop - target) < 1) return;
-  view.programmaticScrollTop = target;
-  list.scrollTop = target;
-}
-
-function handleListScroll() {
-  const expected = view.programmaticScrollTop;
-  view.programmaticScrollTop = null;
-  if (expected !== null && Math.abs(elements.list.scrollTop - expected) <= 1) return;
-  updateCenteredItem();
-  elements.list.classList.add("is-ghost-scrolling");
-  elements.ghost.dataset.visible = "true";
-  clearTimeout(view.ghostTimer);
-  view.ghostTimer = setTimeout(endGhostScroll, GHOST_IDLE_MS);
-}
-
-function endGhostScroll() {
-  clearTimeout(view.ghostTimer);
-  elements.list.classList.remove("is-ghost-scrolling");
-  elements.ghost.dataset.visible = "false";
-  elements.list.querySelectorAll(".is-centered").forEach((item) => item.classList.remove("is-centered"));
+function renderGhost(item, index, total) {
+  return [
+    el("span", { className: "lazymod-pack-ghost-name", text: item.querySelector(".lazymod-pack-item-name")?.textContent || "" }),
+    el("span", { className: "lazymod-pack-ghost-position", text: `${index + 1} / ${total}` }),
+  ];
 }
 
 // --- Actions ---
@@ -245,7 +208,7 @@ async function handleUndo() {
 function revealActiveRow() {
   const row = elements.list.querySelector(".lazymod-pack-item.active");
   if (!row) return;
-  setListScrollTop(row.offsetTop - (elements.list.clientHeight - row.offsetHeight) / 2);
+  ghostScroll.setScrollTop(row.offsetTop - (elements.list.clientHeight - row.offsetHeight) / 2);
 }
 
 function handleOutsidePointer(event) {
@@ -260,7 +223,7 @@ function setOpen(open, { restoreFocus = false } = {}) {
   elements.toggle.setAttribute("aria-expanded", String(open));
   if (!open) {
     document.removeEventListener("pointerdown", handleOutsidePointer, true);
-    endGhostScroll();
+    ghostScroll.end();
     if (restoreFocus) elements.toggle.focus({ preventScroll: true });
     return;
   }
@@ -307,8 +270,10 @@ export function initPackBrowser() {
     list: $("#lm-pack-list"),
     ghost: $("#lm-pack-ghost"),
     status: $("#lm-pack-status"),
+    notice: $("#lm-pack-notice"),
+    uninstall: $("#lm-uninstall-pack"),
   };
-  elements.ghost.dataset.visible = "false";
+  ghostScroll = attachGhostScroll({ list: elements.list, ghost: elements.ghost, renderGhost });
   elements.browser.dataset.busy = "false";
 
   elements.toggle.addEventListener("click", () => setOpen(!view.open));
@@ -321,7 +286,7 @@ export function initPackBrowser() {
   elements.browser.addEventListener("keydown", handlePanelKeydown);
   elements.search.addEventListener("input", () => {
     view.error = "";
-    setListScrollTop(0);
+    ghostScroll.setScrollTop(0);
     render();
   });
   elements.search.addEventListener("keydown", (event) => {
@@ -330,7 +295,10 @@ export function initPackBrowser() {
     elements.search.value = "";
     render();
   });
-  elements.list.addEventListener("scroll", handleListScroll, { passive: true });
+  // The palette header's Uninstall button acts on the selected pack.
+  elements.uninstall.addEventListener("click", () => {
+    if (state.paletteData?.activePackId && state.paletteData.packs[state.paletteData.activePackId]) handleUninstall(state.paletteData.activePackId);
+  });
   on(EVENTS.extensionHidden, () => setOpen(false));
   refreshHubRecords();
 

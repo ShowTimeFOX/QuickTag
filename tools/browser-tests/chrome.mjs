@@ -8,6 +8,7 @@ import { runLayoutFixChecks } from "./checks.mjs";
 import { runFocusModeChecks } from "./focus-checks.mjs";
 import { runAssetsChecks } from "./assets-checks.mjs";
 import { runPackBrowserChecks } from "./pack-checks.mjs";
+import { runAboutChecks } from "./about-checks.mjs";
 
 const chromeExe = browserPath("chrome");
 const profileDir = makeTempDir("chrome-profile");
@@ -240,6 +241,12 @@ try {
   check("Global toggle on shows tagger again", shownDisplay === "", shownDisplay);
 
   // Editor modes
+  await runAboutChecks({
+    openAbout: () => openTab(`chrome-extension://${extensionId}/pages/about.html`, "about"),
+    evaluate: (handle, expression) => evaluate(handle.sessionId, expression),
+    check,
+  });
+
   const editorUrl = (query) => `chrome-extension://${extensionId}/pages/palette-editor.html?${query}`;
   const palette = await openTab(editorUrl("packId=default-character"), "editor-palette");
   const paletteState = await waitFor(palette.sessionId, PROBES.editorState, (state) => state?.status === "Ready");

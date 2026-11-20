@@ -6,6 +6,8 @@
     <meta name="theme-color" content="#0b0f16" />
     <title>QuickTag LazyMod — About</title>
     <link rel="stylesheet" href="../styles/about.css" />
+    <!-- Interactive demos for "What's new" (extension pages allow only packaged scripts). -->
+    <script type="module" src="../scripts/about-page.js"></script>
   </head>
   <body>
     <main class="page-shell">
@@ -17,7 +19,7 @@
             <span class="brand-muted">LazyMod</span>
           </span>
         </a>
-        <span class="version">Extension guide</span>
+        <span class="version">Extension guide · v1.2</span>
         <div class="hero-copy" id="top">
           <p class="eyebrow">TAG FASTER</p>
           <h1>Tag images faster, right where you browse.</h1>
@@ -26,7 +28,13 @@
             ComfyUI.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#comfyui">
+            <a class="button button-primary" href="#whats-new">
+              What's new in 1.2
+              <svg class="link-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 3v10M4.5 9 8 12.5 11.5 9" />
+              </svg>
+            </a>
+            <a class="button" href="#comfyui">
               Set up AI analysis
               <svg class="link-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M8 3v10M4.5 9 8 12.5 11.5 9" />
@@ -41,6 +49,7 @@
           </div>
         </div>
         <nav class="page-nav" aria-label="Table of contents">
+          <a href="#whats-new">What's new</a>
           <a href="#features">Features</a>
           <a href="#comfyui">ComfyUI CLI</a>
           <a href="#wd14">WD14 Tagger</a>
@@ -48,6 +57,122 @@
           <a href="#troubleshooting">Troubleshooting</a>
         </nav>
       </header>
+
+      <section class="section" id="whats-new">
+        <div class="section-heading">
+          <p class="eyebrow">NEW IN 1.2</p>
+          <h2>What's new</h2>
+          <p>Three upgrades for big tag libraries and long tagging sessions. The demos run right on this page with the extension's own code and change nothing in your setup.</p>
+        </div>
+        <div class="showcase-list">
+          <article class="showcase" id="showcase-switcher">
+            <div class="showcase-copy">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16"><path d="M7 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm3.5-1.5 3 3" /></svg>
+              </span>
+              <h3>Pack switcher with deep search</h3>
+              <p>
+                The tag pack selector in the Tagging tab opens a list of every installed pack, local and from File Hub. Type to find a pack by its name or by
+                any group, category, or tag inside it.
+              </p>
+              <ul class="showcase-points">
+                <li><strong>Ghost scroll:</strong> while you scroll, the pack in the middle is shown larger and named in an overlay.</li>
+                <li><strong>Uninstall with Undo:</strong> packs are removed right away, with Undo for 10 seconds, here and in Assets.</li>
+                <li><strong>Keyboard:</strong> arrow keys move between packs, Esc or a click outside closes the list.</li>
+              </ul>
+            </div>
+            <div class="demo" aria-label="Pack switcher demo">
+              <input type="search" class="demo-input" id="demo-pack-search" placeholder="Try “wolf”, “rain”, or “Lighting”" aria-label="Search the demo packs" autocomplete="off" />
+              <div class="demo-list-wrap">
+                <div class="demo-list" id="demo-pack-list" role="list" tabindex="0" aria-label="Demo tag packs"></div>
+                <div class="demo-ghost" id="demo-pack-ghost" aria-hidden="true"></div>
+              </div>
+              <p class="demo-caption" id="demo-pack-status" role="status" aria-live="polite">Scroll the list to see ghost scroll.</p>
+            </div>
+          </article>
+
+          <article class="showcase" id="showcase-focus">
+            <div class="showcase-copy">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16"><path d="M2.5 5.5v-3h3m5 0h3v3m0 5v3h-3m-5 0h-3v-3" /></svg>
+              </span>
+              <h3>Focus Mode you can arrange</h3>
+              <p>
+                Open Focus Mode with Alt+A or the button next to ghost mode. Select <strong>Customize</strong> to move panels (each swaps places with its
+                neighbor) and make them wider, narrower, taller, or shorter.
+              </p>
+              <ul class="showcase-points">
+                <li><strong>Saved layouts:</strong> save an arrangement under a name, pick it from the Layout list, or delete it again.</li>
+                <li><strong>Scale:</strong> Focus Mode follows Settings › Window scale, or gets its own scale from 75% to 150%.</li>
+                <li><strong>Calm notices:</strong> messages appear as a small toast and never shift the panels.</li>
+              </ul>
+            </div>
+            <div class="demo" aria-label="Focus Mode layout demo">
+              <div class="demo-toolbar" role="group" aria-label="Layout demo controls">
+                <button type="button" class="demo-button" data-action="swap">Swap image ↔ palette</button>
+                <button type="button" class="demo-button" data-action="wider">Image wider</button>
+                <button type="button" class="demo-button" data-action="taller">Tags taller</button>
+                <button type="button" class="demo-button" data-action="reset">Reset</button>
+              </div>
+              <div class="demo-stage">
+                <div class="demo-grid" id="demo-focus-grid">
+                  <div class="demo-panel demo-panel-topbar" data-panel="topbar">
+                    <svg class="demo-brand" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 1.5 3.5 8h4L7 14.5 12.5 7h-4z" /></svg>
+                    <strong>QuickTag</strong>
+                    <span class="demo-brand-title">Focus Mode</span>
+                  </div>
+                  <div class="demo-panel" data-panel="image">Image</div>
+                  <div class="demo-panel" data-panel="tags">Tags</div>
+                  <div class="demo-panel" data-panel="palette">Palette</div>
+                </div>
+              </div>
+              <label class="demo-scale">
+                <span>Scale</span>
+                <input type="range" id="demo-focus-scale" min="0.75" max="1.5" step="0.05" value="1" />
+                <output id="demo-focus-scale-value" for="demo-focus-scale">100%</output>
+              </label>
+              <p class="demo-caption demo-code" id="demo-focus-status" role="status" aria-live="polite">Use the buttons to rearrange the layout.</p>
+            </div>
+          </article>
+
+          <article class="showcase" id="showcase-assets">
+            <div class="showcase-copy">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16"><path d="M2.5 5 8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5 8 7.5 13.5 5M8 7.5v6" /></svg>
+              </span>
+              <h3>Assets: community packs from File Hub</h3>
+              <p>
+                The <strong>Assets</strong> tab lists the QuickTag tag packs on
+                <a class="text-link-inline" href="https://showtimefox-file-hub.pages.dev/" target="_blank" rel="noreferrer">File Hub</a>. Search, filter by
+                category, sort, and install a pack with one click; Update appears when a newer version is published.
+              </p>
+              <ul class="showcase-points">
+                <li><strong>Preview:</strong> see the groups, categories, and tags inside a package before installing.</li>
+                <li><strong>Safe installs:</strong> files are checked against their SHA-256 checksum, limited to 2 MB, and validated.</li>
+                <li><strong>Private by default:</strong> File Hub is contacted only when you open the Assets tab.</li>
+              </ul>
+            </div>
+            <div class="demo" aria-label="Assets demo">
+              <div class="demo-card">
+                <div class="demo-card-head">
+                  <strong>Weather &amp; Sky Pack</strong>
+                  <span class="demo-badge">1.0.0</span>
+                </div>
+                <p class="demo-card-meta">by demo · tags · JSON · 1.2 KB</p>
+                <p class="demo-card-description">Skies, weather, and light for outdoor scenes.</p>
+                <div class="demo-card-actions">
+                  <a class="demo-button" href="https://showtimefox-file-hub.pages.dev/index.html?app=quicktag" target="_blank" rel="noreferrer">Show in Hub</a>
+                  <button type="button" class="demo-button" id="demo-asset-preview" aria-expanded="false">Preview</button>
+                  <button type="button" class="demo-button demo-button-danger" id="demo-asset-uninstall" hidden>Uninstall</button>
+                  <button type="button" class="demo-button demo-button-primary" id="demo-asset-install">Install</button>
+                </div>
+                <div class="demo-preview" id="demo-asset-contents" hidden></div>
+                <p class="demo-caption" id="demo-asset-status" role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <section class="section" id="features">
         <div class="section-heading">
@@ -90,7 +215,7 @@
             <h3>Focus Mode · Alt+A</h3>
             <p>
               A full-screen workspace with the page image, your tag list, and the palette side by side. Mute tags without deleting them, sort, deduplicate, or
-              edit them as text; the page's tag field follows live. Esc closes menus first, then Focus Mode. Shortcuts and the JSON layout are set in Settings.
+              edit them as text; the page's tag field follows live. Customize and save layouts, and set the scale. Esc closes menus first, then Focus Mode.
             </p>
           </article>
           <article class="card">
@@ -101,8 +226,28 @@
             </span>
             <h3>Import, export, and editing</h3>
             <p>
-              Import and export JSON palettes, edit them in the editor or in the more readable easyJson mode, and remove palettes you no longer need. Settings
-              also let you back up or restore your full QuickTag configuration. The built-in starter palette is protected.
+              Import and export JSON palettes and edit them in the editor or in the more readable easyJson mode. Uninstall packs you no longer need, with Undo
+              for 10 seconds. Settings also let you back up or restore your full QuickTag configuration.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16"><path d="M7 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm3.5-1.5 3 3" /></svg>
+            </span>
+            <h3>Pack switcher</h3>
+            <p>
+              Switch tag packs from one list that searches pack names, groups, categories, and tags, with ghost scroll for fast scanning and Uninstall with
+              Undo.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16"><path d="M2.5 5 8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5 8 7.5 13.5 5M8 7.5v6" /></svg>
+            </span>
+            <h3>Assets · File Hub</h3>
+            <p>
+              Browse community tag packs, preview their contents, and install, update, or uninstall them. Downloads are verified with SHA-256 before anything
+              is saved.
             </p>
           </article>
           <article class="card">
@@ -397,6 +542,7 @@ comfy install</code></pre>
         <span>QuickTag LazyMod</span>
         <a href="https://showtimefox.github.io/" target="_blank" rel="noreferrer">Website</a>
         <a href="https://github.com/ShowTimeFOX/QuickTag" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://showtimefox-file-hub.pages.dev/" target="_blank" rel="noreferrer">File Hub</a>
         <a href="https://github.com/pythongosssss/ComfyUI-WD14-Tagger" target="_blank" rel="noreferrer">ComfyUI-WD14-Tagger</a>
         <a href="https://github.com/Comfy-Org/comfy-cli" target="_blank" rel="noreferrer">comfy-cli</a>
       </footer>

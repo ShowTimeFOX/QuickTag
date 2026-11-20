@@ -44,6 +44,10 @@
   (no motion with reduced-motion settings).
 - Uninstall with Undo for installed packs on their Assets cards; the card
   offers Install again afterwards.
+- Delete layout in Focus Mode Customize removes a saved layout (built-in
+  layouts are kept) and shows Default again.
+- The About page starts with "What's new": the pack switcher, Focus Mode
+  customization and scale, and Assets, each with a small interactive demo.
 - Assets cards: Preview shows a package's groups, categories, and first tags
   before installing (validated like an install, nothing is saved), and Show
   in Hub opens File Hub filtered to QuickTag packages in its category.
@@ -70,6 +74,11 @@
 - Storage keys, message actions, and defaults are defined once in
   `scripts/shared/constants.js` instead of being repeated across scripts.
 - Replaced the remaining `innerHTML` assignments with `replaceChildren()`.
+- The palette header's Delete button is now Uninstall: packs are removed the
+  same way everywhere, right away with Undo for 10 seconds, instead of after
+  a confirmation dialog.
+- About page: updated feature cards (pack switcher, Assets, Focus Mode) and
+  removed the outdated note that the starter palette cannot be deleted.
 - Imported tag packs skip groups and categories named `__proto__`,
   `constructor`, or `prototype`.
 - The tag counter now also updates when the page's tag field is edited

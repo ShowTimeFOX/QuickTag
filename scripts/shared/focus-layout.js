@@ -278,3 +278,24 @@ export function addPresetCopy(layout, preset, name) {
   const presetId = uniquePresetId(layout, trimmed);
   return normalizeFocusLayout({ ...layout, activePreset: presetId, presets: { ...layout.presets, [presetId]: { ...structuredClone(preset), name: trimmed } } });
 }
+
+/** Ids of the built-in presets; they cannot be deleted (Reset to defaults restores them). */
+export const BUILT_IN_PRESET_IDS = Object.freeze(Object.keys(DEFAULT_FOCUS_LAYOUT.presets));
+
+export function isCustomPreset(presetId) {
+  return !BUILT_IN_PRESET_IDS.includes(presetId);
+}
+
+/**
+ * Removes a user-saved preset. If it was active, "default" (or the first
+ * remaining built-in, else the first remaining preset) becomes active.
+ * Returns null for built-in presets and for the last remaining preset.
+ */
+export function removePreset(layout, presetId) {
+  if (!layout.presets[presetId] || !isCustomPreset(presetId) || Object.keys(layout.presets).length < 2) return null;
+  const presets = { ...layout.presets };
+  delete presets[presetId];
+  const remaining = Object.keys(presets);
+  const fallback = presets.default ? "default" : remaining.find((id) => !isCustomPreset(id)) || remaining[0];
+  return normalizeFocusLayout({ ...layout, presets, activePreset: layout.activePreset === presetId ? fallback : layout.activePreset });
+}

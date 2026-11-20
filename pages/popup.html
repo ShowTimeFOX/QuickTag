@@ -111,11 +111,11 @@
               </svg>
               <span>Edit</span>
             </button>
-            <button type="button" class="lazymod-btn lazymod-btn-danger" id="lm-delete-pack" title="Delete current palette">
+            <button type="button" class="lazymod-btn lazymod-btn-danger" id="lm-uninstall-pack" title="Uninstall the selected pack (Undo is available)">
               <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M3 4.5h10M6 4.5v-2h4v2m2 0-.6 9H4.6l-.6-9m2.5 2.5v4m3-4v4" />
               </svg>
-              <span>Delete</span>
+              <span>Uninstall</span>
             </button>
           </div>
           <input type="file" id="lm-pack-file" accept=".json,application/json" hidden />
@@ -136,6 +136,8 @@
             </svg>
           </button>
         </div>
+        <!-- Uninstall result with Undo, and errors (scripts/content/ui/pack-browser.js) -->
+        <div class="lazymod-pack-notice" id="lm-pack-notice" role="status" aria-live="polite" hidden></div>
         <!-- Pack switcher dropdown (scripts/content/ui/pack-browser.js) -->
         <div class="lazymod-pack-browser" id="lm-pack-browser" hidden>
           <input

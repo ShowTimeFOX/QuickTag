@@ -21,7 +21,6 @@ export function createFocusTopbar(api) {
   const reloadButton = button("Reload from page", { iconPath: ICONS.sync, title: "Replace the Focus Mode list with the page's current tags" });
   const layoutButton = button("Layout", { iconPath: ICONS.layout, title: "View, edit, import, or export the layout JSON" });
   const exitButton = button("Exit", { iconPath: ICONS.close, className: "lazymod-btn lm-focus-exit", title: "Exit Focus Mode" });
-  const status = el("div", { className: "lm-focus-status", attrs: { role: "status", "aria-live": "polite" }, hidden: true });
   // The controller adds the layout editor's Customize button here.
   const actions = el("div", { className: "lm-focus-topbar-group lm-focus-topbar-end" }, [layoutButton, exitButton]);
 
@@ -38,7 +37,6 @@ export function createFocusTopbar(api) {
     el("label", { className: "lm-focus-topbar-group" }, [el("span", { className: "lm-focus-label", text: "Layout" }), presetSelect]),
     el("div", { className: "lm-focus-topbar-group" }, [counts, liveSyncLabel, dirtyNote, applyButton, reloadButton]),
     actions,
-    status,
   ]);
 
   function refresh() {
@@ -89,10 +87,6 @@ export function createFocusTopbar(api) {
       );
       presetSelect.value = layout.activePreset;
     },
-    setStatus(message, statusState) {
-      status.textContent = message;
-      status.dataset.state = statusState;
-      status.hidden = !message;
-    },
+
   };
 }

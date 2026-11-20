@@ -7,7 +7,6 @@ import { emit, on, EVENTS } from "../events.js";
 import { addTagToMain, getMainTags, isEditableTarget, setMainTags } from "../page.js";
 import { requestExtensionPage } from "../messaging.js";
 import {
-  deleteActivePack,
   exportActivePack,
   getActivePack,
   getVisiblePaletteTags,
@@ -133,10 +132,8 @@ function renderPaletteView() {
   paletteData.packs = paletteData.packs || {};
   // The pack switcher (pack-browser.js) renders the pack list itself.
 
+  // #lm-uninstall-pack belongs to the pack switcher (pack-browser.js).
   const activePack = getActivePack();
-  const deletePackButton = $("#lm-delete-pack");
-  deletePackButton.disabled = !activePack;
-  deletePackButton.title = activePack ? `Delete ${activePack.name}` : "No tag pack to delete";
   $("#lm-edit-pack").disabled = !activePack;
   $("#lm-export-pack").disabled = !activePack;
 
@@ -265,22 +262,6 @@ function handleTypeToSearch(event) {
 
 // --- Pack controls ---
 
-async function handleDeletePack() {
-  const pack = getActivePack();
-  if (!pack) {
-    alert("Could not delete palette: the active palette does not exist.");
-    return;
-  }
-  if (!confirm(`Delete the palette "${pack.name}"? This action cannot be undone.`)) return;
-  try {
-    await deleteActivePack();
-    renderPalettePanel();
-  } catch (error) {
-    console.error(`${LOG_PREFIX} Could not delete palette:`, error);
-    alert(`Could not delete palette: ${error.message}`);
-  }
-}
-
 async function handleImportPack(event) {
   // The input is in the shadow root: browsers clear event.target after
   // dispatch, so keep a reference for the reset after the await.
@@ -330,7 +311,6 @@ export function initPalettePanel() {
     attachScrollArrows(scroller);
   });
 
-  $("#lm-delete-pack").onclick = handleDeletePack;
   $("#lm-import-pack").onclick = () => $("#lm-pack-file").click();
   $("#lm-pack-file").onchange = handleImportPack;
   $("#lm-export-pack").onclick = exportActivePack;

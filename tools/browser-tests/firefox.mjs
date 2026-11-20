@@ -10,6 +10,7 @@ import { runLayoutFixChecks } from "./checks.mjs";
 import { runFocusModeChecks } from "./focus-checks.mjs";
 import { runAssetsChecks } from "./assets-checks.mjs";
 import { runPackBrowserChecks } from "./pack-checks.mjs";
+import { runAboutChecks } from "./about-checks.mjs";
 
 const firefoxExe = browserPath("firefox");
 const profileDir = makeTempDir("firefox-profile");
@@ -211,6 +212,8 @@ try {
   await evaluate(popup, PROBES.clickGlobalToggle);
   const shownDisplay = await waitFor(plain, PROBES.hostDisplay, (display) => display === "");
   check("Global toggle on shows tagger again", shownDisplay === "", shownDisplay);
+
+  await runAboutChecks({ openAbout: () => openExtensionPage("pages/about.html"), evaluate, check });
 
   const editorUrl = (query) => `${base}/pages/palette-editor.html?${query}`;
   const palette = await openExtensionPage(`pages/palette-editor.html?packId=default-character`);

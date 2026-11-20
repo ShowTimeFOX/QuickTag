@@ -48,6 +48,10 @@ const PACK_STATE = `(() => {
     status: status.textContent,
     statusState: status.dataset.state || "",
     hasUndo: Boolean(root.querySelector("#lm-pack-undo")),
+    notice: root.querySelector("#lm-pack-notice").hidden ? "" : root.querySelector("#lm-pack-notice").textContent,
+    noticeVisible: root.querySelector("#lm-pack-notice").getBoundingClientRect().height > 0,
+    headerUninstall: (() => { const button = root.querySelector("#lm-uninstall-pack"); return { label: button.textContent.trim(), disabled: button.disabled }; })(),
+    hasDeleteButton: Boolean(root.querySelector("#lm-delete-pack")),
     idle: root.querySelector("#lm-pack-browser").dataset.busy === "false",
     // The list is rendered while closed too; without a search it holds every pack.
     options: items.map((item) => item.querySelector(".lazymod-pack-item-name").textContent),
@@ -240,9 +244,15 @@ export async function runPackBrowserChecks(adapters) {
   const neighbor = idle.items[idle.items.findIndex((item) => item.id === target) + 1].name;
   await evaluate(page, clickInRow(target, ".lazymod-pack-item-select"));
   const selected = await waitFor(evaluate, page, PACK_STATE, (state) => state.activePack === "Ghost Pack 05" && !state.open);
-  await evaluate(page, OPEN_SWITCHER);
-  await evaluate(page, clickInRow(target, ".lazymod-pack-uninstall"));
+  // The palette header's Uninstall (formerly Delete) uses the same flow; its
+  // Undo shows under the switcher while the list is closed.
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-uninstall-pack").click(); return true; })()`);
   const removed = await waitFor(evaluate, page, PACK_STATE, (state) => state.hasUndo && state.idle);
+  check(
+    "Uninstall (header button): no Delete/confirm left; Undo shows under the closed switcher",
+    selected.headerUninstall.label === "Uninstall" && !selected.hasDeleteButton && !removed.open && removed.noticeVisible && /Uninstalled "Ghost Pack 05"\.Undo/.test(removed.notice),
+    { headerUninstall: selected.headerUninstall, hasDeleteButton: selected.hasDeleteButton, open: removed.open, notice: removed.notice },
+  );
   check(
     "Uninstall: removing the active pack selects its neighbor and updates the selector and list",
     selected.activePack === "Ghost Pack 05" &&
@@ -251,14 +261,14 @@ export async function runPackBrowserChecks(adapters) {
       removed.activePack === neighbor &&
       removed.items.find((item) => item.active)?.name === neighbor &&
       removed.chips > 0 &&
-      /Uninstalled "Ghost Pack 05"/.test(removed.status),
-    { activePack: removed.activePack, neighbor, status: removed.status },
+      /Uninstalled "Ghost Pack 05"/.test(removed.notice),
+    { activePack: removed.activePack, neighbor, notice: removed.notice },
   );
   await evaluate(page, CLICK_UNDO);
   const restored = await waitFor(evaluate, page, PACK_STATE, (state) => state.options.includes("Ghost Pack 05"));
   check(
     "Uninstall: Undo restores the pack at its position and reselects it",
-    restored.activePack === "Ghost Pack 05" && restored.options.join() === selected.options.join() && !restored.hasUndo,
+    restored.activePack === "Ghost Pack 05" && restored.options.join() === selected.options.join() && !restored.hasUndo && !restored.notice,
     { activePack: restored.activePack },
   );
 
@@ -300,8 +310,8 @@ export async function runPackBrowserChecks(adapters) {
   const back = await waitFor(evaluate, page, PACK_STATE, (next) => next.items.length === 1);
   check(
     "Uninstall: removing the last pack shows an empty state; Undo restores it as the active pack",
-    empty.activePack === "No tag packs" && empty.total === 0 && empty.chips === 0 && back.activePack === back.items[0].name && back.items[0].id === "default-character" && back.chips > 0,
-    { empty: { options: empty.options, status: empty.status }, back: { activePack: back.activePack, items: back.items } },
+    empty.activePack === "No tag packs" && empty.total === 0 && empty.chips === 0 && empty.headerUninstall.disabled && back.activePack === back.items[0].name && back.items[0].id === "default-character" && back.chips > 0,
+    { empty: { options: empty.options, status: empty.status, headerUninstall: empty.headerUninstall }, back: { activePack: back.activePack, items: back.items } },
   );
 
   // Last (it leaves a second tab in front): a palette write in another tab

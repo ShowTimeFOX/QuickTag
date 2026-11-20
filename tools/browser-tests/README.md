@@ -36,7 +36,7 @@ $env:FIREFOX_PATH = "C:\path\to\firefox.exe"
 | File | Purpose |
 | --- | --- |
 | `pages.mjs` | Local HTTP server with a plain page, a strict-CSP page (`default-src 'none'` and Trusted Types), tall and wide SVG images for the Focus Mode Fit checks, and a mock File Hub under `/hub/` (`hubState` lets checks change versions and fail requests), plus the probe expressions evaluated in pages. |
-| `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs`, `pack-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab, pack browser). `pack-checks.mjs` runs after the Assets checks (it uses the installed mock packs) and ends with only the `default-character` pack, which the editor check opens. |
+| `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs`, `pack-checks.mjs`, `about-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab, pack browser, About page demos). `pack-checks.mjs` runs after the Assets checks (it uses the installed mock packs) and ends with only the `default-character` pack, which the editor check opens. |
 | `chrome.mjs` | Starts Chrome with `--remote-debugging-pipe --enable-unsafe-extension-debugging` and loads the test copy with the DevTools `Extensions.loadUnpacked` command (branded Chrome no longer accepts `--load-extension`). |
 | `firefox.mjs` | Starts Firefox with WebDriver BiDi and installs a temporary add-on with `webExtension.install`. |
 | `pointer` adapter | Both runners pass real (trusted) mouse clicks and wheel input to the checks: DevTools `Input.dispatchMouseEvent` in Chrome, BiDi `input.performActions` in Firefox. The pack switcher checks use it. |
@@ -48,7 +48,7 @@ $env:FIREFOX_PATH = "C:\path\to\firefox.exe"
   contact the live File Hub. Passing an extension directory as the first
   argument loads it unchanged (its Assets checks then fail without the mock).
 - Firefox's BiDi refuses direct navigation to `moz-extension://` pages, so
-  the Firefox copy's manifest also lists `pages/extension-popup.html` and `pages/palette-editor.html` as
+  the Firefox copy's manifest also lists `pages/extension-popup.html`, `pages/palette-editor.html`, and `pages/about.html` as
   web-accessible. A test page then navigates to them. The copy is created in
   the OS temp directory and deleted afterwards; the repository manifest is
   never changed. Evaluating scripts in extension pages also requires

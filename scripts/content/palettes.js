@@ -146,13 +146,6 @@ export function selectCategory(categoryName) {
   savePaletteData();
 }
 
-/** Deletes the active pack and activates the first remaining one. Throws. */
-export async function deleteActivePack() {
-  const packs = { ...state.paletteData.packs };
-  delete packs[state.paletteData.activePackId];
-  await commitPaletteData(withActivePack(packs, Object.keys(packs)[0] || ""));
-}
-
 /** Imports a pack from a JSON file and activates it. Throws on invalid JSON. */
 export async function importPackFile(file) {
   const pack = normalizePalettePack(JSON.parse(await file.text()), file.name.replace(/\.json$/i, ""));
