@@ -26,6 +26,14 @@
   are limited to 2 MB, are checked against the published SHA-256 checksum, and
   must be valid tag pack JSON without `__proto__`, `constructor`, or
   `prototype` keys. File Hub is contacted only when the tab is opened.
+- Pack browser (**Browse** next to the tag pack selector): search every
+  installed pack by name, File Hub version, or group, category, and tag names;
+  switch packs; and uninstall packs with Undo. If the selected pack is
+  uninstalled, the next one is selected. While the list scrolls, the pack in
+  the middle is shown larger in a "ghost" overlay and the others are dimmed
+  (no motion with reduced-motion settings).
+- Uninstall with Undo for installed packs on their Assets cards; the card
+  offers Install again afterwards.
 - Automated browser tests in `tools/browser-tests/` that load the extension
   into installed Chrome and Firefox (headless, no dependencies) and check the
   tagger, background script, popup, and editor on a plain page and a
@@ -75,6 +83,8 @@
   and the AI "Add all" button showed on load, and the theme stylesheet could
   stay blocked. The tagger template no longer uses inline style attributes,
   and theme styles are inserted with their content.
+- Importing a tag pack threw an error after the import and did not reset the
+  file picker, so selecting the same file again did nothing.
 - Opening the legacy `builtin-import` pack, whose `data/import.json` is no
   longer bundled, now shows a clear error in both browsers instead of
   "Failed to fetch" or "The operation was aborted".

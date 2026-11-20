@@ -115,8 +115,39 @@
           </div>
           <input type="file" id="lm-pack-file" accept=".json,application/json" hidden />
         </div>
-        <div class="lazymod-sub-header">
+        <div class="lazymod-sub-header lazymod-pack-row">
           <select class="lazymod-input" id="lm-pack-select" aria-label="JSON package"></select>
+          <button
+            type="button"
+            class="lazymod-btn"
+            id="lm-pack-browse"
+            aria-expanded="false"
+            aria-controls="lm-pack-browser"
+            title="Search, browse, and uninstall tag packs"
+          >
+            <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M7 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm3.5-1.5 3 3" />
+            </svg>
+            <span>Browse</span>
+          </button>
+        </div>
+        <!-- Pack browser (scripts/content/ui/pack-browser.js) -->
+        <div class="lazymod-pack-browser" id="lm-pack-browser" hidden>
+          <input
+            type="search"
+            class="lazymod-input lazymod-pack-search"
+            id="lm-pack-search"
+            placeholder="Find a pack by name, group, category, or tag"
+            aria-label="Search installed tag packs"
+            aria-controls="lm-pack-list"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <div class="lazymod-pack-list-wrap">
+            <div class="lazymod-pack-list" id="lm-pack-list" role="list" aria-label="Installed tag packs" tabindex="0"></div>
+            <div class="lazymod-pack-ghost" id="lm-pack-ghost" aria-hidden="true"></div>
+          </div>
+          <div class="lazymod-pack-status" id="lm-pack-status" role="status" aria-live="polite"></div>
         </div>
         <div class="lazymod-sub-header lazymod-section-heading">
           <div class="lazymod-title">Folder groups</div>

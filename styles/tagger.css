@@ -2112,3 +2112,246 @@
 .lazymod-asset-result[data-state="error"] {
   color: var(--lm-danger, #f85149);
 }
+
+/* --- Pack browser and ghost scroll (scripts/content/ui/pack-browser.js) --- */
+.lazymod-pack-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lazymod-pack-row #lm-pack-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lazymod-pack-row #lm-pack-browse {
+  flex: 0 0 auto;
+}
+
+#lm-pack-browse[aria-expanded="true"] {
+  border-color: var(--lm-accent, #7cafff);
+  color: var(--lm-accent, #7cafff);
+}
+
+.lazymod-pack-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 6px 0 10px;
+}
+
+.lazymod-pack-browser[hidden] {
+  display: none;
+}
+
+.lazymod-pack-search {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.lazymod-pack-list-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.lazymod-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 228px;
+  padding: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Ghost scroll must never move the scroll position itself. */
+  overflow-anchor: none;
+  background: var(--lm-bg, #0b0f16);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 8px;
+}
+
+.lazymod-pack-list:focus-visible {
+  outline: 2px solid var(--lm-accent, #7cafff);
+  outline-offset: 1px;
+}
+
+.lazymod-pack-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.lazymod-pack-item.active {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-color: color-mix(in srgb, var(--lm-accent, #7cafff) 40%, transparent);
+}
+
+.lazymod-pack-item-select {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  margin: 0;
+  padding: 5px 7px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--lm-text, #e2eaf5);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lazymod-pack-item-select:hover {
+  background: color-mix(in srgb, var(--lm-accent, #7cafff) 8%, transparent);
+}
+
+.lazymod-pack-item-name {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform-origin: left center;
+  transition: transform 0.15s ease;
+}
+
+.lazymod-pack-item-meta,
+.lazymod-pack-item-match {
+  overflow: hidden;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lazymod-pack-item-match {
+  color: var(--lm-accent, #7cafff);
+}
+
+.lazymod-pack-uninstall {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.lazymod-pack-uninstall:hover:not(:disabled) {
+  color: var(--lm-danger, #f85149);
+  opacity: 1;
+}
+
+/* Ghost scroll: while the list scrolls, neighbors dim and the centered pack
+   is shown larger, with its name in a fading overlay. Sizes change with
+   transform only: a layout change would move the scroll position, fire
+   another scroll event, and keep the overlay from fading. */
+.lazymod-pack-list.is-ghost-scrolling .lazymod-pack-item {
+  opacity: 0.42;
+}
+
+.lazymod-pack-list.is-ghost-scrolling .lazymod-pack-item-name {
+  transform: scale(0.92);
+}
+
+.lazymod-pack-list.is-ghost-scrolling .lazymod-pack-item.is-centered {
+  opacity: 1;
+}
+
+.lazymod-pack-list.is-ghost-scrolling .lazymod-pack-item.is-centered .lazymod-pack-item-name {
+  transform: scale(1.16);
+}
+
+.lazymod-pack-ghost {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--lm-surface, #111824) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lm-accent, #7cafff) 45%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  color: var(--lm-text, #e2eaf5);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.25s ease;
+}
+
+.lazymod-pack-ghost[data-visible="true"] {
+  opacity: 0.94;
+  transition-duration: 0.08s;
+}
+
+.lazymod-pack-ghost-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lazymod-pack-ghost-position {
+  color: var(--lm-muted, #91a0b5);
+  font-size: 10px;
+}
+
+.lazymod-pack-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+}
+
+.lazymod-pack-status[data-state="success"] {
+  color: var(--lm-success, #3fb950);
+}
+
+.lazymod-pack-status[data-state="error"] {
+  color: var(--lm-danger, #f85149);
+}
+
+.lazymod-pack-undo,
+.lazymod-asset-undo {
+  padding: 2px 9px;
+  font-size: 11px;
+}
+
+.lazymod-asset-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.lazymod-asset-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lazymod-pack-item,
+  .lazymod-pack-item-name,
+  .lazymod-pack-ghost,
+  .lazymod-pack-ghost[data-visible="true"] {
+    transition: none;
+  }
+}

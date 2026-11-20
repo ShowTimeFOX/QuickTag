@@ -9,6 +9,7 @@ import { browserPath, makeTempDir, cleanupTempDirs, createTestCopy, reportResult
 import { runLayoutFixChecks } from "./checks.mjs";
 import { runFocusModeChecks } from "./focus-checks.mjs";
 import { runAssetsChecks } from "./assets-checks.mjs";
+import { runPackBrowserChecks } from "./pack-checks.mjs";
 
 const firefoxExe = browserPath("firefox");
 const profileDir = makeTempDir("firefox-profile");
@@ -168,6 +169,7 @@ try {
   await runLayoutFixChecks(adapters);
   await runFocusModeChecks(adapters);
   await runAssetsChecks(adapters);
+  await runPackBrowserChecks(adapters);
 
   // BiDi refuses direct navigation to moz-extension:// URLs, so a web page
   // navigates there itself (the test copy exposes these pages as WAR).

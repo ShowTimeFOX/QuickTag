@@ -296,7 +296,10 @@ async function handleDeletePack() {
 }
 
 async function handleImportPack(event) {
-  const file = event.target.files[0];
+  // The input is in the shadow root: browsers clear event.target after
+  // dispatch, so keep a reference for the reset after the await.
+  const input = event.currentTarget;
+  const file = input.files[0];
   if (!file) return;
   try {
     await importPackFile(file);
@@ -305,7 +308,7 @@ async function handleImportPack(event) {
     console.error(`${LOG_PREFIX} Could not import palette JSON:`, error);
     alert(`Could not import palette JSON: ${error.message}`);
   } finally {
-    event.target.value = "";
+    input.value = "";
   }
 }
 

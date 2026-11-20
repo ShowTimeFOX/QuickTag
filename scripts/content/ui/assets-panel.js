@@ -8,6 +8,7 @@ import { onLocalStorageChange } from "../../shared/storage.js";
 import { HUB_SORT_MODES, filterHubPackages, sortHubPackages } from "../../shared/file-hub.js";
 import { on, EVENTS } from "../events.js";
 import { fetchHubCatalogue, getHubInstallStatus, installHubPackage, loadHubInstalls } from "../file-hub.js";
+import { uninstallPack, undoUninstall } from "../pack-manager.js";
 import { $ } from "./shell.js";
 import { el } from "./dom.js";
 
@@ -104,9 +105,25 @@ function packageCard(item) {
         el("span", { text: `${item.downloads} downloads · score ${item.score}`, title: "Downloads and score on File Hub" }),
         installedNote ? el("span", { className: "lazymod-asset-installed", text: installedNote }) : null,
       ]),
-      actionButton(item, status),
+      el("div", { className: "lazymod-asset-actions" }, [
+        status === "installed" || status === "update"
+          ? el("button", {
+              className: "lazymod-btn lazymod-asset-uninstall",
+              text: "Uninstall",
+              title: `Remove ${item.name} from your tag packs`,
+              attrs: { type: "button", disabled: view.installing.has(item.id) },
+              on: { click: () => handleUninstall(item) },
+            })
+          : null,
+        actionButton(item, status),
+      ]),
     ]),
-    result ? el("div", { className: "lazymod-asset-result", text: result.text, dataset: { state: result.state }, attrs: { role: "status" } }) : null,
+    result
+      ? el("div", { className: "lazymod-asset-result", dataset: { state: result.state }, attrs: { role: "status" } }, [
+          el("span", { text: result.text }),
+          result.removal ? el("button", { className: "lazymod-btn lazymod-asset-undo", text: "Undo", attrs: { type: "button" }, on: { click: () => handleUndo(item) } }) : null,
+        ])
+      : null,
   ]);
 }
 
@@ -182,6 +199,41 @@ async function handleInstall(item, status) {
   } catch (error) {
     console.warn(`${LOG_PREFIX} Could not install ${item.id}.`, error);
     view.results.set(item.id, { text: `Could not install: ${error.message}`, state: "error" });
+  } finally {
+    view.installing.delete(item.id);
+    renderList();
+  }
+}
+
+/** Removes the installed pack right away; the result line offers Undo. */
+async function handleUninstall(item) {
+  const record = view.installs[item.id];
+  if (!record || view.installing.has(item.id)) return;
+  view.installing.add(item.id);
+  view.confirmingUpdate = "";
+  try {
+    const removal = await uninstallPack(record.packId, "assets");
+    view.installs = await loadHubInstalls();
+    view.results.set(item.id, { text: `Uninstalled "${removal.pack.name}".`, state: "success", removal });
+  } catch (error) {
+    console.warn(`${LOG_PREFIX} Could not uninstall ${item.id}.`, error);
+    view.results.set(item.id, { text: `Could not uninstall: ${error.message}`, state: "error" });
+  } finally {
+    view.installing.delete(item.id);
+    renderList();
+  }
+}
+
+async function handleUndo(item) {
+  const removal = view.results.get(item.id)?.removal;
+  if (!removal || view.installing.has(item.id)) return;
+  view.installing.add(item.id);
+  try {
+    await undoUninstall(removal, "assets");
+    view.installs = await loadHubInstalls();
+    view.results.set(item.id, { text: `Restored "${removal.pack.name}".`, state: "success" });
+  } catch (error) {
+    view.results.set(item.id, { text: `Could not restore: ${error.message}`, state: "error" });
   } finally {
     view.installing.delete(item.id);
     renderList();

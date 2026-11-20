@@ -22,6 +22,7 @@ import { applyTheme, initThemeControls, loadSavedTheme, loadThemeStyles } from "
 import { restoreWindowLayout, updateDockPageSpace } from "./ui/window-layout.js";
 import { initTabs } from "./ui/tabs.js";
 import { initPalettePanel, renderPalettePanel } from "./ui/palette-panel.js";
+import { initPackBrowser } from "./ui/pack-browser.js";
 import { initAiPanel } from "./ui/ai-panel.js";
 import { initQuickActions } from "./ui/quick-actions.js";
 import { initSettingsPanel, renderActiveSiteBadge } from "./ui/settings-panel.js";
@@ -70,6 +71,8 @@ async function main() {
   // type-to-search must be registered before ghost mode's shortcut handler.
   initTabs();
   initPalettePanel();
+  // After the palette panel: its storage listener updates state.paletteData first.
+  initPackBrowser();
   await initAiPanel();
   initQuickActions();
   initSettingsPanel();

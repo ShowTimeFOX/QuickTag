@@ -51,11 +51,13 @@ scripts/
     site-profiles.js, palettes.js, fuzzy-search.js, config-backup.js, visibility.js, messaging.js
     focus-tags.js       Focus Mode tag model (active/muted, sort, page sync) — no DOM
     file-hub.js         File Hub install records (Assets tab) — no DOM
+    pack-manager.js     uninstall/undo and installed-pack search — no DOM
     ui/                 Shadow-DOM interface components (shell, theme, tabs, palette-panel, ai-panel, ...)
       dom.js            el()/icon()/button() — the safe way to build UI from JS
       shortcut-recorder.js  reusable "press a shortcut" buttons
       focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
       assets-panel.js   Assets tab (File Hub browse/install)
+      pack-browser.js   Browse: pack search, ghost scroll, uninstall with undo
   background.js         background entry (registers listeners synchronously)
   background/           messages.js, updates.js, comfyui.js, file-hub.js (all File Hub network requests)
   shared/               used by every context; NO window/document at module level (service worker imports it)

@@ -37,6 +37,22 @@ export async function loadHubInstalls() {
   return Object.fromEntries(Object.entries(saved).filter(([id, record]) => isSafeKey(id) && isValidHubInstallRecord(record)));
 }
 
+/** Deletes the install records of `packId`; resolves to the removed records (for undo). */
+export async function removeHubRecordsForPack(packId) {
+  const installs = await loadHubInstalls();
+  const removed = Object.fromEntries(Object.entries(installs).filter(([, record]) => record.packId === packId));
+  if (!Object.keys(removed).length) return removed;
+  const kept = Object.fromEntries(Object.entries(installs).filter(([, record]) => record.packId !== packId));
+  await chrome.storage.local.set({ [STORAGE_KEYS.hubPackages]: kept });
+  return removed;
+}
+
+export async function restoreHubRecords(records) {
+  if (!records || !Object.keys(records).length) return;
+  const installs = await loadHubInstalls();
+  await chrome.storage.local.set({ [STORAGE_KEYS.hubPackages]: { ...installs, ...records } });
+}
+
 /**
  * `available`, `installed`, `update` (a newer version is on the hub), or
  * `unsupported`. A record whose pack was deleted counts as not installed.

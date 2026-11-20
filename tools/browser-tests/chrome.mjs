@@ -7,6 +7,7 @@ import { browserPath, makeTempDir, cleanupTempDirs, createTestCopy, reportResult
 import { runLayoutFixChecks } from "./checks.mjs";
 import { runFocusModeChecks } from "./focus-checks.mjs";
 import { runAssetsChecks } from "./assets-checks.mjs";
+import { runPackBrowserChecks } from "./pack-checks.mjs";
 
 const chromeExe = browserPath("chrome");
 const profileDir = makeTempDir("chrome-profile");
@@ -207,6 +208,7 @@ try {
   await runLayoutFixChecks(adapters);
   await runFocusModeChecks(adapters);
   await runAssetsChecks(adapters);
+  await runPackBrowserChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");

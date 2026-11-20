@@ -36,7 +36,7 @@ $env:FIREFOX_PATH = "C:\path\to\firefox.exe"
 | File | Purpose |
 | --- | --- |
 | `pages.mjs` | Local HTTP server with a plain page, a strict-CSP page (`default-src 'none'` and Trusted Types), tall and wide SVG images for the Focus Mode Fit checks, and a mock File Hub under `/hub/` (`hubState` lets checks change versions and fail requests), plus the probe expressions evaluated in pages. |
-| `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab). |
+| `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs`, `pack-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab, pack browser). `pack-checks.mjs` runs after the Assets checks (it uses the installed mock packs) and ends with only the `default-character` pack, which the editor check opens. |
 | `chrome.mjs` | Starts Chrome with `--remote-debugging-pipe --enable-unsafe-extension-debugging` and loads the test copy with the DevTools `Extensions.loadUnpacked` command (branded Chrome no longer accepts `--load-extension`). |
 | `firefox.mjs` | Starts Firefox with WebDriver BiDi and installs a temporary add-on with `webExtension.install`. |
 | `config.mjs` | Browser paths, temporary directories, the test copies (`createTestCopy`), and result reporting. |
@@ -71,7 +71,8 @@ The update check contacts the public GitHub Gist, as the extension does.
 
 ## Not covered
 
-Visual appearance, real mouse dragging and resizing, physical key presses,
+Visual appearance (including the ghost scroll animation and
+`prefers-reduced-motion`), real mouse dragging and resizing, physical key presses,
 file dialogs, clipboard access, the toolbar button itself, analysis with a
 running ComfyUI instance, and installing from the live File Hub (GitHub
 release downloads, Firefox host permission prompts) still need a manual

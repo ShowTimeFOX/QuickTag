@@ -160,6 +160,47 @@ export async function importPackFile(file) {
   await commitPaletteData(withActivePack({ ...state.paletteData.packs, [packId]: pack }, packId));
 }
 
+/**
+ * Removes the pack `packId`. If it was active, its neighbor in the list (the
+ * next pack, else the previous one) becomes active, or nothing when it was
+ * the last pack. Resolves to the information `restorePack` needs. Throws.
+ */
+export async function removePack(packId) {
+  const previous = state.paletteData;
+  const ids = Object.keys(previous.packs);
+  const index = ids.indexOf(packId);
+  if (index < 0) throw new Error("This tag pack no longer exists.");
+  const packs = { ...previous.packs };
+  delete packs[packId];
+  const wasActive = previous.activePackId === packId;
+  const remaining = Object.keys(packs);
+  const next = wasActive ? withActivePack(packs, remaining[index] ?? remaining[index - 1] ?? "") : { ...previous, packs };
+  await commitPaletteData(next);
+  return {
+    packId,
+    pack: previous.packs[packId],
+    index,
+    wasActive,
+    location: { activeGroup: previous.activeGroup, activeCategory: previous.activeCategory },
+  };
+}
+
+/** Puts a removed pack back at its position (and reselects it if it was active). Throws. */
+export async function restorePack(removal) {
+  if (state.paletteData.packs[removal.packId]) throw new Error("A tag pack with the same ID exists again.");
+  const entries = Object.entries(state.paletteData.packs);
+  entries.splice(Math.min(removal.index, entries.length), 0, [removal.packId, removal.pack]);
+  // Object.fromEntries defines own properties, so no id can reach a prototype.
+  const packs = Object.fromEntries(entries);
+  if (!removal.wasActive) {
+    await commitPaletteData({ ...state.paletteData, packs });
+    return;
+  }
+  const { activeGroup, activeCategory } = removal.location;
+  const locationValid = Boolean(removal.pack.groups[activeGroup]?.[activeCategory]);
+  await commitPaletteData({ ...state.paletteData, packs, activePackId: removal.packId, ...(locationValid ? removal.location : firstPaletteLocation(removal.pack)) });
+}
+
 /** Adds or replaces the pack `packId` (File Hub installs and updates) and activates it. Throws. */
 export async function installPalettePack(packId, pack) {
   const normalized = normalizePalettePack(pack, packId);

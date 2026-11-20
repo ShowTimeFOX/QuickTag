@@ -16,6 +16,8 @@ ComfyUI installation with the WD14 Tagger node.
 - Edit palettes with JSON formatting, easyJson mode, and optional word wrap
   with aligned line numbers and current-line highlighting.
 - Add or remove tags individually or in batches, and search with fuzzy matching.
+- Find any installed tag pack by name, group, category, or tag with
+  **Browse**, and uninstall packs with Undo.
 - Open Focus Mode (`Alt+A`) for a full-screen workspace with the page image,
   the tag list, and the palette side by side.
 - Browse and install community tag packs from
@@ -57,6 +59,20 @@ least one group and category; names are labels shown in the tagger.
 sections; each group’s properties are category names, and each category’s
 value must be an array of strings. Save the file as `.json`, then choose
 **Import** in the tagger to add it.
+
+## Browsing and uninstalling tag packs
+
+Select **Browse** next to the tag pack selector to list every installed pack,
+local and from File Hub, with its source, group count, and tag count. Type to
+filter by pack name, File Hub version, or any group, category, or tag name
+(case-insensitive); a matching tag or category is shown under the pack.
+Select a pack to switch to it. While you scroll the list, the pack in the
+middle is shown larger and named in an overlay, and the others are dimmed.
+
+**Uninstall** removes a pack right away and offers **Undo** for 10 seconds.
+If the removed pack was selected, the next pack in the list is selected. A
+pack installed from File Hub can also be uninstalled from its card in the
+**Assets** tab, which then offers **Install** again.
 
 ## Focus Mode
 

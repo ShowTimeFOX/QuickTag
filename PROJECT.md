@@ -40,6 +40,10 @@ source directory; `manifest.json` contains the shared browser configuration.
   field follows live (two-way) unless Live sync is off. `Esc` closes menus and
   dialogs first, then Focus Mode. Shortcuts, strict capture, and a JSON grid
   layout with presets are configurable.
+- **Pack browser:** **Browse** next to the pack selector searches every
+  installed pack (name, File Hub metadata, groups, categories, tags), switches
+  packs, and uninstalls them with Undo. Scrolling the list shows a "ghost"
+  overlay with the centered pack.
 - **Assets:** The Assets tab lists the community tag packs on File Hub
   (`https://showtimefox-file-hub.pages.dev/`) with search, a category filter,
   and sorting, and installs a pack with one click. Installed packs show as
@@ -133,8 +137,8 @@ if you need help.
 | `scripts/background.js` | Background entry module; registers event listeners. |
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
-| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records). |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-settings.js`. |
+| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
 | `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
@@ -273,6 +277,24 @@ if you need help.
     the pack after a second confirmation click.
   - Only `json` packages for `targetApp: "quicktag"` can be installed; other
     file types are listed as not supported.
+- **Uninstall and pack search** (`content/pack-manager.js`, shown by
+  `ui/pack-browser.js` and the Assets cards). `palettes.removePack` deletes a
+  pack and, if it was active, activates its neighbor (next, else previous,
+  else none); it returns what `restorePack` needs to put the pack back at the
+  same position. Uninstall also removes the pack's `lazymod_hub_packages`
+  record, and Undo restores both. Uninstall acts immediately; Undo is offered
+  for 10 seconds instead of a blocking confirmation. Views learn about changes
+  through `paletteChanged` (sources `packs` and `assets`) and storage change
+  events. Search matches case-insensitive substrings against a per-pack index
+  cached by pack object (a `WeakMap`), and never modifies packs.
+- **Ghost scroll.** The pack list listens only to its own passive `scroll`
+  events (no wheel handlers, no `preventDefault`), so page scrolling is never
+  captured. While it scrolls, the item nearest the list's center is marked,
+  named in an overlay, and shown larger, and the overlay fades out 500 ms
+  after the last scroll event. Sizes change with `transform` only and the
+  list sets `overflow-anchor: none`: a layout change would move the scroll
+  position, fire another scroll event, and keep the overlay from fading.
+  Transitions are disabled under `prefers-reduced-motion`.
 
 ## Browser loading notes
 
@@ -341,7 +363,8 @@ node tools/browser-tests/firefox.mjs
 ```
 
 They cover loading, the strict-CSP page, the tagger, Focus Mode, the Assets
-tab (against a local mock File Hub), the background script, the popup, and
+tab (against a local mock File Hub), the pack browser (search, ghost scroll,
+uninstall and undo), the background script, the popup, and
 the editor. Then load the repository root in each target
 browser for the manual checks listed in that README. Full AI analysis testing
 requires a running ComfyUI instance with the WD14 node installed.
