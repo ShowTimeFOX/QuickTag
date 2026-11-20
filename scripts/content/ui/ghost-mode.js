@@ -2,11 +2,11 @@
 // active only while the ghost button or the keyboard shortcut is held.
 import { STORAGE_KEYS, DEFAULT_GHOST_SHORTCUT } from "../../shared/constants.js";
 import { loadData, saveData } from "../../shared/storage.js";
+import { matchesShortcut, normalizeShortcut } from "../../shared/shortcuts.js";
 import { state } from "../state.js";
 import { on, EVENTS } from "../events.js";
 import { $, shell } from "./shell.js";
-
-const MODIFIER_KEYS = ["Control", "Alt", "Shift", "Meta"];
+import { createShortcutRecorder } from "./shortcut-recorder.js";
 
 const ghost = {
   holdMode: false,
@@ -18,17 +18,6 @@ const ghost = {
 };
 
 let ghostToggle;
-let ghostShortcutButton;
-
-export function formatGhostShortcut(shortcut) {
-  const modifiers = [];
-  if (shortcut.ctrl) modifiers.push("Ctrl");
-  if (shortcut.alt) modifiers.push("Alt");
-  if (shortcut.shift) modifiers.push("Shift");
-  if (shortcut.meta) modifiers.push("Meta");
-  const key = shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key.replace(/^Arrow/, "");
-  return [...modifiers, key].join(" + ");
-}
 
 function updateGhostUI() {
   const active = ghost.holdMode ? ghost.transientActive : ghost.enabled;
@@ -60,56 +49,10 @@ export function releaseGhostMode() {
   releaseGhostButton();
 }
 
-export function cancelShortcutRecording() {
-  if (!state.recordingGhostShortcut) return;
-  state.recordingGhostShortcut = false;
-  ghostShortcutButton.textContent = formatGhostShortcut(ghost.shortcut);
-}
-
-function matchesShortcut(event) {
-  const { shortcut } = ghost;
-  return (
-    event.ctrlKey === shortcut.ctrl &&
-    event.altKey === shortcut.alt &&
-    event.shiftKey === shortcut.shift &&
-    event.metaKey === shortcut.meta &&
-    event.key.toLowerCase() === shortcut.key
-  );
-}
-
-function recordShortcut(event) {
-  event.preventDefault();
-  event.stopPropagation();
-  if (event.key === "Escape") {
-    cancelShortcutRecording();
-    return;
-  }
-  if (MODIFIER_KEYS.includes(event.key)) return;
-  if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
-    ghostShortcutButton.textContent = "Use a modifier + key";
-    return;
-  }
-  ghost.shortcut = {
-    ctrl: event.ctrlKey,
-    alt: event.altKey,
-    shift: event.shiftKey,
-    meta: event.metaKey,
-    key: event.key.toLowerCase(),
-  };
-  state.recordingGhostShortcut = false;
-  ghostShortcutButton.textContent = formatGhostShortcut(ghost.shortcut);
-  saveData(STORAGE_KEYS.ghostShortcut, ghost.shortcut);
-}
-
 // Capture phase on document, so the shortcut also works while page or
-// tagger inputs have focus.
+// tagger inputs have focus. Recording is handled by shortcut-recorder.js.
 function handleKeydown(event) {
-  if (!state.extensionEnabled) return;
-  if (state.recordingGhostShortcut) {
-    recordShortcut(event);
-    return;
-  }
-  if (!matchesShortcut(event)) return;
+  if (!state.extensionEnabled || state.recordingShortcut || !matchesShortcut(event, ghost.shortcut)) return;
   event.preventDefault();
   event.stopPropagation();
   if (ghost.holdMode) {
@@ -138,7 +81,6 @@ function handleKeyup(event) {
 
 export async function initGhostMode() {
   ghostToggle = $("#lm-ghost-toggle");
-  ghostShortcutButton = $("#lm-ghost-shortcut");
   const ghostHoldCheckbox = $("#lm-ghost-hold");
 
   const savedGhostMode = await loadData(STORAGE_KEYS.ghostMode, false);
@@ -146,17 +88,17 @@ export async function initGhostMode() {
   const savedShortcut = await loadData(STORAGE_KEYS.ghostShortcut, DEFAULT_GHOST_SHORTCUT);
   ghost.holdMode = Boolean(savedHoldMode);
   ghost.enabled = Boolean(savedGhostMode) && !ghost.holdMode;
-  ghost.shortcut = {
-    ctrl: Boolean(savedShortcut?.ctrl),
-    alt: Boolean(savedShortcut?.alt),
-    shift: Boolean(savedShortcut?.shift),
-    meta: Boolean(savedShortcut?.meta),
-    key: typeof savedShortcut?.key === "string" ? savedShortcut.key.toLowerCase() : DEFAULT_GHOST_SHORTCUT.key,
-  };
+  ghost.shortcut = normalizeShortcut(savedShortcut, DEFAULT_GHOST_SHORTCUT);
 
   updateGhostUI();
   ghostHoldCheckbox.checked = ghost.holdMode;
-  ghostShortcutButton.textContent = formatGhostShortcut(ghost.shortcut);
+  createShortcutRecorder($("#lm-ghost-shortcut"), {
+    getShortcut: () => ghost.shortcut,
+    onRecorded: (shortcut) => {
+      ghost.shortcut = shortcut;
+      saveData(STORAGE_KEYS.ghostShortcut, shortcut);
+    },
+  });
 
   ghostHoldCheckbox.onchange = () => {
     ghost.holdMode = ghostHoldCheckbox.checked;
@@ -189,18 +131,8 @@ export async function initGhostMode() {
     if (!ghost.holdMode) setGhostMode(!ghost.enabled);
   };
 
-  ghostShortcutButton.onclick = () => {
-    state.recordingGhostShortcut = true;
-    ghostShortcutButton.textContent = "Press shortcut…";
-    ghostShortcutButton.focus();
-  };
-
   document.addEventListener("keydown", handleKeydown, true);
   document.addEventListener("keyup", handleKeyup, true);
   window.addEventListener("blur", releaseGhostMode);
-
-  on(EVENTS.extensionHidden, () => {
-    releaseGhostMode();
-    cancelShortcutRecording();
-  });
+  on(EVENTS.extensionHidden, releaseGhostMode);
 }

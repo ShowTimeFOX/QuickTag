@@ -6,9 +6,9 @@
 // details)` records a result.
 import { sleep } from "./pages.mjs";
 
-const ROOT = `document.getElementById("quicktag-extension-root").shadowRoot`;
+export const ROOT = `document.getElementById("quicktag-extension-root").shadowRoot`;
 
-async function waitFor(evaluate, handle, expression, predicate, timeoutMs = 8000) {
+export async function waitFor(evaluate, handle, expression, predicate, timeoutMs = 8000) {
   const deadline = Date.now() + timeoutMs;
   let value;
   while (Date.now() < deadline) {
@@ -23,7 +23,7 @@ async function waitFor(evaluate, handle, expression, predicate, timeoutMs = 8000
   return value;
 }
 
-const READY = `(() => { const host = document.getElementById("quicktag-extension-root"); return host?.style.visibility === "visible" && host.shadowRoot.querySelectorAll("#lm-user-chips .lazymod-chip").length > 0; })()`;
+export const READY = `(() => { const host = document.getElementById("quicktag-extension-root"); return host?.style.visibility === "visible" && host.shadowRoot.querySelectorAll("#lm-user-chips .lazymod-chip").length > 0; })()`;
 
 const SHOW_TAGGER = `(() => { const root = ${ROOT}; const win = root.querySelector("#lazymod-window"); if (win.hidden) root.querySelector("#lm-show-tagger").click(); return !win.hidden; })()`;
 

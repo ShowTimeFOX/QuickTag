@@ -23,12 +23,3 @@ export function isValidPageLayout(layout) {
     (layout.position === undefined || isValidWindowPosition(layout.position))
   );
 }
-
-export function isValidGhostShortcut(shortcut) {
-  return (
-    isRecord(shortcut) &&
-    ["ctrl", "alt", "shift", "meta"].every((key) => typeof shortcut[key] === "boolean") &&
-    typeof shortcut.key === "string" &&
-    Boolean(shortcut.key)
-  );
-}

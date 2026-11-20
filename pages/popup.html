@@ -329,6 +329,54 @@
         </div>
       </div>
 
+      <div class="lazymod-section" id="lm-focus-settings">
+        <div class="lazymod-sub-header">
+          <div class="lazymod-title">Focus Mode</div>
+          <span
+            class="lazymod-info"
+            title="A full-screen workspace with the page image, the tag list, and the palette side by side."
+            aria-label="A full-screen workspace with the page image, the tag list, and the palette side by side."
+          >
+            i
+          </span>
+        </div>
+        <div class="lazymod-settings-control">
+          <div>
+            <strong>Open Focus Mode</strong>
+            <p>Tag with the image, tag list, and palette side by side.</p>
+          </div>
+          <button type="button" class="lazymod-btn lazymod-btn-accent" id="lm-focus-open">Open</button>
+        </div>
+        <div class="lazymod-settings-control lazymod-settings-control-separated">
+          <div>
+            <strong>Toggle shortcut</strong>
+            <p>Opens and closes Focus Mode.</p>
+          </div>
+          <button type="button" class="lazymod-btn" id="lm-focus-toggle-shortcut" title="Click, then press a key combination">Alt + A</button>
+        </div>
+        <div class="lazymod-settings-control lazymod-settings-control-separated">
+          <div>
+            <strong>Close shortcut</strong>
+            <p>Closes an open menu or dialog first, then exits Focus Mode.</p>
+          </div>
+          <button type="button" class="lazymod-btn" id="lm-focus-close-shortcut" title="Click, then press a key (Esc cancels recording)">Esc</button>
+        </div>
+        <div class="lazymod-settings-control lazymod-settings-control-separated">
+          <div>
+            <strong>Strict shortcut capture</strong>
+            <p>QuickTag handles its shortcuts before the page does. Off: the page goes first, and keys it already uses are skipped.</p>
+          </div>
+          <label class="lazymod-checkbox-option" for="lm-focus-strict">
+            <input type="checkbox" id="lm-focus-strict" />
+            <span>Strict</span>
+          </label>
+        </div>
+        <div class="lazymod-settings-actions">
+          <button type="button" class="lazymod-btn" id="lm-focus-edit-layout">Edit layout JSON</button>
+          <button type="button" class="lazymod-btn" id="lm-focus-reset-shortcuts">Reset shortcuts</button>
+        </div>
+      </div>
+
       <div class="lazymod-section">
         <div class="lazymod-sub-header">
           <div class="lazymod-title">Configuration</div>

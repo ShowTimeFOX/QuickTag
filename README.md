@@ -16,6 +16,8 @@ ComfyUI installation with the WD14 Tagger node.
 - Edit palettes with JSON formatting, easyJson mode, and optional word wrap
   with aligned line numbers and current-line highlighting.
 - Add or remove tags individually or in batches, and search with fuzzy matching.
+- Open Focus Mode (`Alt+A`) for a full-screen workspace with the page image,
+  the tag list, and the palette side by side.
 - Analyze the current image with ComfyUI-WD14-Tagger and adjust the confidence
   threshold for suggestions.
 - Configure page-specific selectors for tag fields, images, and source links.
@@ -53,6 +55,68 @@ least one group and category; names are labels shown in the tagger.
 sections; each group’s properties are category names, and each category’s
 value must be an array of strings. Save the file as `.json`, then choose
 **Import** in the tagger to add it.
+
+## Focus Mode
+
+Press `Alt+A` on any page, or select **Open** under **Settings › Focus Mode**,
+to open a full-screen workspace:
+
+- **Top bar:** the page host and site profile, the layout preset, the number
+  of active and muted tags, the **Live sync** switch, and **Exit**.
+- **Image:** the page image found by the site profile, fitted to the panel or
+  at 1:1 (double-click to switch), with its dimensions.
+- **Tags:** click a badge to mute it (it leaves the page's tag field but stays
+  in the list) and click again to switch it back on; `×` removes it. Type in
+  the input to add tags (Enter, space, or comma separate them). Switch between
+  **Badges** and **Raw text**, sort (A–Z, Z–A, added order, or by pack group),
+  deduplicate, copy all active tags as one string, or clear.
+- **Palette:** every category of the selected group; clicking a tag adds it,
+  mutes it, or switches it back on.
+
+With **Live sync** on, the page's tag field follows every change, and edits
+made on the page appear in Focus Mode. With it off, use **Apply to page** and
+**Reload from page**. Muted tags are kept only until the page is reloaded.
+
+`Esc` closes an open menu or dialog first, then Focus Mode. Both shortcuts can
+be changed in **Settings › Focus Mode**. By default the page handles keys
+first, and QuickTag skips a shortcut the page already uses; turn on **Strict
+shortcut capture** to let QuickTag handle its shortcuts before the page.
+On macOS, `Option+A` works for the default `Alt+A`.
+
+### Focus Mode layout JSON
+
+Select **Layout** in Focus Mode (or **Edit layout JSON** in Settings) to view,
+edit, import, or export the layout. Each preset places the panels `topbar`,
+`image`, `tags`, and `palette` on a CSS grid:
+
+```json
+{
+  "version": 1,
+  "activePreset": "default",
+  "presets": {
+    "default": {
+      "name": "Default",
+      "columns": "minmax(280px, 2fr) minmax(320px, 3fr)",
+      "rows": "auto minmax(0, 1fr) minmax(0, 1.25fr)",
+      "areas": ["topbar topbar", "image palette", "tags palette"],
+      "panels": {
+        "topbar": { "visible": true },
+        "image": { "visible": true },
+        "tags": { "visible": true },
+        "palette": { "visible": true }
+      }
+    }
+  }
+}
+```
+
+`areas` lists the grid rows; each word is a panel or `.` for an empty cell,
+every row needs the same number of cells, and each panel must form a
+rectangle. `columns` and `rows` are CSS grid track sizes. A panel that is not
+placed in `areas`, or has `"visible": false`, is hidden. Preset ids use
+lowercase letters, digits, and hyphens. On narrow windows the panels are
+stacked. The built-in presets are **Default**, **Wide palette**, and **Image
+review**; **Reset to defaults** restores them.
 
 ## Requirements
 

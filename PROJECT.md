@@ -34,6 +34,12 @@ source directory; `manifest.json` contains the shared browser configuration.
   or the easier-to-read easyJson format.
 - **Tab strips:** Group and category strips scroll with the mouse wheel or
   with arrow buttons that appear when the strip overflows.
+- **Focus Mode:** `Alt+A` opens a full-screen workspace with the page image
+  (fit or 1:1), a tag list with mutable badges, a Raw text view, sorting,
+  deduplication, copy, and clear, and a full-height palette. The page's tag
+  field follows live (two-way) unless Live sync is off. `Esc` closes menus and
+  dialogs first, then Focus Mode. Shortcuts, strict capture, and a JSON grid
+  layout with presets are configurable.
 - **Interface controls:** Move, resize, dock, collapse, or hide the tagger.
   Ghost mode can be toggled with a keyboard shortcut, including while an
   editable field has focus; it can optionally be active only while a button or
@@ -119,12 +125,12 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `data/character.json` | Default Character Portrait tag pack. |
 | `data/anthro.json` | Default Anthro & Fursuit tag pack. |
-| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, and `validation.js`. No DOM access at module level. |
+| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema and presets), and `validation.js`. No DOM access at module level. |
 | `scripts/background.js` | Background entry module; registers event listeners. |
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
-| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`. |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`. |
+| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync). |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`; Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
 | `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
@@ -161,7 +167,8 @@ if you need help.
   last to prevent flicker. Feature modules share mutable values through
   `content/state.js` and react to each other through `content/events.js`
   (`tagsChanged`, `extensionHidden`, `siteProfilesChanged`,
-  `blacklistChanged`) instead of importing each other.
+  `blacklistChanged`, `themeChanged`, `paletteChanged`, `focusModeChanged`,
+  `focusTagsChanged`) instead of importing each other.
 - Interface elements are built with `document.createElement`, `textContent`,
   and explicit attributes. The packaged `pages/popup.html` template is parsed
   with `DOMParser`; no dynamic data is inserted as HTML.
@@ -211,6 +218,26 @@ if you need help.
   changes to `host_permissions` in `manifest.json`.
 - Storage keys, message action names, and default values are defined once in
   `scripts/shared/constants.js`. All storage keys start with `lazymod_`.
+- Focus Mode (`ui/focus-mode.js`) is an overlay (`#lm-focus-root`) in the
+  same Shadow DOM, styled by `styles/focus-mode.css`. The theme rules are
+  scoped to `#lazymod-window`, so the controller copies the computed `--lm-*`
+  theme variables onto the overlay whenever the theme changes. Panels receive
+  an `api` object from the controller instead of importing it. Menus and
+  dialogs register on a dismiss stack, which the close shortcut empties
+  before it exits. While Focus Mode is open, page scrolling is locked, and
+  keys typed inside the overlay do not reach the page's bubble-phase handlers.
+- Focus Mode stores `lazymod_focus_settings` (toggle and close shortcuts,
+  `strictCapture`), `lazymod_focus_layout` (the layout JSON, validated by
+  `shared/focus-layout.js`), and `lazymod_focus_prefs` (live sync, tag view,
+  image zoom). With `strictCapture` off, shortcuts are handled by a
+  bubble-phase `document` listener that skips events the page already
+  handled; with it on, by a capture-phase `window` listener that stops the
+  event. Page listeners registered on `window` in the capture phase before
+  QuickTag loaded still run first.
+- The Focus Mode tag model (`content/focus-tags.js`) keeps muted tags in
+  memory only. The page's tag field always holds the active tags in list
+  order; with live sync on, changes are written immediately and page edits
+  are merged back through `tagsChanged`.
 
 ## Browser loading notes
 

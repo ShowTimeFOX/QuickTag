@@ -21,6 +21,10 @@ export const STORAGE_KEYS = Object.freeze({
   windowSize: "lazymod_win_size",
   windowPosition: "lazymod_win_pos",
   aiThreshold: "lazymod_ai_threshold",
+  // Focus Mode: shortcuts + capture priority, layout JSON, and view preferences.
+  focusSettings: "lazymod_focus_settings",
+  focusLayout: "lazymod_focus_layout",
+  focusPrefs: "lazymod_focus_prefs",
   // Per-origin layout: `${siteLayoutPrefix}${encodeURIComponent(origin)}`.
   siteLayoutPrefix: "lazymod_site_layout_",
 });
@@ -54,6 +58,22 @@ export const DOCK_EDGES = Object.freeze(["left", "right", "top", "bottom"]);
 export const DEFAULT_DOCK_EDGE = "right";
 export const DEFAULT_WINDOW_POSITION = Object.freeze({ top: "100px", left: "100px" });
 export const DEFAULT_GHOST_SHORTCUT = Object.freeze({ ctrl: true, alt: false, shift: true, meta: false, key: "g" });
+
+export const DEFAULT_FOCUS_SETTINGS = Object.freeze({
+  toggleShortcut: Object.freeze({ ctrl: false, alt: true, shift: false, meta: false, key: "a" }),
+  closeShortcut: Object.freeze({ ctrl: false, alt: false, shift: false, meta: false, key: "escape" }),
+  // false: the page handles keys first (QuickTag skips keys the page already
+  // handled). true: QuickTag captures its shortcuts before page handlers.
+  strictCapture: false,
+});
+
+export const DEFAULT_FOCUS_PREFS = Object.freeze({
+  liveSync: true,
+  tagView: "badges",
+  imageZoom: "fit",
+});
+export const FOCUS_TAG_VIEWS = Object.freeze(["badges", "raw"]);
+export const FOCUS_IMAGE_ZOOMS = Object.freeze(["fit", "actual"]);
 
 export const FALLBACK_SITE_KEY = ".*";
 export const SITE_SELECTOR_KEYS = Object.freeze(["tagInputSelector", "imgSelector", "linkSelector"]);

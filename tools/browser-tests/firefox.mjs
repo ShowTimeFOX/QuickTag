@@ -7,6 +7,7 @@ import path from "node:path";
 import { startServer, PROBES, sleep } from "./pages.mjs";
 import { browserPath, makeTempDir, cleanupTempDirs, createFirefoxTestCopy, reportResults } from "./config.mjs";
 import { runLayoutFixChecks } from "./checks.mjs";
+import { runFocusModeChecks } from "./focus-checks.mjs";
 
 const extensionDir = process.argv[2] || createFirefoxTestCopy();
 const firefoxExe = browserPath("firefox");
@@ -163,6 +164,7 @@ try {
   // Shared checks (checks.mjs)
   const adapters = { open: (url) => openTab(url), evaluate, check, origin };
   await runLayoutFixChecks(adapters);
+  await runFocusModeChecks(adapters);
 
   // BiDi refuses direct navigation to moz-extension:// URLs, so a web page
   // navigates there itself (the test copy exposes these pages as WAR).

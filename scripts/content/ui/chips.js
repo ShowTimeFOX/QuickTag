@@ -6,14 +6,17 @@ function getChipIcon(isActive) {
 }
 
 /**
- * Creates a chip that toggles `tag` in the page tag field when clicked.
+ * Creates a chip that toggles `tag` in the page tag field when clicked
+ * (or calls `onClick(tag)` instead). `isMuted` marks a tag kept but switched
+ * off in Focus Mode.
  * Structure: <div.lazymod-chip data-tag><span.icon/> tag [<span.score/>]</div>
  */
-export function createTagChip(tag, { isActive = false, isHighlighted = false, score = null, title = "" } = {}) {
+export function createTagChip(tag, { isActive = false, isMuted = false, isHighlighted = false, score = null, title = "", onClick = null } = {}) {
   const chip = document.createElement("div");
   chip.className = "lazymod-chip";
   chip.classList.toggle("active", isActive);
   chip.classList.toggle("search-highlighted", isHighlighted);
+  chip.classList.toggle("muted", isMuted);
   chip.dataset.tag = tag;
   if (title) chip.title = title;
 
@@ -29,7 +32,7 @@ export function createTagChip(tag, { isActive = false, isHighlighted = false, sc
     chip.appendChild(scoreLabel);
   }
 
-  chip.addEventListener("click", () => toggleTagInMain(tag));
+  chip.addEventListener("click", () => (onClick ? onClick(tag) : toggleTagInMain(tag)));
   return chip;
 }
 

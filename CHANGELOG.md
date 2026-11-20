@@ -2,6 +2,21 @@
 
 ### Added
 
+- Focus Mode (`Alt+A`): a full-screen workspace with a top bar (page and
+  site profile, layout preset, active and muted tag counts, live sync, exit),
+  an image preview (fit or 1:1, with dimensions), a tag list, and a
+  full-height palette. Badges switch between active and muted without being
+  deleted, `×` removes them, and an inline input adds tags. The list has
+  Badges and Raw text views and can be sorted (A–Z, Z–A, added order, by pack
+  group), deduplicated, copied as one string, or cleared. The page's tag field
+  stays in sync both ways while Live sync is on.
+- Focus Mode settings: toggle and close shortcuts (defaults `Alt+A` and
+  `Esc`; `Esc` closes open menus and dialogs first), and strict shortcut
+  capture, which lets QuickTag handle its shortcuts before the page.
+- Focus Mode layout JSON with presets (Default, Wide palette, Image review):
+  grid areas, column and row sizes, and panel visibility. It can be viewed,
+  edited, imported, exported, and reset from Focus Mode, and is included in
+  configuration backups.
 - Automated browser tests in `tools/browser-tests/` that load the extension
   into installed Chrome and Firefox (headless, no dependencies) and check the
   tagger, background script, popup, and editor on a plain page and a

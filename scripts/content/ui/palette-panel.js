@@ -3,7 +3,7 @@
 import { LOG_PREFIX, STORAGE_KEYS, MESSAGE_ACTIONS } from "../../shared/constants.js";
 import { onLocalStorageChange } from "../../shared/storage.js";
 import { state } from "../state.js";
-import { on, EVENTS } from "../events.js";
+import { emit, on, EVENTS } from "../events.js";
 import { addTagToMain, getMainTags, isEditableTarget, setMainTags } from "../page.js";
 import { requestExtensionPage } from "../messaging.js";
 import {
@@ -21,7 +21,7 @@ import { $, $$, shell, setIconPath, ICON_PATHS } from "./shell.js";
 import { createEmptyMessage, createTagChip, syncChipStates } from "./chips.js";
 import { isMainTabActive, showMainTab } from "./tabs.js";
 import { setTaggerCollapsed } from "./window-controls.js";
-import { attachScrollArrows } from "./scroll-arrows.js";
+import { attachScrollArrows, enableWheelScrolling } from "./scroll-arrows.js";
 
 const TYPE_TO_SEARCH_RESET_MS = 1000;
 const NO_PACKS_MESSAGE = "No tag packs. Import a JSON pack to get started.";
@@ -120,8 +120,16 @@ function renderCategoriesUI() {
   renderUserChips();
 }
 
-/** Re-renders the whole palette view from `state.paletteData`. */
-export function renderPalettePanel() {
+/**
+ * Re-renders the whole palette view from `state.paletteData` and announces
+ * the change to other palette views (Focus Mode) unless `notify` is false.
+ */
+export function renderPalettePanel({ notify = true } = {}) {
+  renderPaletteView();
+  if (notify) emit(EVENTS.paletteChanged, { source: "tagger" });
+}
+
+function renderPaletteView() {
   const paletteData = state.paletteData;
   paletteData.packs = paletteData.packs || {};
   const packSelect = $("#lm-pack-select");
@@ -218,7 +226,8 @@ function shouldIgnoreTypeToSearch(event) {
     isEditableTarget(document.activeElement) ||
     isEditableTarget(shell.root.activeElement) ||
     state.elementPickerActive ||
-    state.recordingGhostShortcut
+    state.recordingShortcut ||
+    state.focusModeActive
   );
 }
 
@@ -308,19 +317,6 @@ function handleToggleVisibleTags() {
   setMainTags(allSelected ? current.filter((tag) => !visibleTags.includes(tag)) : [...new Set([...current, ...visibleTags])]);
 }
 
-/** Horizontal tab strips scroll with the vertical mouse wheel. */
-function enableWheelScrolling(scroller) {
-  scroller.addEventListener(
-    "wheel",
-    (event) => {
-      if (scroller.scrollWidth <= scroller.clientWidth) return;
-      event.preventDefault();
-      scroller.scrollLeft += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    },
-    { passive: false },
-  );
-}
-
 export function initPalettePanel() {
   const searchInput = $("#lm-palette-search");
   searchInput.addEventListener("input", () => {
@@ -357,6 +353,10 @@ export function initPalettePanel() {
   on(EVENTS.tagsChanged, () => {
     syncChipStates($("#lm-user-chips"), getMainTags());
     updatePaletteToggleButton();
+  });
+  // Pack or group switched in another view (Focus Mode palette).
+  on(EVENTS.paletteChanged, ({ source }) => {
+    if (source !== "tagger") renderPalettePanel({ notify: false });
   });
 
   // Palette edits from the editor page or other tabs.

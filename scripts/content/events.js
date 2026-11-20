@@ -10,6 +10,14 @@ export const EVENTS = Object.freeze({
   siteProfilesChanged: "site-profiles-changed",
   /** `state.tagBlacklist` changed. */
   blacklistChanged: "blacklist-changed",
+  /** The tagger theme (or custom accent) was applied. */
+  themeChanged: "theme-changed",
+  /** The active tag pack, group, or pack contents changed. */
+  paletteChanged: "palette-changed",
+  /** Focus Mode opened or closed; detail: { active }. */
+  focusModeChanged: "focus-mode-changed",
+  /** The Focus Mode tag list changed; detail: { source }. */
+  focusTagsChanged: "focus-tags-changed",
 });
 
 const bus = new EventTarget();

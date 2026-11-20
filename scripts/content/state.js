@@ -24,5 +24,8 @@ export const state = {
 
   /** Keyboard features must stand down while these modes capture input. */
   elementPickerActive: false,
-  recordingGhostShortcut: false,
+  /** A shortcut recorder (ghost mode, Focus Mode) is waiting for a key. */
+  recordingShortcut: false,
+  /** The Focus Mode overlay is open. */
+  focusModeActive: false,
 };

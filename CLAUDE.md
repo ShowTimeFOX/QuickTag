@@ -49,11 +49,16 @@ scripts/
     events.js           event bus: tagsChanged, extensionHidden, siteProfilesChanged, blacklistChanged
     page.js             host-page DOM: tag field, selectors, body margins
     site-profiles.js, palettes.js, fuzzy-search.js, config-backup.js, visibility.js, messaging.js
+    focus-tags.js       Focus Mode tag model (active/muted, sort, page sync) — no DOM
     ui/                 Shadow-DOM interface components (shell, theme, tabs, palette-panel, ai-panel, ...)
+      dom.js            el()/icon()/button() — the safe way to build UI from JS
+      shortcut-recorder.js  reusable "press a shortcut" buttons
+      focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
   background.js         background entry (registers listeners synchronously)
   background/           messages.js, updates.js, comfyui.js
   shared/               used by every context; NO window/document at module level (service worker imports it)
     constants.js        storage keys, message actions, defaults — single source of truth
+    shortcuts.js        shortcut match/format (macOS Option fallback); focus-layout.js = layout JSON schema
   editor/               palette editor components
   extension-popup.js, palette-editor.js   page entry modules (<script type="module">)
 ```

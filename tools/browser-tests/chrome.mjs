@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { startServer, PROBES, sleep } from "./pages.mjs";
 import { REPO_ROOT, browserPath, makeTempDir, cleanupTempDirs, reportResults } from "./config.mjs";
 import { runLayoutFixChecks } from "./checks.mjs";
+import { runFocusModeChecks } from "./focus-checks.mjs";
 
 const extensionDir = process.argv[2] || REPO_ROOT;
 const chromeExe = browserPath("chrome");
@@ -202,6 +203,7 @@ try {
     origin,
   };
   await runLayoutFixChecks(adapters);
+  await runFocusModeChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");

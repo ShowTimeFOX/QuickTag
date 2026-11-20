@@ -1,0 +1,670 @@
+/* Focus Mode overlay (scripts/content/ui/focus-mode.js).
+   Theme colors come from the tagger's --lm-* variables, which focus-mode.js
+   copies from #lazymod-window whenever the theme changes. Every rule is
+   scoped to #lm-focus-root so tagger theme rules (scoped to #lazymod-window)
+   never apply here, and vice versa. */
+
+#lm-focus-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  display: flex;
+  padding: 12px;
+  background: color-mix(in srgb, var(--lm-bg, #0b0f16) 94%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--lm-text, #e2eaf5);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 13px;
+  pointer-events: auto;
+  outline: none;
+}
+
+#lm-focus-root[hidden] {
+  display: none;
+}
+
+#lm-focus-root *,
+#lm-focus-root *::before,
+#lm-focus-root *::after {
+  box-sizing: border-box;
+}
+
+#lm-focus-root [hidden] {
+  display: none !important;
+}
+
+#lm-focus-root .lm-focus-grid {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* --- Panels --- */
+#lm-focus-root .lm-focus-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow: hidden;
+  background: var(--lm-surface, #111824);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 12px;
+}
+
+#lm-focus-root .lm-focus-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+#lm-focus-root .lazymod-title {
+  margin: 0;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+#lm-focus-root .lm-focus-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+#lm-focus-root .lm-focus-meta,
+#lm-focus-root .lm-focus-label,
+#lm-focus-root .lm-focus-hint {
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+}
+
+#lm-focus-root .lm-focus-hint {
+  margin: 0;
+  line-height: 1.45;
+}
+
+#lm-focus-root .lm-focus-empty {
+  margin: 0;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 12px;
+}
+
+/* --- Shared controls (theme-variable versions of the tagger controls) --- */
+#lm-focus-root .lazymod-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  margin: 0;
+  padding: 5px 10px;
+  background: var(--lm-surface-raised, #172131);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 7px;
+  color: var(--lm-text, #e2eaf5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#lm-focus-root .lazymod-btn:hover:not(:disabled) {
+  border-color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lazymod-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+#lm-focus-root .lazymod-btn:focus-visible,
+#lm-focus-root .lm-focus-segment:focus-visible,
+#lm-focus-root .lm-focus-badge button:focus-visible,
+#lm-focus-root .lm-focus-menu-item:focus-visible,
+#lm-focus-root .lazymod-chip:focus-visible,
+#lm-focus-root .lazymod-input:focus-visible {
+  outline: 2px solid var(--lm-accent, #7cafff);
+  outline-offset: 1px;
+}
+
+#lm-focus-root .lazymod-btn-accent {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-color: var(--lm-accent, #7cafff);
+  color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lazymod-btn-danger {
+  color: var(--lm-danger, #f85149);
+}
+
+#lm-focus-root .lazymod-btn[aria-pressed="true"] {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-color: var(--lm-accent, #7cafff);
+  color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lm-focus-icon-btn {
+  justify-content: center;
+  width: 30px;
+  padding: 0;
+}
+
+#lm-focus-root .lazymod-action-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+#lm-focus-root .lazymod-input {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 5px 9px;
+  background: var(--lm-theme-input, var(--lm-bg, #0b0f16));
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 7px;
+  color: var(--lm-text, #e2eaf5);
+  font: inherit;
+  font-size: 12px;
+}
+
+#lm-focus-root .lazymod-badge {
+  padding: 3px 9px;
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 99px;
+  color: var(--lm-accent, #7cafff);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#lm-focus-root .lazymod-checkbox-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#lm-focus-root .lm-focus-segmented {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--lm-theme-input, var(--lm-bg, #0b0f16));
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 8px;
+}
+
+#lm-focus-root .lm-focus-segment {
+  margin: 0;
+  padding: 4px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--lm-muted, #91a0b5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#lm-focus-root .lm-focus-segment[aria-pressed="true"] {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  color: var(--lm-accent, #7cafff);
+  font-weight: 600;
+}
+
+#lm-focus-root .lm-focus-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--lm-muted, #91a0b5);
+}
+
+#lm-focus-root .lm-focus-status[data-state="success"] {
+  color: var(--lm-success, #3fb950);
+}
+
+#lm-focus-root .lm-focus-status[data-state="error"] {
+  color: var(--lm-danger, #f85149);
+}
+
+/* --- Top bar --- */
+#lm-focus-root .lm-focus-topbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 8px 12px;
+}
+
+#lm-focus-root .lm-focus-topbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+#lm-focus-root .lm-focus-site {
+  flex: 1 1 220px;
+  overflow: hidden;
+}
+
+#lm-focus-root .lm-focus-brand {
+  color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lm-focus-host,
+#lm-focus-root .lm-focus-profile {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#lm-focus-root .lm-focus-profile {
+  max-width: 260px;
+  padding: 2px 6px;
+  background: var(--lm-theme-input, var(--lm-bg, #0b0f16));
+  border-radius: 5px;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+}
+
+#lm-focus-root .lm-focus-dirty {
+  color: var(--lm-accent, #7cafff);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#lm-focus-root .lm-focus-topbar-end {
+  margin-left: auto;
+}
+
+#lm-focus-root .lm-focus-topbar .lm-focus-status {
+  flex: 1 0 100%;
+}
+
+/* --- Image --- */
+#lm-focus-root .lm-focus-image-viewport {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  place-items: center;
+  overflow: auto;
+  background:
+    repeating-conic-gradient(color-mix(in srgb, var(--lm-border, #253246) 45%, transparent) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px,
+    var(--lm-theme-input, var(--lm-bg, #0b0f16));
+  border-radius: 8px;
+}
+
+#lm-focus-root .lm-focus-image-viewport[data-zoom="fit"] .lm-focus-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+#lm-focus-root .lm-focus-image-viewport[data-zoom="actual"] {
+  place-items: start;
+}
+
+#lm-focus-root .lm-focus-image-viewport[data-zoom="actual"] .lm-focus-image {
+  max-width: none;
+  max-height: none;
+}
+
+#lm-focus-root .lm-focus-image {
+  display: block;
+}
+
+#lm-focus-root .lm-focus-image-viewport .lm-focus-empty {
+  max-width: 34ch;
+  padding: 16px;
+  text-align: center;
+}
+
+/* --- Tags --- */
+#lm-focus-root .lm-focus-tags-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#lm-focus-root .lm-focus-badges-view {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+#lm-focus-root .lm-focus-badges {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
+}
+
+#lm-focus-root .lm-focus-badge {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  overflow: hidden;
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border: 1px solid var(--lm-accent, #7cafff);
+  border-radius: 7px;
+  color: var(--lm-text, #e2eaf5);
+}
+
+#lm-focus-root .lm-focus-badge.muted {
+  background: transparent;
+  border-color: var(--lm-border, #253246);
+  border-style: dashed;
+  color: var(--lm-muted, #91a0b5);
+}
+
+#lm-focus-root .lm-focus-badge.muted .lm-focus-badge-toggle {
+  text-decoration: line-through;
+}
+
+#lm-focus-root .lm-focus-badge button {
+  margin: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#lm-focus-root .lm-focus-badge-toggle {
+  min-width: 0;
+  padding: 4px 4px 4px 9px;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+#lm-focus-root .lm-focus-badge-remove {
+  padding: 0 8px;
+  opacity: 0.7;
+}
+
+#lm-focus-root .lm-focus-badge-remove:hover {
+  color: var(--lm-danger, #f85149);
+  opacity: 1;
+}
+
+#lm-focus-root .lm-focus-add-input {
+  width: 100%;
+}
+
+#lm-focus-root .lm-focus-raw {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  resize: none;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  line-height: 1.5;
+}
+
+#lm-focus-root .lm-focus-warning {
+  margin: 0;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--lm-danger, #f85149) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lm-danger, #f85149) 40%, transparent);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* Sort menu */
+#lm-focus-root .lm-focus-menu-anchor {
+  position: relative;
+}
+
+#lm-focus-root .lm-focus-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+  padding: 4px;
+  background: var(--lm-surface-raised, #172131);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+#lm-focus-root .lm-focus-menu-item {
+  margin: 0;
+  padding: 7px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--lm-text, #e2eaf5);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+#lm-focus-root .lm-focus-menu-item:hover {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+}
+
+/* --- Palette --- */
+#lm-focus-root .lm-focus-pack {
+  flex: 1 1 160px;
+}
+
+#lm-focus-root .lazymod-tabs {
+  display: flex;
+  gap: 5px;
+  margin: 0;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--lm-border, #253246);
+}
+
+#lm-focus-root .lazymod-tab {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 11px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--lm-muted, #91a0b5);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#lm-focus-root .lazymod-tab.active {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-color: color-mix(in srgb, var(--lm-accent, #7cafff) 40%, transparent);
+  color: var(--lm-accent, #7cafff);
+  font-weight: 600;
+}
+
+#lm-focus-root .lazymod-scroll-arrow {
+  bottom: 4px;
+}
+
+#lm-focus-root .lazymod-scroll-arrow-prev {
+  background: linear-gradient(to right, color-mix(in srgb, var(--lm-surface, #111824) 92%, transparent), transparent);
+}
+
+#lm-focus-root .lazymod-scroll-arrow-next {
+  background: linear-gradient(to left, color-mix(in srgb, var(--lm-surface, #111824) 92%, transparent), transparent);
+}
+
+#lm-focus-root .lm-focus-filter {
+  width: 100%;
+}
+
+#lm-focus-root .lm-focus-palette-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+#lm-focus-root .lm-focus-category-title {
+  margin: 0 0 6px;
+  color: var(--lm-text, #e2eaf5);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#lm-focus-root .lazymod-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+
+#lm-focus-root .lazymod-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 9px;
+  background: var(--lm-theme-chip, var(--lm-surface-raised, #172131));
+  border: 1px solid var(--lm-theme-chip-border, var(--lm-border, #253246));
+  border-radius: 7px;
+  color: var(--lm-text, #e2eaf5);
+  font-size: 12px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+#lm-focus-root .lazymod-chip:hover {
+  border-color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lazymod-chip .icon {
+  color: var(--lm-success, #3fb950);
+  font-weight: 700;
+}
+
+#lm-focus-root .lazymod-chip.active {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-color: var(--lm-accent, #7cafff);
+  color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lazymod-chip.active .icon {
+  color: var(--lm-danger, #f85149);
+}
+
+#lm-focus-root .lazymod-chip.muted {
+  border-style: dashed;
+  color: var(--lm-muted, #91a0b5);
+  text-decoration: line-through;
+}
+
+#lm-focus-root .lazymod-chip.muted .icon {
+  color: var(--lm-muted, #91a0b5);
+}
+
+#lm-focus-root .lazymod-search-empty {
+  color: var(--lm-muted, #91a0b5);
+  font-size: 12px;
+}
+
+/* --- Layout dialog --- */
+#lm-focus-root .lm-focus-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+#lm-focus-root .lm-focus-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(760px, 100%);
+  max-height: 100%;
+  padding: 16px;
+  background: var(--lm-surface, #111824);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+#lm-focus-root .lm-focus-json {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* Narrow viewports: stack every panel regardless of the preset. */
+@media (max-width: 720px) {
+  #lm-focus-root .lm-focus-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    grid-template-areas: none !important;
+    grid-auto-rows: minmax(260px, auto);
+    overflow: auto;
+  }
+
+  #lm-focus-root .lm-focus-grid > .lm-focus-panel {
+    grid-area: auto !important;
+  }
+
+  #lm-focus-root .lm-focus-topbar {
+    grid-auto-rows: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lm-focus-root,
+  #lm-focus-root * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

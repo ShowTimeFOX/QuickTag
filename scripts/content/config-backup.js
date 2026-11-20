@@ -12,7 +12,9 @@ import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
 } from "../shared/constants.js";
-import { isRecord, isStringArray, isValidPageLayout, isValidGhostShortcut, isValidWindowPosition } from "../shared/validation.js";
+import { isRecord, isStringArray, isValidPageLayout, isValidWindowPosition } from "../shared/validation.js";
+import { isValidShortcut } from "../shared/shortcuts.js";
+import { isValidFocusLayout } from "../shared/focus-layout.js";
 import { isValidPalettePack, isValidPaletteGroups } from "../shared/palette.js";
 import { isValidSiteConfigs } from "../shared/site-configs.js";
 import { downloadJsonFile } from "./page.js";
@@ -53,7 +55,18 @@ const VALIDATION_RULES = [
   [LEGACY_STORAGE_KEYS.dockPosition, (value) => DOCK_EDGES.includes(value), "The docking position in this backup is invalid."],
   [STORAGE_KEYS.scale, (value) => isInRange(value, SCALE_RANGE), "The window scale in this backup is invalid."],
   [STORAGE_KEYS.aiThreshold, (value) => isInRange(value, AI_THRESHOLD_RANGE), "The AI threshold in this backup is invalid."],
-  [STORAGE_KEYS.ghostShortcut, isValidGhostShortcut, "The ghost mode shortcut in this backup is invalid."],
+  [STORAGE_KEYS.ghostShortcut, isValidShortcut, "The ghost mode shortcut in this backup is invalid."],
+  [
+    STORAGE_KEYS.focusSettings,
+    (settings) =>
+      isRecord(settings) &&
+      isValidShortcut(settings.toggleShortcut) &&
+      isValidShortcut(settings.closeShortcut) &&
+      typeof settings.strictCapture === "boolean",
+    "The Focus Mode settings in this backup are invalid.",
+  ],
+  [STORAGE_KEYS.focusLayout, isValidFocusLayout, "The Focus Mode layout in this backup is invalid."],
+  [STORAGE_KEYS.focusPrefs, isRecord, "The Focus Mode preferences in this backup are invalid."],
   [STORAGE_KEYS.windowPosition, isValidWindowPosition, "The window position in this backup is invalid."],
   [
     STORAGE_KEYS.windowSize,

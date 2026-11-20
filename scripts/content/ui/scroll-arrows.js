@@ -68,3 +68,16 @@ export function attachScrollArrows(scroller) {
   update();
   return update;
 }
+
+/** Horizontal tab strips scroll with the vertical mouse wheel. */
+export function enableWheelScrolling(scroller) {
+  scroller.addEventListener(
+    "wheel",
+    (event) => {
+      if (scroller.scrollWidth <= scroller.clientWidth) return;
+      event.preventDefault();
+      scroller.scrollLeft += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    },
+    { passive: false },
+  );
+}

@@ -28,6 +28,7 @@ import { initSettingsPanel, renderActiveSiteBadge } from "./ui/settings-panel.js
 import { initElementPicker } from "./ui/element-picker.js";
 import { initWindowControls } from "./ui/window-controls.js";
 import { initGhostMode } from "./ui/ghost-mode.js";
+import { initFocusMode } from "./ui/focus-mode.js";
 
 const PAGE_WATCH_INTERVAL_MS = 1500;
 
@@ -52,6 +53,7 @@ async function main() {
   createHost({ enabled: state.extensionEnabled });
   try {
     await injectStylesheet("styles/tagger.css");
+    await injectStylesheet("styles/focus-mode.css");
     await loadThemeStyles(state.theme);
     await mountTemplate("pages/popup.html");
   } catch (error) {
@@ -75,6 +77,7 @@ async function main() {
   initElementPicker();
   initWindowControls();
   await initGhostMode();
+  await initFocusMode();
   watchPageChanges();
 
   // 5. Render and reveal

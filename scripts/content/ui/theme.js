@@ -2,6 +2,7 @@
 import { LOG_PREFIX, STORAGE_KEYS, THEME_NAMES, DEFAULT_THEME, DEFAULT_CUSTOM_ACCENT, HEX_COLOR_PATTERN } from "../../shared/constants.js";
 import { loadData, onLocalStorageChange } from "../../shared/storage.js";
 import { state } from "../state.js";
+import { emit, EVENTS } from "../events.js";
 import { $, shell } from "./shell.js";
 import { setConfigStatus } from "./status.js";
 
@@ -73,6 +74,7 @@ export function applyTheme(theme = state.theme, accent = state.customAccent) {
   $("#lm-theme-select").value = theme;
   $("#lm-theme-color").value = accent;
   $("#lm-custom-color-control").hidden = theme !== "custom";
+  emit(EVENTS.themeChanged, { theme, accent });
 }
 
 export function initThemeControls() {
