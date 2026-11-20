@@ -26,9 +26,11 @@
   are limited to 2 MB, are checked against the published SHA-256 checksum, and
   must be valid tag pack JSON without `__proto__`, `constructor`, or
   `prototype` keys. File Hub is contacted only when the tab is opened.
-- Pack browser (**Browse** next to the tag pack selector): search every
-  installed pack by name, File Hub version, or group, category, and tag names;
-  switch packs; and uninstall packs with Undo. If the selected pack is
+- Pack switcher: the tag pack selector opens a list that searches every
+  installed pack by name, File Hub version, or group, category, and tag names,
+  switches packs (also with the arrow keys), and uninstalls packs with Undo.
+  It replaces the native drop-down, which closed whenever the tagger scrolled
+  under the pointer. If the selected pack is
   uninstalled, the next one is selected. While the list scrolls, the pack in
   the middle is shown larger in a "ghost" overlay and the others are dimmed
   (no motion with reduced-motion settings).

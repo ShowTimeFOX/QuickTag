@@ -8,7 +8,6 @@ const ASSETS_STATE = `(() => {
   const view = root.querySelector("#lm-view-assets");
   const tabs = root.querySelector("#lm-main-tabs");
   const status = root.querySelector("#lm-assets-status");
-  const packSelect = root.querySelector("#lm-pack-select");
   return {
     display: view.style.display,
     status: status.hidden ? "" : status.textContent,
@@ -18,8 +17,9 @@ const ASSETS_STATE = `(() => {
       const result = card.querySelector(".lazymod-asset-result");
       return { id: card.dataset.packageId, status: card.dataset.status, action: action.textContent, disabled: action.disabled, result: result?.textContent || "", resultState: result?.dataset.state || "" };
     }),
-    packs: [...packSelect.options].map((option) => option.textContent),
-    activePack: packSelect.selectedOptions[0]?.textContent || "",
+    // The pack switcher list is rendered even while its panel is closed.
+    packs: [...root.querySelectorAll("#lm-pack-list .lazymod-pack-item-name")].map((name) => name.textContent),
+    activePack: root.querySelector("#lm-pack-current").textContent,
     chips: [...root.querySelectorAll("#lm-user-chips .lazymod-chip")].map((chip) => chip.dataset.tag || chip.textContent.trim()),
     tabOrder: [...tabs.querySelectorAll(".lazymod-tab")].map((tab) => tab.id),
     tabsOverflow: tabs.scrollWidth > tabs.clientWidth + 1,

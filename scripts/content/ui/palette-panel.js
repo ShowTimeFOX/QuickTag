@@ -15,7 +15,6 @@ import {
   searchActivePack,
   selectCategory,
   selectGroup,
-  selectPack,
 } from "../palettes.js";
 import { $, $$, shell, setIconPath, ICON_PATHS } from "./shell.js";
 import { createEmptyMessage, createTagChip, syncChipStates } from "./chips.js";
@@ -132,15 +131,7 @@ export function renderPalettePanel({ notify = true } = {}) {
 function renderPaletteView() {
   const paletteData = state.paletteData;
   paletteData.packs = paletteData.packs || {};
-  const packSelect = $("#lm-pack-select");
-  packSelect.replaceChildren();
-  Object.entries(paletteData.packs).forEach(([packId, pack]) => {
-    const option = document.createElement("option");
-    option.value = packId;
-    option.textContent = pack.name;
-    option.selected = packId === paletteData.activePackId;
-    packSelect.appendChild(option);
-  });
+  // The pack switcher (pack-browser.js) renders the pack list itself.
 
   const activePack = getActivePack();
   const deletePackButton = $("#lm-delete-pack");
@@ -152,11 +143,6 @@ function renderPaletteView() {
   const groupTabs = $("#lm-palette-tabs");
   groupTabs.replaceChildren();
   if (!activePack) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "No tag packs";
-    option.selected = true;
-    packSelect.appendChild(option);
     renderCategoriesUI();
     return;
   }
@@ -344,9 +330,6 @@ export function initPalettePanel() {
     attachScrollArrows(scroller);
   });
 
-  $("#lm-pack-select").onchange = (event) => {
-    if (selectPack(event.target.value)) renderPalettePanel();
-  };
   $("#lm-delete-pack").onclick = handleDeletePack;
   $("#lm-import-pack").onclick = () => $("#lm-pack-file").click();
   $("#lm-pack-file").onchange = handleImportPack;

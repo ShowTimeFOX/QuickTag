@@ -133,7 +133,7 @@ export const PROBES = {
       windowHidden: win ? win.hidden : null,
       showButtonVisible: root?.querySelector("#lm-show-tagger") ? !root.querySelector("#lm-show-tagger").hidden : null,
       chipCount: root ? root.querySelectorAll("#lm-user-chips .lazymod-chip").length : 0,
-      packOptions: root ? [...root.querySelectorAll("#lm-pack-select option")].map((o) => o.textContent) : [],
+      packOptions: root ? [...root.querySelectorAll("#lm-pack-list .lazymod-pack-item-name")].map((name) => name.textContent) : [],
       badge: root?.querySelector("#lm-active-badge")?.textContent,
       windowBg: win ? getComputedStyle(win).backgroundColor : null,
       windowPosition: win ? getComputedStyle(win).position : null,

@@ -2121,18 +2121,40 @@
   min-width: 0;
 }
 
-.lazymod-pack-row #lm-pack-select {
+/* Pack switcher button (replaces a native <select>; see pack-browser.js). */
+.lazymod-pack-trigger {
+  display: flex;
   flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   min-width: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
 }
 
-.lazymod-pack-row #lm-pack-browse {
-  flex: 0 0 auto;
-}
-
-#lm-pack-browse[aria-expanded="true"] {
+.lazymod-pack-trigger:hover,
+.lazymod-pack-trigger[aria-expanded="true"] {
   border-color: var(--lm-accent, #7cafff);
-  color: var(--lm-accent, #7cafff);
+}
+
+.lazymod-pack-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lazymod-pack-trigger-icon {
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+
+.lazymod-pack-trigger[aria-expanded="true"] .lazymod-pack-trigger-icon {
+  transform: rotate(180deg);
 }
 
 .lazymod-pack-browser {
@@ -2163,8 +2185,11 @@
   gap: 2px;
   max-height: 228px;
   padding: 4px;
+  position: relative;
   overflow-x: hidden;
   overflow-y: auto;
+  /* Scrolling through packs never scrolls the tagger body or the page. */
+  overscroll-behavior: contain;
   /* Ghost scroll must never move the scroll position itself. */
   overflow-anchor: none;
   background: var(--lm-bg, #0b0f16);
@@ -2348,6 +2373,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .lazymod-pack-trigger-icon,
   .lazymod-pack-item,
   .lazymod-pack-item-name,
   .lazymod-pack-ghost,

@@ -57,7 +57,7 @@ scripts/
       shortcut-recorder.js  reusable "press a shortcut" buttons
       focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
       assets-panel.js   Assets tab (File Hub browse/install)
-      pack-browser.js   Browse: pack search, ghost scroll, uninstall with undo
+      pack-browser.js   pack switcher dropdown: search, ghost scroll, uninstall with undo
   background.js         background entry (registers listeners synchronously)
   background/           messages.js, updates.js, comfyui.js, file-hub.js (all File Hub network requests)
   shared/               used by every context; NO window/document at module level (service worker imports it)

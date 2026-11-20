@@ -116,22 +116,22 @@
           <input type="file" id="lm-pack-file" accept=".json,application/json" hidden />
         </div>
         <div class="lazymod-sub-header lazymod-pack-row">
-          <select class="lazymod-input" id="lm-pack-select" aria-label="JSON package"></select>
           <button
             type="button"
-            class="lazymod-btn"
-            id="lm-pack-browse"
+            class="lazymod-input lazymod-pack-trigger"
+            id="lm-pack-switcher"
+            aria-haspopup="true"
             aria-expanded="false"
             aria-controls="lm-pack-browser"
-            title="Search, browse, and uninstall tag packs"
+            title="Switch, search, or uninstall tag packs"
           >
-            <svg class="lazymod-action-icon" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M7 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm3.5-1.5 3 3" />
+            <span class="lazymod-pack-trigger-label" id="lm-pack-current">No tag packs</span>
+            <svg class="lazymod-action-icon lazymod-pack-trigger-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="m4 6 4 4 4-4" />
             </svg>
-            <span>Browse</span>
           </button>
         </div>
-        <!-- Pack browser (scripts/content/ui/pack-browser.js) -->
+        <!-- Pack switcher dropdown (scripts/content/ui/pack-browser.js) -->
         <div class="lazymod-pack-browser" id="lm-pack-browser" hidden>
           <input
             type="search"

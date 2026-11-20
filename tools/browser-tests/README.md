@@ -39,6 +39,7 @@ $env:FIREFOX_PATH = "C:\path\to\firefox.exe"
 | `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs`, `pack-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab, pack browser). `pack-checks.mjs` runs after the Assets checks (it uses the installed mock packs) and ends with only the `default-character` pack, which the editor check opens. |
 | `chrome.mjs` | Starts Chrome with `--remote-debugging-pipe --enable-unsafe-extension-debugging` and loads the test copy with the DevTools `Extensions.loadUnpacked` command (branded Chrome no longer accepts `--load-extension`). |
 | `firefox.mjs` | Starts Firefox with WebDriver BiDi and installs a temporary add-on with `webExtension.install`. |
+| `pointer` adapter | Both runners pass real (trusted) mouse clicks and wheel input to the checks: DevTools `Input.dispatchMouseEvent` in Chrome, BiDi `input.performActions` in Firefox. The pack switcher checks use it. |
 | `config.mjs` | Browser paths, temporary directories, the test copies (`createTestCopy`), and result reporting. |
 
 - Browser profiles are created in the OS temp directory and deleted afterwards.
@@ -72,7 +73,8 @@ The update check contacts the public GitHub Gist, as the extension does.
 ## Not covered
 
 Visual appearance (including the ghost scroll animation and
-`prefers-reduced-motion`), real mouse dragging and resizing, physical key presses,
+`prefers-reduced-motion`), mouse dragging and resizing, trackpad scrolling,
+physical key presses,
 file dialogs, clipboard access, the toolbar button itself, analysis with a
 running ComfyUI instance, and installing from the live File Hub (GitHub
 release downloads, Firefox host permission prompts) still need a manual

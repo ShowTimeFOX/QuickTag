@@ -199,9 +199,25 @@ try {
   check("Strict CSP page: theme CSS + template styles match plain page", cspState?.themeClass === plainState?.themeClass && cspState.windowBg === plainState.windowBg && cspState.sitesViewDisplay === "none" && cspState.addAllAiDisplay === "none" && cspState.placeholderFont === "11px", { csp: cspState, plain: { tabBg: plainState?.tabBg, windowBg: plainState?.windowBg } });
 
   // Shared checks (checks.mjs)
+  // Real (trusted) input through the DevTools protocol, viewport coordinates.
+  const mouse = (handle, params) => send("Input.dispatchMouseEvent", params, handle.sessionId);
+  const pointer = {
+    async click(handle, x, y) {
+      await send("Target.activateTarget", { targetId: handle.targetId });
+      await mouse(handle, { type: "mouseMoved", x, y });
+      await mouse(handle, { type: "mousePressed", x, y, button: "left", clickCount: 1 });
+      await mouse(handle, { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
+    },
+    async wheel(handle, x, y, deltaY) {
+      await send("Target.activateTarget", { targetId: handle.targetId });
+      await mouse(handle, { type: "mouseMoved", x, y });
+      await mouse(handle, { type: "mouseWheel", x, y, deltaX: 0, deltaY });
+    },
+  };
   const adapters = {
     open: (url) => openTab(url, `page ${new URL(url).pathname}`),
     evaluate: (handle, expression) => evaluate(handle.sessionId, expression),
+    pointer,
     check,
     origin,
   };

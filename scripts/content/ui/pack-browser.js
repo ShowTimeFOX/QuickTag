@@ -1,9 +1,17 @@
-// Pack browser (Tagging view, "Browse"): search all installed packs, switch
-// packs, and uninstall with undo. While the list scrolls, a "ghost" overlay
-// names the pack at the center and neighbors are dimmed ("ghost scroll").
+// Pack switcher (Tagging view): a button showing the active pack opens a
+// dropdown panel to search all installed packs, switch packs, and uninstall
+// with undo. While the list scrolls, a "ghost" overlay names the pack at the
+// center and neighbors are dimmed ("ghost scroll").
+//
+// This replaces a native <select>: browsers close a native select popup
+// whenever an ancestor scrolls (e.g. a wheel over the select scrolling the
+// tagger body), and its popup cannot show ghost scroll. The panel closes only
+// on a pack choice, Escape, the switcher button, or a pointerdown outside it
+// (checked with composedPath(), since the tagger lives in a shadow root).
 //
 // Ghost scroll only listens to the list's own `scroll` events (passive, no
-// wheel handling, no preventDefault), so page scrolling is never captured.
+// wheel handling, no preventDefault). The list uses `overscroll-behavior:
+// contain`, so scrolling through packs never scrolls the tagger or page.
 // Motion is CSS-only and disabled under prefers-reduced-motion.
 import { LOG_PREFIX, STORAGE_KEYS } from "../../shared/constants.js";
 import { onLocalStorageChange } from "../../shared/storage.js";
@@ -12,7 +20,7 @@ import { emit, on, EVENTS } from "../events.js";
 import { selectPack } from "../palettes.js";
 import { loadHubInstalls } from "../file-hub.js";
 import { hubRecordsByPack, searchInstalledPacks, uninstallPack, undoUninstall } from "../pack-manager.js";
-import { $ } from "./shell.js";
+import { $, shell } from "./shell.js";
 import { el } from "./dom.js";
 
 const SOURCE = "packs";
@@ -30,6 +38,8 @@ const view = {
   busy: false,
   /** Last error, shown until the next action or search. */
   error: "",
+  /** scrollTop the code set last; its scroll event is not a user scroll. */
+  programmaticScrollTop: null,
 };
 
 let elements;
@@ -109,12 +119,18 @@ function packRow(result) {
   ]);
 }
 
+/** Renders the switcher label and the list (also while closed, so both stay current). */
 function render() {
-  if (!view.open || !elements) return;
+  if (!elements) return;
+  const packs = state.paletteData?.packs || {};
+  const activePack = packs[state.paletteData?.activePackId];
+  elements.current.textContent = activePack ? activePack.name : "No tag packs";
+  elements.toggle.title = activePack ? `${activePack.name}: switch, search, or uninstall tag packs` : "No tag packs installed";
   const query = elements.search.value;
   const results = searchInstalledPacks(query, view.hubRecords);
   elements.list.replaceChildren(...results.map(packRow));
-  renderCountStatus(results.length, Object.keys(state.paletteData?.packs || {}).length, query.trim());
+  elements.list.dataset.total = String(Object.keys(packs).length);
+  renderCountStatus(results.length, Object.keys(packs).length, query.trim());
   endGhostScroll();
 }
 
@@ -152,7 +168,19 @@ function updateCenteredItem() {
   );
 }
 
+/** Scrolls the list from code (open, search) without triggering ghost scroll. */
+function setListScrollTop(value) {
+  const list = elements.list;
+  const target = Math.round(Math.max(0, Math.min(value, list.scrollHeight - list.clientHeight)));
+  if (Math.abs(list.scrollTop - target) < 1) return;
+  view.programmaticScrollTop = target;
+  list.scrollTop = target;
+}
+
 function handleListScroll() {
+  const expected = view.programmaticScrollTop;
+  view.programmaticScrollTop = null;
+  if (expected !== null && Math.abs(elements.list.scrollTop - expected) <= 1) return;
   updateCenteredItem();
   elements.list.classList.add("is-ghost-scrolling");
   elements.ghost.dataset.visible = "true";
@@ -170,8 +198,11 @@ function endGhostScroll() {
 // --- Actions ---
 
 function handleSelect(packId) {
-  if (!selectPack(packId)) return;
-  emit(EVENTS.paletteChanged, { source: SOURCE });
+  if (packId !== state.paletteData.activePackId) {
+    if (!selectPack(packId)) return;
+    emit(EVENTS.paletteChanged, { source: SOURCE });
+  }
+  setOpen(false, { restoreFocus: true });
   render();
 }
 
@@ -210,21 +241,67 @@ async function handleUndo() {
   render();
 }
 
-function setOpen(open) {
+/** Centers the active pack in the list without scrolling any ancestor. */
+function revealActiveRow() {
+  const row = elements.list.querySelector(".lazymod-pack-item.active");
+  if (!row) return;
+  setListScrollTop(row.offsetTop - (elements.list.clientHeight - row.offsetHeight) / 2);
+}
+
+function handleOutsidePointer(event) {
+  const path = event.composedPath();
+  if (!path.includes(elements.browser) && !path.includes(elements.toggle)) setOpen(false);
+}
+
+function setOpen(open, { restoreFocus = false } = {}) {
+  if (view.open === open) return;
   view.open = open;
   elements.browser.hidden = !open;
   elements.toggle.setAttribute("aria-expanded", String(open));
   if (!open) {
+    document.removeEventListener("pointerdown", handleOutsidePointer, true);
     endGhostScroll();
+    if (restoreFocus) elements.toggle.focus({ preventScroll: true });
     return;
   }
+  // Registered after the opening click, in the capture phase, so page
+  // handlers that stop propagation cannot keep the panel open by accident.
+  document.addEventListener("pointerdown", handleOutsidePointer, true);
+  render();
+  revealActiveRow();
   refreshHubRecords();
   elements.search.focus({ preventScroll: true });
 }
 
+/** Arrow keys move between packs (like a native select); Escape closes. */
+function handlePanelKeydown(event) {
+  if (event.key === "Escape") {
+    // A non-empty search clears itself first (its own keydown handler).
+    if (event.target === elements.search && elements.search.value) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(false, { restoreFocus: true });
+    return;
+  }
+  if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+  const buttons = [...elements.list.querySelectorAll(".lazymod-pack-item-select")];
+  if (!buttons.length) return;
+  event.preventDefault();
+  const step = event.key === "ArrowDown" ? 1 : -1;
+  const current = buttons.indexOf(shell.root.activeElement);
+  const next = current < 0 ? (step > 0 ? 0 : buttons.length - 1) : Math.min(buttons.length - 1, Math.max(0, current + step));
+  buttons[next].focus({ preventScroll: true });
+  // Keep the focused row visible by scrolling the list only.
+  const row = buttons[next].closest(".lazymod-pack-item");
+  const list = elements.list;
+  if (row.offsetTop < list.scrollTop) list.scrollTop = row.offsetTop;
+  else if (row.offsetTop + row.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = row.offsetTop + row.offsetHeight - list.clientHeight;
+}
+
 export function initPackBrowser() {
   elements = {
-    toggle: $("#lm-pack-browse"),
+    toggle: $("#lm-pack-switcher"),
+    current: $("#lm-pack-current"),
     browser: $("#lm-pack-browser"),
     search: $("#lm-pack-search"),
     list: $("#lm-pack-list"),
@@ -235,9 +312,16 @@ export function initPackBrowser() {
   elements.browser.dataset.busy = "false";
 
   elements.toggle.addEventListener("click", () => setOpen(!view.open));
+  elements.toggle.addEventListener("keydown", (event) => {
+    if ((event.key === "ArrowDown" || event.key === "ArrowUp") && !view.open) {
+      event.preventDefault();
+      setOpen(true);
+    }
+  });
+  elements.browser.addEventListener("keydown", handlePanelKeydown);
   elements.search.addEventListener("input", () => {
     view.error = "";
-    elements.list.scrollTop = 0;
+    setListScrollTop(0);
     render();
   });
   elements.search.addEventListener("keydown", (event) => {
@@ -247,6 +331,8 @@ export function initPackBrowser() {
     render();
   });
   elements.list.addEventListener("scroll", handleListScroll, { passive: true });
+  on(EVENTS.extensionHidden, () => setOpen(false));
+  refreshHubRecords();
 
   // Pack changes from any view (tagger selector, Focus Mode, Assets, other tabs).
   on(EVENTS.paletteChanged, ({ source }) => {

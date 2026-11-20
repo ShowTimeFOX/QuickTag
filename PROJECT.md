@@ -40,10 +40,10 @@ source directory; `manifest.json` contains the shared browser configuration.
   field follows live (two-way) unless Live sync is off. `Esc` closes menus and
   dialogs first, then Focus Mode. Shortcuts, strict capture, and a JSON grid
   layout with presets are configurable.
-- **Pack browser:** **Browse** next to the pack selector searches every
-  installed pack (name, File Hub metadata, groups, categories, tags), switches
-  packs, and uninstalls them with Undo. Scrolling the list shows a "ghost"
-  overlay with the centered pack.
+- **Pack switcher:** The pack selector opens a dropdown panel that searches
+  every installed pack (name, File Hub metadata, groups, categories, tags),
+  switches packs, and uninstalls them with Undo. Scrolling the list shows a
+  "ghost" overlay with the centered pack.
 - **Assets:** The Assets tab lists the community tag packs on File Hub
   (`https://showtimefox-file-hub.pages.dev/`) with search, a category filter,
   and sorting, and installs a pack with one click. Installed packs show as
@@ -277,6 +277,18 @@ if you need help.
     the pack after a second confirmation click.
   - Only `json` packages for `targetApp: "quicktag"` can be installed; other
     file types are listed as not supported.
+- **Pack switcher** (`ui/pack-browser.js`). The Tagging view's pack selector
+  is a button (`#lm-pack-switcher`) that opens a dropdown panel, not a native
+  `<select>`: browsers close a native select popup whenever an ancestor
+  scrolls (a wheel over the select scrolls `#lazymod-body`), and its popup
+  cannot show ghost scroll. The panel closes on a pack choice, `Escape`, the
+  switcher button, or a `pointerdown` outside it; the outside check uses
+  `composedPath()` because document listeners see shadow-DOM clicks
+  retargeted to the host. The list is rendered while closed too, so the label
+  and list follow every palette change. Scrolls made by code (centering the
+  active pack on open, resetting on search) are recognized by their target
+  position and do not start ghost scroll. Focus Mode's palette keeps a native
+  `<select>`; nothing around it scrolls.
 - **Uninstall and pack search** (`content/pack-manager.js`, shown by
   `ui/pack-browser.js` and the Assets cards). `palettes.removePack` deletes a
   pack and, if it was active, activates its neighbor (next, else previous,
@@ -289,7 +301,8 @@ if you need help.
   cached by pack object (a `WeakMap`), and never modifies packs.
 - **Ghost scroll.** The pack list listens only to its own passive `scroll`
   events (no wheel handlers, no `preventDefault`), so page scrolling is never
-  captured. While it scrolls, the item nearest the list's center is marked,
+  captured; `overscroll-behavior: contain` keeps a wheel at the end of the
+  list from scrolling the tagger body. While it scrolls, the item nearest the list's center is marked,
   named in an overlay, and shown larger, and the overlay fades out 500 ms
   after the last scroll event. Sizes change with `transform` only and the
   list sets `overflow-anchor: none`: a layout change would move the scroll
@@ -363,8 +376,8 @@ node tools/browser-tests/firefox.mjs
 ```
 
 They cover loading, the strict-CSP page, the tagger, Focus Mode, the Assets
-tab (against a local mock File Hub), the pack browser (search, ghost scroll,
-uninstall and undo), the background script, the popup, and
+tab (against a local mock File Hub), the pack switcher (real mouse and wheel
+input, search, ghost scroll, uninstall and undo), the background script, the popup, and
 the editor. Then load the repository root in each target
 browser for the manual checks listed in that README. Full AI analysis testing
 requires a running ComfyUI instance with the WD14 node installed.

@@ -165,7 +165,28 @@ try {
   check("Strict CSP page: theme CSS + template styles match plain page", cspState?.themeClass === plainState?.themeClass && cspState.windowBg === plainState.windowBg && cspState.sitesViewDisplay === "none" && cspState.addAllAiDisplay === "none" && cspState.placeholderFont === "11px", { csp: cspState, plain: { tabBg: plainState?.tabBg, windowBg: plainState?.windowBg } });
 
   // Shared checks (checks.mjs)
-  const adapters = { open: (url) => openTab(url), evaluate, check, origin };
+  // Real (trusted) input through WebDriver BiDi, viewport coordinates.
+  const perform = async (context, actions) => {
+    await send("browsingContext.activate", { context });
+    await send("input.performActions", { context, actions });
+  };
+  const pointer = {
+    click: (context, x, y) =>
+      perform(context, [
+        {
+          type: "pointer",
+          id: "mouse",
+          parameters: { pointerType: "mouse" },
+          actions: [{ type: "pointerMove", x: Math.round(x), y: Math.round(y) }, { type: "pointerDown", button: 0 }, { type: "pointerUp", button: 0 }],
+        },
+      ]),
+    wheel: (context, x, y, deltaY) =>
+      perform(context, [
+        { type: "pointer", id: "mouse", parameters: { pointerType: "mouse" }, actions: [{ type: "pointerMove", x: Math.round(x), y: Math.round(y) }] },
+        { type: "wheel", id: "wheel", actions: [{ type: "scroll", x: Math.round(x), y: Math.round(y), deltaX: 0, deltaY }] },
+      ]),
+  };
+  const adapters = { open: (url) => openTab(url), evaluate, pointer, check, origin };
   await runLayoutFixChecks(adapters);
   await runFocusModeChecks(adapters);
   await runAssetsChecks(adapters);
