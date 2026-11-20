@@ -1,13 +1,15 @@
-// Top-level tagger tabs (Palette / Settings) and the About link.
+// Top-level tagger tabs (Tagging / Settings / Assets) and the About link.
 import { MESSAGE_ACTIONS } from "../../shared/constants.js";
 import { notifyTagsChanged } from "../page.js";
 import { requestExtensionPage } from "../messaging.js";
 import { $ } from "./shell.js";
 import { renderSettingsUI } from "./settings-panel.js";
+import { showAssetsPanel } from "./assets-panel.js";
 
 const TABS = {
   main: { button: "#lm-tab-btn-main", view: "#lm-view-main", onShow: notifyTagsChanged },
   sites: { button: "#lm-tab-btn-sites", view: "#lm-view-sites", onShow: renderSettingsUI },
+  assets: { button: "#lm-tab-btn-assets", view: "#lm-view-assets", onShow: showAssetsPanel },
 };
 
 function showTab(name) {
@@ -31,6 +33,7 @@ export function initTabs() {
   // Initial state is set via CSSOM, not a template style attribute (blocked by
   // strict page CSPs in Firefox). The Palette tab is active in the template.
   $(TABS.sites.view).style.display = "none";
+  $(TABS.assets.view).style.display = "none";
   Object.entries(TABS).forEach(([name, tab]) => {
     $(tab.button).onclick = () => showTab(name);
   });

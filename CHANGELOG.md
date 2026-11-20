@@ -17,6 +17,15 @@
   grid areas, column and row sizes, and panel visibility. It can be viewed,
   edited, imported, exported, and reset from Focus Mode, and is included in
   configuration backups.
+- Assets tab next to Settings: browse the QuickTag tag packs on File Hub
+  (`showtimefox-file-hub.pages.dev`) with search by name, author, or
+  description, a category filter, and sorting (recently updated, newest, top
+  rated, most downloaded, name). One-click Install adds and selects a pack;
+  installed packs are marked, and Update replaces a pack with a newer File Hub
+  version after a confirmation click. Downloads run in the background script,
+  are limited to 2 MB, are checked against the published SHA-256 checksum, and
+  must be valid tag pack JSON without `__proto__`, `constructor`, or
+  `prototype` keys. File Hub is contacted only when the tab is opened.
 - Automated browser tests in `tools/browser-tests/` that load the extension
   into installed Chrome and Firefox (headless, no dependencies) and check the
   tagger, background script, popup, and editor on a plain page and a
@@ -40,6 +49,8 @@
 - Storage keys, message actions, and defaults are defined once in
   `scripts/shared/constants.js` instead of being repeated across scripts.
 - Replaced the remaining `innerHTML` assignments with `replaceChildren()`.
+- Imported tag packs skip groups and categories named `__proto__`,
+  `constructor`, or `prototype`.
 - The tag counter now also updates when the page's tag field is edited
   directly or the Palette tab is opened.
 

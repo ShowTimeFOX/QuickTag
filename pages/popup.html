@@ -43,6 +43,12 @@
         </svg>
         Settings
       </button>
+      <button type="button" class="lazymod-tab" id="lm-tab-btn-assets">
+        <svg class="lazymod-tab-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M2.5 5 8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5 8 7.5 13.5 5M8 7.5v6" />
+        </svg>
+        Assets
+      </button>
       <button type="button" class="lazymod-tab" id="lm-tab-btn-about">
         <svg class="lazymod-tab-icon" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M9 3h4v4M13 3 7 9M11 9v3.5H3.5v-8H7" />
@@ -391,6 +397,35 @@
           <input type="file" id="lm-config-file" accept=".json,application/json" hidden />
         </div>
         <div class="lazymod-config-status" id="lm-config-status" role="status" aria-live="polite" hidden></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ASSETS (File Hub packages; rendered by scripts/content/ui/assets-panel.js) -->
+    <div id="lm-view-assets">
+      <div class="lazymod-section">
+        <div class="lazymod-sub-header lazymod-section-heading">
+          <div class="lazymod-title">File Hub</div>
+          <div class="lazymod-section-actions">
+            <a class="lazymod-btn lazymod-assets-site" id="lm-assets-site" target="_blank" rel="noopener noreferrer">Website</a>
+            <button type="button" class="lazymod-btn" id="lm-assets-refresh" title="Reload the package list from File Hub">Refresh</button>
+          </div>
+        </div>
+        <p class="lazymod-settings-hint">Community tag packs from File Hub. Installing adds the pack to your tag packs and selects it.</p>
+        <input
+          type="search"
+          class="lazymod-input lazymod-assets-search"
+          id="lm-assets-search"
+          placeholder="Search name, author, or description"
+          aria-label="Search packages by name, author, or description"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="lazymod-assets-filters">
+          <select class="lazymod-input" id="lm-assets-category" aria-label="Filter by category"></select>
+          <select class="lazymod-input" id="lm-assets-sort" aria-label="Sort packages"></select>
+        </div>
+        <div class="lazymod-assets-status" id="lm-assets-status" role="status" aria-live="polite"></div>
+        <div class="lazymod-assets-list" id="lm-assets-list" role="list" aria-label="File Hub packages"></div>
       </div>
     </div>
   </div>

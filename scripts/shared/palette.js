@@ -4,7 +4,7 @@
 // Older formats are accepted: `folders` instead of `groups`, groups given
 // directly at the top level, and groups that are a flat tag array (these
 // become a single "General" category).
-import { isRecord } from "./validation.js";
+import { isRecord, isSafeKey } from "./validation.js";
 
 const PACK_META_KEYS = ["name", "activeFolder", "activeGroup", "activeCategory"];
 
@@ -24,7 +24,10 @@ export function normalizePalettePack(rawData, fallbackName) {
   }
 
   const groups = {};
+  // Unsafe keys (`__proto__`, ...) are skipped: assigning them would change
+  // the prototype of the new objects.
   Object.entries(sourceGroups).forEach(([groupName, rawCategories]) => {
+    if (!isSafeKey(groupName)) return;
     if (Array.isArray(rawCategories)) {
       groups[groupName] = { General: rawCategories.filter((tag) => typeof tag === "string") };
       return;
@@ -33,7 +36,7 @@ export function normalizePalettePack(rawData, fallbackName) {
 
     const categories = {};
     Object.entries(rawCategories).forEach(([categoryName, rawTags]) => {
-      if (Array.isArray(rawTags)) {
+      if (isSafeKey(categoryName) && Array.isArray(rawTags)) {
         categories[categoryName] = rawTags.filter((tag) => typeof tag === "string");
       }
     });

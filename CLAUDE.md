@@ -50,15 +50,18 @@ scripts/
     page.js             host-page DOM: tag field, selectors, body margins
     site-profiles.js, palettes.js, fuzzy-search.js, config-backup.js, visibility.js, messaging.js
     focus-tags.js       Focus Mode tag model (active/muted, sort, page sync) — no DOM
+    file-hub.js         File Hub install records (Assets tab) — no DOM
     ui/                 Shadow-DOM interface components (shell, theme, tabs, palette-panel, ai-panel, ...)
       dom.js            el()/icon()/button() — the safe way to build UI from JS
       shortcut-recorder.js  reusable "press a shortcut" buttons
       focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
+      assets-panel.js   Assets tab (File Hub browse/install)
   background.js         background entry (registers listeners synchronously)
-  background/           messages.js, updates.js, comfyui.js
+  background/           messages.js, updates.js, comfyui.js, file-hub.js (all File Hub network requests)
   shared/               used by every context; NO window/document at module level (service worker imports it)
     constants.js        storage keys, message actions, defaults — single source of truth
     shortcuts.js        shortcut match/format (macOS Option fallback); focus-layout.js = layout JSON schema
+    file-hub.js         File Hub catalogue/pack validation (unsafe keys, limits, sha256)
   editor/               palette editor components
   extension-popup.js, palette-editor.js   page entry modules (<script type="module">)
 ```
@@ -83,6 +86,13 @@ scripts/
 - Log prefix: `LOG_PREFIX` (`[QuickTag]`).
 - DOM ids/classes in the tagger use `lm-` / `lazymod-` prefixes.
 - ComfyUI URL is `COMFYUI_BASE_URL`; changing it also requires `host_permissions`.
+- File Hub URL is `FILE_HUB_BASE_URL`. Network requests to it (and package
+  downloads) go through the background script, never the content script.
+  Untrusted JSON must be checked with `hasUnsafeKeys`/`isSafeKey`
+  (`shared/validation.js`) before keys are copied into objects.
+- The browser tests load a temporary copy of the extension with
+  `FILE_HUB_BASE_URL` rewritten to a local mock hub; keep that constant a
+  single-line string literal.
 
 ## Validation
 

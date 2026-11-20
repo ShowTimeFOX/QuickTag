@@ -1936,3 +1936,179 @@
   scroll-padding-inline: 26px;
   padding-inline: 22px;
 }
+
+/* --- Assets tab (File Hub, scripts/content/ui/assets-panel.js) --- */
+#lm-view-assets .lazymod-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#lm-view-assets .lazymod-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#lm-view-assets .lazymod-assets-site {
+  text-decoration: none;
+}
+
+#lm-view-assets .lazymod-assets-search {
+  display: block;
+  width: 100%;
+  margin: 8px 0 6px;
+}
+
+.lazymod-assets-filters {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lazymod-assets-filters .lazymod-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.lazymod-assets-status {
+  margin: 8px 0;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.lazymod-assets-status[data-state="error"] {
+  color: var(--lm-danger, #f85149);
+}
+
+.lazymod-assets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lazymod-asset-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  background: var(--lm-surface-raised, #172131);
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 9px;
+}
+
+.lazymod-asset-card[data-status="installed"] {
+  border-color: color-mix(in srgb, var(--lm-success, #3fb950) 45%, var(--lm-border, #253246));
+}
+
+.lazymod-asset-card[data-status="update"] {
+  border-color: var(--lm-accent, #7cafff);
+}
+
+.lazymod-asset-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lazymod-asset-name {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--lm-text, #e2eaf5);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.lazymod-asset-version {
+  flex: 0 0 auto;
+}
+
+.lazymod-asset-byline,
+.lazymod-asset-stats {
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.lazymod-asset-description {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--lm-text, #e2eaf5);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.lazymod-asset-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lazymod-asset-tag {
+  max-width: 100%;
+  padding: 1px 7px;
+  overflow: hidden;
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 99px;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lazymod-asset-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+
+.lazymod-asset-stats {
+  display: flex;
+  flex: 1 1 140px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lazymod-asset-installed {
+  color: var(--lm-success, #3fb950);
+  font-weight: 600;
+}
+
+.lazymod-asset-action {
+  flex: 0 0 auto;
+}
+
+.lazymod-asset-action:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.lazymod-asset-result {
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.lazymod-asset-result[data-state="success"] {
+  color: var(--lm-success, #3fb950);
+}
+
+.lazymod-asset-result[data-state="error"] {
+  color: var(--lm-danger, #f85149);
+}

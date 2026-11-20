@@ -1,6 +1,77 @@
 // Local test server (plain page + strict-CSP page) and the probe expressions
 // both runners evaluate in pages.
 import http from "node:http";
+import crypto from "node:crypto";
+
+// --- Mock File Hub (the test copies point FILE_HUB_BASE_URL at /hub/) ---
+// `hubState` is mutable from the checks (same Node process).
+export const hubState = { goodVersion: "1.0.0", failCatalogue: false, catalogueRequests: 0 };
+
+const sha256 = (text) => crypto.createHash("sha256").update(text).digest("hex");
+const packJson = (name, tags) => JSON.stringify({ name, groups: { "Hub Group": { "Hub Category": tags } } });
+const HUB_FILES = {
+  "good-1.0.0.json": packJson("Mock Hub Pack", ["hub_tag_one", "hub_tag_two"]),
+  "good-1.1.0.json": packJson("Mock Hub Pack", ["hub_tag_one", "hub_tag_two", "hub_tag_three"]),
+  "fallback.json": packJson("Fallback Pack", ["fallback_tag"]),
+  "tampered.json": packJson("Tampered Pack", ["tampered_tag"]),
+  // JSON.parse keeps "__proto__" as an own key.
+  "proto.json": '{"name":"Proto Pack","groups":{"G":{"C":["x"]}},"__proto__":{"polluted":true}}',
+  "toobig.json": packJson("Huge Pack", Array.from({ length: 150000 }, (_, index) => `huge_tag_${index}`)),
+};
+
+function hubCatalogue(base) {
+  const goodFile = `good-${hubState.goodVersion}.json`;
+  const entry = (id, fields) => ({
+    id,
+    version: "1.0.0",
+    author: "tester",
+    description: "Mock package",
+    targetApp: "quicktag",
+    targetAppName: "QuickTag",
+    category: "tags",
+    tags: ["quicktag", "tag-pack"],
+    fileType: "json",
+    downloads: 0,
+    score: 0,
+    createdAt: "2026-11-01T00:00:00.000Z",
+    updatedAt: "2026-11-01T00:00:00.000Z",
+    ...fields,
+  });
+  const packages = [
+    entry("good", { name: "Mock Hub Pack", version: hubState.goodVersion, author: "alice", description: "Primary download endpoint", assetId: "1001", fileSize: HUB_FILES[goodFile].length, sha256: sha256(HUB_FILES[goodFile]), downloads: 50, score: 5, updatedAt: "2026-11-15T00:00:00.000Z" }),
+    entry("fallback", { name: "Fallback Pack", description: "Asset endpoint fails, downloadUrl works", assetId: "404404", downloadUrl: `${base}files/fallback.json`, sha256: sha256(HUB_FILES["fallback.json"]), downloads: 200, score: 1 }),
+    entry("tampered", { name: "Tampered Pack", downloadUrl: `${base}files/tampered.json`, sha256: sha256("something else") }),
+    entry("proto", { name: "Proto Pack", downloadUrl: `${base}files/proto.json`, sha256: sha256(HUB_FILES["proto.json"]) }),
+    entry("toobig", { name: "Huge Pack", downloadUrl: `${base}files/toobig.json` }),
+    entry("zipped", { name: "Zipped Pack", category: "themes", fileType: "zip", downloadUrl: `${base}files/zipped.zip` }),
+    entry("otherapp", { name: "Other App Plugin", targetApp: "otherapp", downloadUrl: `${base}files/fallback.json` }),
+    { id: "__proto__", name: "Bad id" },
+  ];
+  return { version: "1.0", total: packages.length, generatedAt: new Date().toISOString(), packages };
+}
+
+function handleHub(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const base = `http://${req.headers.host}/hub/`;
+  if (url.pathname === "/hub/api/v1/packages") {
+    hubState.catalogueRequests += 1;
+    if (hubState.failCatalogue) {
+      res.writeHead(503, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+      return res.end('{"error":"Unavailable"}');
+    }
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache" });
+    return res.end(JSON.stringify(hubCatalogue(base)));
+  }
+  // Like the real hub, downloads send no CORS headers.
+  const download = /^\/hub\/api\/download\/([^/]+)$/.exec(url.pathname);
+  const file = download ? (download[1] === "1001" ? `good-${hubState.goodVersion}.json` : null) : /^\/hub\/files\/([^/]+)$/.exec(url.pathname)?.[1];
+  if (file && HUB_FILES[file]) {
+    res.writeHead(200, { "Content-Type": "application/octet-stream" });
+    return res.end(HUB_FILES[file]);
+  }
+  res.writeHead(404, { "Content-Type": "application/json" });
+  return res.end('{"error":"File not found."}');
+}
 
 // 1x1 transparent PNG
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
@@ -12,6 +83,7 @@ export const STRICT_CSP = "default-src 'none'; img-src 'self'; require-trusted-t
 
 export function startServer() {
   const server = http.createServer((req, res) => {
+    if (req.url.startsWith("/hub/")) return handleHub(req, res);
     if (req.url.startsWith("/img.png")) {
       res.writeHead(200, { "Content-Type": "image/png" });
       return res.end(PNG);

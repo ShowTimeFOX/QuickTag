@@ -1,13 +1,13 @@
-// Loads the repository as an unpacked extension into installed Chrome via the
+// Loads a temporary copy of the repository (see createTestCopy) as an unpacked extension into installed Chrome via the
 // DevTools protocol (Extensions.loadUnpacked over --remote-debugging-pipe) and
 // runs functional checks. See README.md in this folder.
 import { spawn } from "node:child_process";
 import { startServer, PROBES, sleep } from "./pages.mjs";
-import { REPO_ROOT, browserPath, makeTempDir, cleanupTempDirs, reportResults } from "./config.mjs";
+import { browserPath, makeTempDir, cleanupTempDirs, createTestCopy, reportResults } from "./config.mjs";
 import { runLayoutFixChecks } from "./checks.mjs";
 import { runFocusModeChecks } from "./focus-checks.mjs";
+import { runAssetsChecks } from "./assets-checks.mjs";
 
-const extensionDir = process.argv[2] || REPO_ROOT;
 const chromeExe = browserPath("chrome");
 const profileDir = makeTempDir("chrome-profile");
 
@@ -116,6 +116,8 @@ function check(name, ok, details) {
 }
 
 const { server, origin } = await startServer();
+// An explicit directory argument is loaded as is (its File Hub is not mocked).
+const extensionDir = process.argv[2] || createTestCopy({ label: "chrome", hubBaseUrl: `${origin}/hub/` });
 try {
   await sleep(1500);
   const version = await send("Browser.getVersion");
@@ -204,6 +206,7 @@ try {
   };
   await runLayoutFixChecks(adapters);
   await runFocusModeChecks(adapters);
+  await runAssetsChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");

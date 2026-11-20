@@ -289,6 +289,8 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   const invalid = await evaluate(page, DIALOG_STATUS);
   check("Focus layout: an invalid layout is rejected with an error", invalid.state === "error" && /cells/.test(invalid.text), invalid);
   await evaluate(page, applyLayoutJson(`(layout) => { layout.activePreset = "default"; layout.presets["palette-wide"].areas = ["topbar topbar", "tags palette"]; }`));
+  // Applying saves to storage first (async); wait before closing the dialog.
+  await waitFor(evaluate, page, FOCUS_STATE, (state) => state.preset === "default");
   await evaluate(page, press(FOCUS, ESC));
   const escDialog = await evaluate(page, FOCUS_STATE);
   check("Focus Mode: Esc closes the layout dialog before Focus Mode", escDialog.open && !escDialog.dialogOpen && escDialog.preset === "default", escDialog);

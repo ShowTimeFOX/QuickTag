@@ -18,6 +18,7 @@ import { isValidFocusLayout } from "../shared/focus-layout.js";
 import { isValidPalettePack, isValidPaletteGroups } from "../shared/palette.js";
 import { isValidSiteConfigs } from "../shared/site-configs.js";
 import { downloadJsonFile } from "./page.js";
+import { isValidHubInstallRecord } from "../shared/file-hub.js";
 
 function isInRange(value, { min, max }) {
   const number = Number(value);
@@ -67,6 +68,11 @@ const VALIDATION_RULES = [
   ],
   [STORAGE_KEYS.focusLayout, isValidFocusLayout, "The Focus Mode layout in this backup is invalid."],
   [STORAGE_KEYS.focusPrefs, isRecord, "The Focus Mode preferences in this backup are invalid."],
+  [
+    STORAGE_KEYS.hubPackages,
+    (installs) => isRecord(installs) && Object.values(installs).every(isValidHubInstallRecord),
+    "The installed File Hub packages in this backup are invalid.",
+  ],
   [STORAGE_KEYS.windowPosition, isValidWindowPosition, "The window position in this backup is invalid."],
   [
     STORAGE_KEYS.windowSize,

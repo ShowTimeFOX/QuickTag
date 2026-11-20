@@ -18,6 +18,8 @@ ComfyUI installation with the WD14 Tagger node.
 - Add or remove tags individually or in batches, and search with fuzzy matching.
 - Open Focus Mode (`Alt+A`) for a full-screen workspace with the page image,
   the tag list, and the palette side by side.
+- Browse and install community tag packs from
+  [File Hub](https://showtimefox-file-hub.pages.dev/) in the **Assets** tab.
 - Analyze the current image with ComfyUI-WD14-Tagger and adjust the confidence
   threshold for suggestions.
 - Configure page-specific selectors for tag fields, images, and source links.
@@ -118,6 +120,23 @@ lowercase letters, digits, and hyphens. On narrow windows the panels are
 stacked. The built-in presets are **Default**, **Wide palette**, and **Image
 review**; **Reset to defaults** restores them.
 
+## Assets (File Hub)
+
+The **Assets** tab lists the QuickTag tag packs published on
+[File Hub](https://showtimefox-file-hub.pages.dev/). Search by name, author,
+or description, filter by category, and sort by update date, newest, score,
+downloads, or name. **Install** adds the pack to your tag packs and selects
+it; an installed pack shows **Installed**, and **Update** appears when File
+Hub has a newer version (select it twice: updating replaces the installed
+pack, including your edits to it).
+
+QuickTag contacts File Hub only when you open the Assets tab or select
+**Refresh**. Package files are checked before anything is saved: at most
+2 MB, matching the SHA-256 checksum published on File Hub, and valid tag pack
+JSON. Only JSON tag packs can be installed. In Firefox, installing requires
+QuickTag's permission to access websites; if it is turned off, the error
+message explains how to allow it.
+
 ## Requirements
 
 - Chrome or Firefox with Manifest V3 support.
@@ -176,7 +195,7 @@ require a JavaScript package manager or build step. See
   Firefox.
 - `scripts/` contains ES modules: `content/` (the tagger, with `content/ui/`
   for its interface components), `background/` (messages, update checks,
-  ComfyUI), `editor/` (palette editor components), and `shared/` (constants,
+  ComfyUI, File Hub), `editor/` (palette editor components), and `shared/` (constants,
   storage, and validation used by every context). `scripts/content.js` is a
   small loader that imports the content modules.
 - `pages/` contains the extension pages and the tagger interface template.

@@ -25,6 +25,8 @@ export const STORAGE_KEYS = Object.freeze({
   focusSettings: "lazymod_focus_settings",
   focusLayout: "lazymod_focus_layout",
   focusPrefs: "lazymod_focus_prefs",
+  // Packs installed from File Hub: { [hubPackageId]: { packId, version, sha256, name, installedAt } }.
+  hubPackages: "lazymod_hub_packages",
   // Per-origin layout: `${siteLayoutPrefix}${encodeURIComponent(origin)}`.
   siteLayoutPrefix: "lazymod_site_layout_",
 });
@@ -47,6 +49,8 @@ export const MESSAGE_ACTIONS = Object.freeze({
   openPaletteEditor: "open_palette_editor",
   openSiteConfigEditor: "open_site_config_editor",
   openAiBlacklistEditor: "open_ai_blacklist_editor",
+  fileHubCatalogue: "file_hub_catalogue",
+  fileHubDownload: "file_hub_download",
 });
 
 export const THEME_NAMES = Object.freeze(["dark", "light", "femboy", "halloween", "minimalistic", "cyberpunk", "custom"]);
@@ -137,3 +141,20 @@ export const BACKUP_VERSION = 1;
 // in manifest.json.
 export const COMFYUI_BASE_URL = "http://127.0.0.1:8188";
 export const WD14_NODE_TYPE = "WD14Tagger|pysssss";
+
+// File Hub (Assets tab). The background script fetches the catalogue and
+// package files (the download endpoints send no CORS headers); the
+// `<all_urls>` host permission covers the hub and GitHub release downloads.
+// The browser tests rewrite FILE_HUB_BASE_URL in their temporary copy.
+export const FILE_HUB_BASE_URL = "https://showtimefox-file-hub.pages.dev/";
+export const FILE_HUB = Object.freeze({
+  appId: "quicktag",
+  cataloguePath: "api/v1/packages",
+  downloadPath: "api/download/",
+  /** Largest accepted catalogue response and package file. */
+  maxCatalogueBytes: 5 * 1024 * 1024,
+  maxPackageBytes: 2 * 1024 * 1024,
+  requestTimeoutMs: 20000,
+  /** The background reuses a fetched catalogue this long (the hub caches 120 s). */
+  catalogueTtlMs: 2 * 60 * 1000,
+});

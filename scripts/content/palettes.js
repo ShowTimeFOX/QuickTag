@@ -160,6 +160,12 @@ export async function importPackFile(file) {
   await commitPaletteData(withActivePack({ ...state.paletteData.packs, [packId]: pack }, packId));
 }
 
+/** Adds or replaces the pack `packId` (File Hub installs and updates) and activates it. Throws. */
+export async function installPalettePack(packId, pack) {
+  const normalized = normalizePalettePack(pack, packId);
+  await commitPaletteData(withActivePack({ ...state.paletteData.packs, [packId]: normalized }, packId));
+}
+
 export function exportActivePack() {
   const pack = getActivePack();
   if (!pack) return;

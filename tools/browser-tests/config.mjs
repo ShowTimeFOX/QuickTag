@@ -1,6 +1,6 @@
 // Shared paths and temp-directory handling for the browser test runners.
 //
-// Everything temporary (browser profiles, the Firefox test copy of the
+// Everything temporary (browser profiles, the test copies of the
 // extension) is created under the OS temp directory and removed afterwards,
 // so nothing is written into the repository.
 import fs from "node:fs";
@@ -48,20 +48,32 @@ export function cleanupTempDirs() {
 const EXTENSION_ENTRIES = ["manifest.json", "assets", "data", "pages", "scripts", "styles"];
 
 /**
- * Firefox's WebDriver BiDi refuses to navigate directly to moz-extension://
- * pages, so the Firefox run uses a temporary copy whose manifest also exposes
- * the popup and editor pages as web-accessible. A test page then navigates to
- * them itself. The repository manifest is never modified.
+ * Both runners load a temporary copy of the extension (the repository is
+ * never modified):
+ * - `hubBaseUrl` points FILE_HUB_BASE_URL at the local mock File Hub, so the
+ *   Assets checks never depend on the live site.
+ * - `exposePages` (Firefox): WebDriver BiDi refuses to navigate directly to
+ *   moz-extension:// pages, so the copy's manifest also exposes the popup and
+ *   editor pages as web-accessible, and a test page navigates to them itself.
  */
-export function createFirefoxTestCopy() {
-  const dir = makeTempDir("firefox-ext");
+export function createTestCopy({ label, hubBaseUrl, exposePages = false }) {
+  const dir = makeTempDir(`${label}-ext`);
   for (const entry of EXTENSION_ENTRIES) {
     fs.cpSync(path.join(REPO_ROOT, entry), path.join(dir, entry), { recursive: true });
   }
-  const manifestPath = path.join(dir, "manifest.json");
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  manifest.web_accessible_resources[0].resources.push("pages/extension-popup.html", "pages/palette-editor.html");
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  if (hubBaseUrl) {
+    const constantsPath = path.join(dir, "scripts", "shared", "constants.js");
+    const source = fs.readFileSync(constantsPath, "utf8");
+    const pattern = /export const FILE_HUB_BASE_URL = "[^"]*";/;
+    if (!pattern.test(source)) throw new Error("FILE_HUB_BASE_URL not found in scripts/shared/constants.js");
+    fs.writeFileSync(constantsPath, source.replace(pattern, `export const FILE_HUB_BASE_URL = ${JSON.stringify(hubBaseUrl)};`));
+  }
+  if (exposePages) {
+    const manifestPath = path.join(dir, "manifest.json");
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    manifest.web_accessible_resources[0].resources.push("pages/extension-popup.html", "pages/palette-editor.html");
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  }
   return dir;
 }
 

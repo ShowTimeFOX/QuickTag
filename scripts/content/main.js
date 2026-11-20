@@ -25,6 +25,7 @@ import { initPalettePanel, renderPalettePanel } from "./ui/palette-panel.js";
 import { initAiPanel } from "./ui/ai-panel.js";
 import { initQuickActions } from "./ui/quick-actions.js";
 import { initSettingsPanel, renderActiveSiteBadge } from "./ui/settings-panel.js";
+import { initAssetsPanel } from "./ui/assets-panel.js";
 import { initElementPicker } from "./ui/element-picker.js";
 import { initWindowControls } from "./ui/window-controls.js";
 import { initGhostMode } from "./ui/ghost-mode.js";
@@ -72,6 +73,7 @@ async function main() {
   await initAiPanel();
   initQuickActions();
   initSettingsPanel();
+  initAssetsPanel();
   watchSiteProfileStorage();
   initThemeControls();
   initElementPicker();

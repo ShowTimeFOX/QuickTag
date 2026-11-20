@@ -40,6 +40,10 @@ source directory; `manifest.json` contains the shared browser configuration.
   field follows live (two-way) unless Live sync is off. `Esc` closes menus and
   dialogs first, then Focus Mode. Shortcuts, strict capture, and a JSON grid
   layout with presets are configurable.
+- **Assets:** The Assets tab lists the community tag packs on File Hub
+  (`https://showtimefox-file-hub.pages.dev/`) with search, a category filter,
+  and sorting, and installs a pack with one click. Installed packs show as
+  installed, and a newer hub version can replace them (Update).
 - **Interface controls:** Move, resize, dock, collapse, or hide the tagger.
   Ghost mode can be toggled with a keyboard shortcut, including while an
   editable field has focus; it can optionally be active only while a button or
@@ -125,12 +129,12 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `data/character.json` | Default Character Portrait tag pack. |
 | `data/anthro.json` | Default Anthro & Fursuit tag pack. |
-| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema and presets), and `validation.js`. No DOM access at module level. |
+| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema and presets), `file-hub.js` (File Hub catalogue and pack validation), and `validation.js`. No DOM access at module level. |
 | `scripts/background.js` | Background entry module; registers event listeners. |
-| `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis). |
+| `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
-| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync). |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`; Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-settings.js`. |
+| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records). |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
 | `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
@@ -241,6 +245,34 @@ if you need help.
   memory only. The page's tag field always holds the active tags in list
   order; with live sync on, changes are written immediately and page edits
   are merged back through `tagsChanged`.
+- **Assets (File Hub).** The catalogue (`GET api/v1/packages?app=quicktag`)
+  is requested only when the Assets tab is first opened or **Refresh** is
+  selected, never at page load. All File Hub requests run in the background
+  script (`background/file-hub.js`): the download endpoints send no CORS
+  headers, and Chrome applies the page's CORS rules to content-script
+  requests. The `<all_urls>` host permission covers the hub and GitHub
+  release downloads, so the manifest needs no extra entry.
+  - The content script sends only a package id; the background script looks
+    up the download address, size, and checksum in the catalogue it fetched
+    itself (cached for two minutes).
+  - Downloads try `api/download/:assetId` when the catalogue provides an
+    `assetId` (the hub endpoint takes the GitHub release asset id, not the
+    package `id`), then `downloadUrl`. Only `https` addresses are accepted,
+    including after redirects.
+  - The file must be at most 2 MB (checked while streaming), match `sha256`
+    when the catalogue provides one (otherwise `fileSize`), be UTF-8 JSON
+    without `__proto__`, `constructor`, or `prototype` keys at any depth, and
+    have an explicit `groups` object in the tag pack format, within size
+    limits. Checks live in `shared/file-hub.js`.
+  - In Firefox, users can withhold MV3 host permissions; the download then
+    reports how to allow access instead of failing with a CORS error.
+  - Installs are stored as normal packs (`hub-<package id>`) in
+    `lazymod_global_palettes` and recorded in `lazymod_hub_packages`
+    (`{ [package id]: { packId, version, sha256, name, installedAt } }`). A
+    record whose pack was deleted counts as not installed. Update replaces
+    the pack after a second confirmation click.
+  - Only `json` packages for `targetApp: "quicktag"` can be installed; other
+    file types are listed as not supported.
 
 ## Browser loading notes
 
@@ -308,8 +340,9 @@ node tools/browser-tests/chrome.mjs
 node tools/browser-tests/firefox.mjs
 ```
 
-They cover loading, the strict-CSP page, the tagger, the background script,
-the popup, and the editor. Then load the repository root in each target
+They cover loading, the strict-CSP page, the tagger, Focus Mode, the Assets
+tab (against a local mock File Hub), the background script, the popup, and
+the editor. Then load the repository root in each target
 browser for the manual checks listed in that README. Full AI analysis testing
 requires a running ComfyUI instance with the WD14 node installed.
 

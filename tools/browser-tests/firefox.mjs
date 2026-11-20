@@ -5,11 +5,11 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { startServer, PROBES, sleep } from "./pages.mjs";
-import { browserPath, makeTempDir, cleanupTempDirs, createFirefoxTestCopy, reportResults } from "./config.mjs";
+import { browserPath, makeTempDir, cleanupTempDirs, createTestCopy, reportResults } from "./config.mjs";
 import { runLayoutFixChecks } from "./checks.mjs";
 import { runFocusModeChecks } from "./focus-checks.mjs";
+import { runAssetsChecks } from "./assets-checks.mjs";
 
-const extensionDir = process.argv[2] || createFirefoxTestCopy();
 const firefoxExe = browserPath("firefox");
 const profileDir = makeTempDir("firefox-profile");
 const GECKO_ID = "quicktag@lazymod.app";
@@ -103,6 +103,8 @@ async function waitFor(context, expression, predicate, timeoutMs = 8000) {
 const results = [];
 const check = (name, ok, details) => results.push({ name, ok: Boolean(ok), details });
 const { server, origin } = await startServer();
+// An explicit directory argument is loaded as is (its File Hub is not mocked).
+const extensionDir = process.argv[2] || createTestCopy({ label: "firefox", hubBaseUrl: `${origin}/hub/`, exposePages: true });
 
 try {
   const session = await send("session.new", { capabilities: {} });
@@ -165,6 +167,7 @@ try {
   const adapters = { open: (url) => openTab(url), evaluate, check, origin };
   await runLayoutFixChecks(adapters);
   await runFocusModeChecks(adapters);
+  await runAssetsChecks(adapters);
 
   // BiDi refuses direct navigation to moz-extension:// URLs, so a web page
   // navigates there itself (the test copy exposes these pages as WAR).

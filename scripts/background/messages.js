@@ -2,6 +2,7 @@
 import { LOG_PREFIX, MESSAGE_ACTIONS } from "../shared/constants.js";
 import { checkForUpdate } from "./updates.js";
 import { analyzeImageWithWd14 } from "./comfyui.js";
+import { getHubCatalogue, downloadHubPackage } from "./file-hub.js";
 
 const EDITOR_PAGE = "pages/palette-editor.html";
 
@@ -53,6 +54,20 @@ export function handleMessage(request, sender, sendResponse) {
     const reportProgress = (message) => sendAnalysisProgress(tabId, request.analysisId, message);
     analyzeImageWithWd14(request.imgUrl, request.threshold, reportProgress)
       .then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (request.action === MESSAGE_ACTIONS.fileHubCatalogue) {
+    getHubCatalogue({ force: request.force === true })
+      .then((catalogue) => sendResponse({ success: true, catalogue }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (request.action === MESSAGE_ACTIONS.fileHubDownload) {
+    downloadHubPackage(request.packageId)
+      .then((result) => sendResponse({ success: true, ...result }))
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true;
   }
