@@ -85,7 +85,8 @@ export function applyWindowScale(requestedScale) {
 
   if (isWindowDocked()) {
     const sideDock = isSideDock();
-    const dockedWidth = sideDock ? SIDE_DOCK_WIDTH : window.innerWidth / scale;
+    // Side docks never exceed the viewport, whatever the scale.
+    const dockedWidth = sideDock ? Math.min(SIDE_DOCK_WIDTH, window.innerWidth / scale) : window.innerWidth / scale;
     const dockedHeight = sideDock ? window.innerHeight / scale : (window.innerHeight * HORIZONTAL_DOCK_HEIGHT_RATIO) / scale;
     windowEl.style.setProperty("--lm-docked-width", `${dockedWidth}px`);
     windowEl.style.setProperty("--lm-docked-height", `${dockedHeight}px`);

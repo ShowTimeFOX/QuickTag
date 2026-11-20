@@ -4,6 +4,7 @@
 import { spawn } from "node:child_process";
 import { startServer, PROBES, sleep } from "./pages.mjs";
 import { REPO_ROOT, browserPath, makeTempDir, cleanupTempDirs, reportResults } from "./config.mjs";
+import { runLayoutFixChecks } from "./checks.mjs";
 
 const extensionDir = process.argv[2] || REPO_ROOT;
 const chromeExe = browserPath("chrome");
@@ -134,7 +135,8 @@ try {
   check("Background module service worker starts", worker, worker?.url);
   if (worker) {
     const swSession = await attach(worker.targetId, "service-worker");
-    const swInfo = await evaluate(swSession, "({ isModule: typeof importScripts === 'function' ? 'importScripts present' : 'n/a', hasListeners: chrome.runtime.onMessage.hasListeners(), alarms: 0 })");
+    // The worker's extension context can still be starting right after attach.
+    const swInfo = await waitFor(swSession, "typeof chrome === 'undefined' ? null : { hasListeners: chrome.runtime.onMessage.hasListeners() }", (info) => info && typeof info === "object");
     const alarms = await evaluate(swSession, "chrome.alarms.getAll().then((a) => a.map((x) => x.name))");
     check("Service worker registered listeners", swInfo.hasListeners, { ...swInfo, alarms });
   }
@@ -191,6 +193,15 @@ try {
   check("Strict CSP page: modules load and tagger mounts", cspState?.visibility === "visible" && cspState.window && cspState.chipCount > 0, cspState);
   check("Strict CSP page: shadow-root styles apply", cspState?.styleCount >= 2 && cspState.windowPosition === "fixed", { styles: cspState?.styleCount, position: cspState?.windowPosition, bg: cspState?.windowBg });
   check("Strict CSP page: theme CSS + template styles match plain page", cspState?.themeClass === plainState?.themeClass && cspState.windowBg === plainState.windowBg && cspState.sitesViewDisplay === "none" && cspState.addAllAiDisplay === "none" && cspState.placeholderFont === "11px", { csp: cspState, plain: { tabBg: plainState?.tabBg, windowBg: plainState?.windowBg } });
+
+  // Shared checks (checks.mjs)
+  const adapters = {
+    open: (url) => openTab(url, `page ${new URL(url).pathname}`),
+    evaluate: (handle, expression) => evaluate(handle.sessionId, expression),
+    check,
+    origin,
+  };
+  await runLayoutFixChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");

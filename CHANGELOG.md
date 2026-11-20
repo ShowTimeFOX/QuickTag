@@ -6,6 +6,11 @@
   into installed Chrome and Firefox (headless, no dependencies) and check the
   tagger, background script, popup, and editor on a plain page and a
   strict-CSP page.
+- Semi-transparent left and right arrows on the group and category tab strips
+  scroll them smoothly. They appear only when the strip overflows, and the
+  arrow at an edge is disabled.
+- A link to the project website (`showtimefox.github.io`) and the GitHub
+  repository on the About page.
 
 ### Changed
 
@@ -25,6 +30,14 @@
 
 ### Fixed
 
+- The window buttons, including close (x), no longer shift when the site
+  profile badge is long, when a theme decorates the title, or when the page
+  sets inherited text styles such as `line-height`, `letter-spacing`, or
+  `text-transform`. Long profile names are truncated, with the full name in a
+  tooltip.
+- Long tags and lists no longer overflow horizontally: tag lists stay within
+  the window, chip text wraps, and a side-docked window never exceeds the
+  viewport width at larger window scales.
 - Translated the remaining Polish interface text (copy confirmation and the AI
   blacklist editor title) to English.
 - On a fresh install, editing a default tag pack failed with "The selected

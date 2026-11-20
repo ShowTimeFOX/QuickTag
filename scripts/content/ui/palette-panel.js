@@ -21,6 +21,7 @@ import { $, $$, shell, setIconPath, ICON_PATHS } from "./shell.js";
 import { createEmptyMessage, createTagChip, syncChipStates } from "./chips.js";
 import { isMainTabActive, showMainTab } from "./tabs.js";
 import { setTaggerCollapsed } from "./window-controls.js";
+import { attachScrollArrows } from "./scroll-arrows.js";
 
 const TYPE_TO_SEARCH_RESET_MS = 1000;
 const NO_PACKS_MESSAGE = "No tag packs. Import a JSON pack to get started.";
@@ -339,7 +340,10 @@ export function initPalettePanel() {
     requestExtensionPage({ action: MESSAGE_ACTIONS.openPaletteEditor, packId: state.paletteData.activePackId }, "Could not open the editor");
   };
 
-  $$(".lazymod-palette-scroller").forEach(enableWheelScrolling);
+  $$(".lazymod-palette-scroller").forEach((scroller) => {
+    enableWheelScrolling(scroller);
+    attachScrollArrows(scroller);
+  });
 
   $("#lm-pack-select").onchange = (event) => {
     if (selectPack(event.target.value)) renderPalettePanel();

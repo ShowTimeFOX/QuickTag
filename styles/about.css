@@ -161,6 +161,12 @@ h1 {
   color: #d5e6ff;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .link-icon {
   width: 14px;
   height: 14px;

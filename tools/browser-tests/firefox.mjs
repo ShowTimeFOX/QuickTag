@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { startServer, PROBES, sleep } from "./pages.mjs";
 import { browserPath, makeTempDir, cleanupTempDirs, createFirefoxTestCopy, reportResults } from "./config.mjs";
+import { runLayoutFixChecks } from "./checks.mjs";
 
 const extensionDir = process.argv[2] || createFirefoxTestCopy();
 const firefoxExe = browserPath("firefox");
@@ -158,6 +159,10 @@ try {
   check("Strict CSP page: modules load and tagger mounts", cspState?.visibility === "visible" && cspState.window && cspState.chipCount > 0, cspState);
   check("Strict CSP page: shadow-root styles apply", cspState?.styleCount >= 2 && cspState.windowPosition === "fixed", cspState);
   check("Strict CSP page: theme CSS + template styles match plain page", cspState?.themeClass === plainState?.themeClass && cspState.windowBg === plainState.windowBg && cspState.sitesViewDisplay === "none" && cspState.addAllAiDisplay === "none" && cspState.placeholderFont === "11px", { csp: cspState, plain: { tabBg: plainState?.tabBg, windowBg: plainState?.windowBg } });
+
+  // Shared checks (checks.mjs)
+  const adapters = { open: (url) => openTab(url), evaluate, check, origin };
+  await runLayoutFixChecks(adapters);
 
   // BiDi refuses direct navigation to moz-extension:// URLs, so a web page
   // navigates there itself (the test copy exposes these pages as WAR).

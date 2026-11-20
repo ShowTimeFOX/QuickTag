@@ -16,6 +16,17 @@ export function startServer() {
       res.writeHead(200, { "Content-Type": "image/png" });
       return res.end(PNG);
     }
+    if (req.url.startsWith("/hostile")) {
+      // Inherited text properties cross the Shadow DOM boundary; `div` also
+      // matches the extension's host element and beats its :host rules.
+      res.writeHead(200, { "Content-Type": "text/html" });
+      return res.end(
+        PAGE("Hostile styles page").replace(
+          "</head>",
+          `<style>html, body, div { line-height: 3 !important; letter-spacing: 4px !important; word-spacing: 20px !important; text-transform: uppercase !important; white-space: nowrap !important; text-align: right !important; } html { direction: rtl; }</style></head>`,
+        ),
+      );
+    }
     if (req.url.startsWith("/csp")) {
       res.writeHead(200, { "Content-Type": "text/html", "Content-Security-Policy": STRICT_CSP });
       return res.end(PAGE("Strict CSP page"));

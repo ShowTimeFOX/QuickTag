@@ -13,7 +13,10 @@ const BLACKLIST_PREVIEW_COUNT = 6;
 const RELOAD_DELAY_MS = 600;
 
 export function renderActiveSiteBadge() {
-  $("#lm-active-badge").textContent = state.activeSiteKey;
+  const badge = $("#lm-active-badge");
+  badge.textContent = state.activeSiteKey;
+  // The badge truncates long profile keys; the full key is in the tooltip.
+  badge.title = `Active site profile: ${state.activeSiteKey}`;
 }
 
 export function renderSettingsUI() {

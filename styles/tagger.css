@@ -1776,3 +1776,163 @@
   color: #6e7681;
   font-size: 11px;
 }
+
+/* --- Robustness against page and theme styles ---------------------------
+   Inherited text properties cross the Shadow DOM boundary, and page rules
+   that target the host element beat :host. Reset the ones that change layout
+   on every top-level QuickTag surface. Font size is left inherited on
+   purpose so the interface keeps its current size. */
+#lazymod-window,
+#lm-focus-root,
+.lazymod-edge-tab,
+.lazymod-picker-banner,
+.lazymod-picker-label {
+  line-height: normal;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  text-indent: 0;
+  white-space: normal;
+  direction: ltr;
+  font-style: normal;
+}
+
+/* Header: the title shrinks and truncates; the window buttons keep a fixed
+   size and stay pinned to the right whatever the title, badge, or theme
+   decorations (::before/::after glyphs, letter-spacing, animations) do. */
+#lazymod-window .lazymod-header-bar {
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+#lazymod-window .lazymod-app-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#lazymod-window #lm-active-badge {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#lazymod-window .lazymod-controls-top {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+#lazymod-window .lazymod-win-btn {
+  box-sizing: border-box;
+  display: inline-grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Long tags and lists never overflow horizontally (docked or floating):
+   containers are limited to their parent's width and chip text can wrap. */
+#lazymod-window .lazymod-body,
+#lazymod-window .lazymod-section,
+#lazymod-window .lazymod-chips {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#lazymod-window .lazymod-chips {
+  overflow-x: hidden;
+}
+
+#lazymod-window .lazymod-chip {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+#lazymod-window .lazymod-input {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* --- Scroll arrows for horizontal tab strips (ui/scroll-arrows.js) --- */
+.lazymod-scroller-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.lazymod-scroller-wrap[hidden] {
+  display: none;
+}
+
+.lazymod-scroll-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 4px;
+  z-index: 1;
+  display: grid;
+  width: 26px;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--lm-text, #e2eaf5);
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.lazymod-scroll-arrow[hidden] {
+  display: none;
+}
+
+.lazymod-scroll-arrow:hover {
+  opacity: 1;
+}
+
+.lazymod-scroll-arrow:disabled {
+  cursor: default;
+  opacity: 0.25;
+}
+
+.lazymod-scroll-arrow:focus-visible {
+  outline: 2px solid var(--lm-accent, #7cafff);
+  outline-offset: -2px;
+}
+
+.lazymod-scroll-arrow-prev {
+  left: 0;
+  background: linear-gradient(to right, color-mix(in srgb, var(--lm-bg, #0b0f16) 92%, transparent), transparent);
+}
+
+.lazymod-scroll-arrow-next {
+  right: 0;
+  background: linear-gradient(to left, color-mix(in srgb, var(--lm-bg, #0b0f16) 92%, transparent), transparent);
+}
+
+.lazymod-scroll-arrow svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+/* Keep the first/last tab clear of the arrows when they are shown. */
+.lazymod-scroller-wrap.has-overflow > .lazymod-palette-scroller {
+  scroll-padding-inline: 26px;
+  padding-inline: 22px;
+}
