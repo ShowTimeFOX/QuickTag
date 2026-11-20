@@ -1,5 +1,12 @@
 ## [1.2.0] - Unreleased
 
+### Added
+
+- Automated browser tests in `tools/browser-tests/` that load the extension
+  into installed Chrome and Firefox (headless, no dependencies) and check the
+  tagger, background script, popup, and editor on a plain page and a
+  strict-CSP page.
+
 ### Changed
 
 - Split all scripts into ES modules: `scripts/shared/` (constants, storage, tag,
