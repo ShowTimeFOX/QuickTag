@@ -117,10 +117,15 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `data/character.json` | Default Character Portrait tag pack. |
 | `data/anthro.json` | Default Anthro & Fursuit tag pack. |
-| `scripts/background.js` | Handles extension messages, opens editor and information pages, checks for updates, and coordinates ComfyUI analysis. |
-| `scripts/content.js` | Injects and manages the tagger, global visibility, tag packs, site profiles, search, tag state, and per-origin interface settings. |
-| `scripts/extension-popup.js` | Handles global visibility, ComfyUI connectivity, and update checks in the toolbar popup. |
-| `scripts/palette-editor.js` | Loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
+| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, and `validation.js`. No DOM access at module level. |
+| `scripts/background.js` | Background entry module; registers event listeners. |
+| `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis). |
+| `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
+| `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`. |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`. |
+| `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
+| `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
+| `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
 | `pages/extension-popup.html` | Toolbar popup for global visibility, ComfyUI status, updates, and the About link. |
 | `pages/palette-editor.html` | Palette and settings editor page. |
 | `pages/about.html` | Feature and setup guide. |
@@ -141,18 +146,32 @@ if you need help.
 
 ## Architecture and data storage
 
-- `scripts/content.js` runs on pages matched by `content_scripts` and creates
-  the interface inside a Shadow DOM to reduce style conflicts with the host
-  page. It restores page layout and visibility state before revealing the
-  interface to prevent flicker.
+- All scripts are ES modules. Manifest V3 cannot declare module content
+  scripts, so `scripts/content.js` (listed in `content_scripts`) imports
+  `scripts/content/main.js` with a dynamic `import()`. The content and shared
+  module folders are listed in `web_accessible_resources` so both browsers can
+  load them. Extension pages use `<script type="module">`, and the background
+  entry is declared with `"type": "module"`.
+- `scripts/content/main.js` runs on pages matched by `content_scripts` and
+  creates the interface inside a Shadow DOM to reduce style conflicts with the
+  host page. It loads saved state, mounts the interface hidden, restores page
+  layout and visibility, wires each feature module, and reveals the interface
+  last to prevent flicker. Feature modules share mutable values through
+  `content/state.js` and react to each other through `content/events.js`
+  (`tagsChanged`, `extensionHidden`, `siteProfilesChanged`,
+  `blacklistChanged`) instead of importing each other.
+- Interface elements are built with `document.createElement`, `textContent`,
+  and explicit attributes. The packaged `pages/popup.html` template is parsed
+  with `DOMParser`; no dynamic data is inserted as HTML.
 - Shared tagger components use `styles/tagger.css`. The selected theme is
   loaded asynchronously from `styles/theme-<name>.css` into the same Shadow
   DOM. Theme stylesheets, the popup template, and both default pack JSON files
   are listed in `web_accessible_resources`.
-- `scripts/background.js` handles extension events and messages, runs scheduled
-  update checks, opens extension pages, and sends requests to the local ComfyUI
-  server. The root manifest declares the background worker form for Chrome and
-  the background script form for Firefox.
+- `scripts/background.js` registers extension event listeners; the modules in
+  `scripts/background/` handle messages, run scheduled update checks, open
+  extension pages, and send requests to the local ComfyUI server. The root
+  manifest declares the background worker form for Chrome and the background
+  script form for Firefox.
 - The extension uses the `chrome.*` WebExtension API namespace, which is
   supported by both target browsers.
 - Settings, site profiles, palettes, and the AI blacklist are stored locally
@@ -164,7 +183,8 @@ if you need help.
   and domain-rule values may remain in imported backups but do not control
   visibility.
 - Update checks fetch `update.json` from the public Gist
-  `ShowTimeFOX/1c601aab8d8a4b7540b34fc3e273d74f`, compare its version with the
+  `30eeb54c1474ffedee3eae97d10eb715` (set in `scripts/background/updates.js`),
+  compare its version with the
   manifest, and set a "NEW" badge through the browser action API. Checks run at
   startup, every six hours, and when requested from the toolbar popup. The
   button opens the GitHub Releases page; unpacked installations still require
@@ -184,25 +204,82 @@ if you need help.
 - ComfyUI analysis uses the `WD14Tagger|pysssss` node. The extension fetches
   the page image, uploads it to `/upload/image`, submits a workflow to `/prompt`,
   checks `/history` and `/queue`, and reads the resulting tags.
-- The ComfyUI address is set in the code to `http://127.0.0.1:8188`. Changing
-  its host or port requires matching changes to the configuration and
-  `host_permissions` in `manifest.json`.
+- The ComfyUI address is `COMFYUI_BASE_URL` (`http://127.0.0.1:8188`) in
+  `scripts/shared/constants.js`. Changing its host or port requires matching
+  changes to `host_permissions` in `manifest.json`.
+- Storage keys, message action names, and default values are defined once in
+  `scripts/shared/constants.js`. All storage keys start with `lazymod_`.
+
+## Browser loading notes
+
+| Part | Chrome (unpacked) | Firefox (temporary add-on) |
+| --- | --- | --- |
+| Background | `background.service_worker` with `"type": "module"` (module service worker; `background.scripts` is ignored) | `background.scripts` with `"type": "module"` (event page; `service_worker` is ignored) |
+| Content script | `scripts/content.js` runs `import(chrome.runtime.getURL("scripts/content/main.js"))`; imported modules run in the content script's isolated world | Same; supported since Firefox 89 |
+| Popup and editor | `<script type="module">` | Same |
+
+- Every module that the content script imports must be listed in
+  `web_accessible_resources` (`scripts/content/*`, `scripts/content/ui/*`,
+  `scripts/shared/*`). The entry uses `"matches": ["<all_urls>"]` because the
+  tagger runs on every page. A new module subfolder must be added explicitly;
+  a `*` is not relied on to match nested folders.
+- `use_dynamic_url` is not set; loading was verified without it. It is a
+  Chrome-only option that limits fingerprinting through the fixed extension
+  ID, and enabling it would need a separate test in Chrome. Firefox already
+  uses a random per-install UUID. Like the stylesheets and template that were
+  already web-accessible, the module files let a page detect that QuickTag is
+  installed in Chrome.
+- Page CSPs do not block module loading or the extension's `fetch()` calls
+  for packaged files in either browser. Firefox does apply a strict page CSP
+  to inline styles that the content script adds to the page's DOM, including
+  its Shadow DOM:
+  - `pages/popup.html` must not contain `style="…"` attributes
+    (`style-src-attr`). Use rules in `styles/tagger.css`, or set
+    `element.style` from script (CSSOM is not blocked).
+  - A `<style>` element must already contain its CSS when it is inserted
+    (`style-src-elem`); `ui/theme.js` creates a new, filled element for each
+    theme change.
+- For a missing packaged file, Chrome rejects `fetch()`, while Firefox
+  resolves it and rejects while the body is read (`AbortError`). Handle both
+  when fetching optional files.
+- The editor's `builtin-import` pack ID and its `data/import.json` fallback
+  are kept for palettes saved by early versions. The file is no longer
+  bundled, so opening that ID without a saved override shows a clear error.
+- On first initialization, the content script saves the palette state
+  (including the default packs and `defaultPacksLoaded`) so the editor page
+  can open default packs immediately.
+
+## Releases and update metadata
+
+`manifest.json` `version` stays at the last released version during
+development; the next version is listed as `[x.y.z] - Unreleased` in
+`CHANGELOG.md`. To release: bump `version` in `manifest.json`, date the
+changelog entry, publish the GitHub release, and only then update `version`
+in the Gist's `update.json`. If the Gist is updated first, installed copies
+show a "NEW" badge that links to a release that does not exist yet.
 
 ## Validation
 
-Check JavaScript syntax after changing scripts:
+Check JavaScript syntax after changing scripts (Node.js 22 or later detects ES
+module syntax automatically):
 
 ```powershell
-node --check scripts/background.js
-node --check scripts/content.js
-node --check scripts/extension-popup.js
-node --check scripts/palette-editor.js
+Get-ChildItem scripts -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
 ```
 
-Validate `manifest.json` as JSON, then load the repository root in each target
-browser and test the extension. Check JavaScript syntax with the commands
-above. Full AI analysis testing requires a running ComfyUI instance with the
-WD14 node installed.
+Validate `manifest.json` as JSON, then run the automated browser tests in
+installed Chrome and Firefox, one after the other (see
+`tools/browser-tests/README.md`):
+
+```powershell
+node tools/browser-tests/chrome.mjs
+node tools/browser-tests/firefox.mjs
+```
+
+They cover loading, the strict-CSP page, the tagger, the background script,
+the popup, and the editor. Then load the repository root in each target
+browser for the manual checks listed in that README. Full AI analysis testing
+requires a running ComfyUI instance with the WD14 node installed.
 
 ## Documentation maintenance
 

@@ -108,12 +108,13 @@ require a JavaScript package manager or build step. See
 
 ## Source layout
 
-- `manifest.json` is the Chrome Manifest V3 source manifest.
-- `manifests/firefox.json` contains the Firefox Manifest V3 background-script
-  variant.
-- `build-extension.ps1` packages the shared files with the selected browser's
-  manifest.
-- `scripts/` contains the background worker, content script, and page scripts.
+- `manifest.json` is the single Manifest V3 manifest shared by Chrome and
+  Firefox.
+- `scripts/` contains ES modules: `content/` (the tagger, with `content/ui/`
+  for its interface components), `background/` (messages, update checks,
+  ComfyUI), `editor/` (palette editor components), and `shared/` (constants,
+  storage, and validation used by every context). `scripts/content.js` is a
+  small loader that imports the content modules.
 - `pages/` contains the extension pages and the tagger interface template.
 - `styles/` is the stylesheet catalog, including `tagger.css`, page styles, and
   themes.
@@ -125,13 +126,11 @@ the saved global visibility setting.
 
 ## Development
 
-After changing JavaScript files, check their syntax with:
+After changing JavaScript files, check the syntax of every script (Node.js 22
+or later detects ES module syntax automatically):
 
 ```powershell
-node --check scripts/background.js
-node --check scripts/content.js
-node --check scripts/extension-popup.js
-node --check scripts/palette-editor.js
+Get-ChildItem scripts -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
 ```
 
 Validate `manifest.json` as JSON and reload the unpacked extension in your
