@@ -20,6 +20,20 @@ export function hasUnsafeKeys(value, depth = 0) {
   return Object.keys(value).some((key) => !isSafeKey(key) || hasUnsafeKeys(value[key], depth + 1));
 }
 
+/**
+ * A copy of `object` with keys in `order` first (only keys that exist), then
+ * any other keys in their current order. Chrome's storage.local returns object
+ * keys sorted, so stored order arrays restore the intended order. (Integer-like
+ * keys such as "2024" always come first in JavaScript objects.)
+ */
+export function orderedObject(object, order) {
+  if (!isRecord(object)) return object;
+  const keys = Object.keys(object);
+  const ordered = Array.isArray(order) ? order.filter((key, index) => typeof key === "string" && Object.hasOwn(object, key) && order.indexOf(key) === index) : [];
+  const rest = keys.filter((key) => !ordered.includes(key));
+  return Object.fromEntries([...ordered, ...rest].map((key) => [key, object[key]]));
+}
+
 export function isStringArray(value) {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }

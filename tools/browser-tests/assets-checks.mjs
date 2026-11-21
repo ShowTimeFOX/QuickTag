@@ -108,7 +108,7 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
   const listed = await waitFor(evaluate, page, ASSETS_STATE, (state) => state.cards.length > 0, 10000);
   check(
     "Assets: tab sits right after Settings; nothing is requested from File Hub until it is opened",
-    requestsBeforeOpen === 0 && hubState.catalogueRequests === 1 && listed.display === "block" && listed.tabOrder.indexOf("lm-tab-btn-assets") === listed.tabOrder.indexOf("lm-tab-btn-sites") + 1 && !listed.tabsOverflow,
+    requestsBeforeOpen === 0 && hubState.catalogueRequests === 1 && listed.display !== "none" && listed.tabOrder.indexOf("lm-tab-btn-assets") === listed.tabOrder.indexOf("lm-tab-btn-sites") + 1 && !listed.tabsOverflow,
     { requestsBeforeOpen, requests: hubState.catalogueRequests, tabOrder: listed.tabOrder, tabsOverflow: listed.tabsOverflow },
   );
   check(

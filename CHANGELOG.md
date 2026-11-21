@@ -56,8 +56,14 @@
   comma-separated sites; a space by default.
 - Reduce visual effects (Settings › Appearance): turns off blur, shadows, and
   animations in the tagger and Focus Mode for slower computers.
-- Focus Mode palette: AI Suggestions (same analysis as the tagger's AI panel)
-  and a "+ all" toggle next to the groups.
+- AI suggestions live in the tag palettes: the AI button (with a loading
+  spinner) analyzes the image, and the suggestions appear as an "AI" group at
+  the start of the groups in the tagger and Focus Mode, with loading, empty,
+  and error states.
+- Focus Mode palette: group and category tabs like the tagger, Flat view, and
+  "+ All".
+- Focus Mode image: zoom with the mouse wheel and drag to move; double-click,
+  the zoom percentage, Fit, or 1:1 reset the view.
 - File Hub: when QuickTag lacks access to the download sites, a small QuickTag
   window asks the browser for it and the install or preview continues.
 - Automated browser tests in `tools/browser-tests/` that load the extension
@@ -83,6 +89,10 @@
 - Storage keys, message actions, and defaults are defined once in
   `scripts/shared/constants.js` instead of being repeated across scripts.
 - Replaced the remaining `innerHTML` assignments with `replaceChildren()`.
+- The separate AI Suggestions section is gone (now the AI button and "AI"
+  group in the palettes). "Add tags" is now "+ All", Flat view shows category
+  labels, and the palette uses the full height of the Tagging tab.
+- The Focus Mode image area uses a calm gradient instead of a checkerboard.
 - Focus Mode: the tag list controls sit next to the "Tags" heading as compact
   buttons, badges use the normal chip size, and palette chips add or remove
   tags (muting stays on the badges).
@@ -129,6 +139,10 @@
   and theme styles are inserted with their content.
 - Importing a tag pack threw an error after the import and did not reset the
   file picker, so selecting the same file again did nothing.
+- Chrome: tag groups, categories, and packs switched to alphabetical order
+  after the first save, because Chrome's storage returns object keys sorted.
+  Their order is now saved with them; site profile order is saved too (it
+  decides which profile matches first).
 - Settings › Current page profile: changes did not reliably stay. A new
   profile only matched its exact page and never matched sites with a port, so
   the tagger switched back to `.*` right away, and element picks on `.*`

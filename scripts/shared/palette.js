@@ -4,7 +4,7 @@
 // Older formats are accepted: `folders` instead of `groups`, groups given
 // directly at the top level, and groups that are a flat tag array (these
 // become a single "General" category).
-import { isRecord, isSafeKey } from "./validation.js";
+import { isRecord, isSafeKey, orderedObject } from "./validation.js";
 
 const PACK_META_KEYS = ["name", "activeFolder", "activeGroup", "activeCategory"];
 
@@ -80,6 +80,44 @@ export function isValidPaletteGroups(groups) {
 export function isValidPalettePack(pack) {
   if (!isRecord(pack)) return false;
   return (pack.name === undefined || typeof pack.name === "string") && isValidPaletteGroups(getSourceGroups(pack));
+}
+
+// --- Order in storage ---
+// Chrome's storage.local returns object keys sorted alphabetically, which
+// reordered packs, groups, and categories after a save. Stored palette data
+// carries explicit order arrays: `packOrder` on the palette data, and
+// `groupOrder` / `categoryOrder` on each pack. Write with `encode…`, read with
+// `decode…`; in memory, object key order is the order.
+
+export function encodePack(pack) {
+  if (!isRecord(pack) || !isRecord(pack.groups)) return pack;
+  return {
+    ...pack,
+    groupOrder: Object.keys(pack.groups),
+    categoryOrder: Object.fromEntries(Object.entries(pack.groups).map(([group, categories]) => [group, isRecord(categories) ? Object.keys(categories) : []])),
+  };
+}
+
+export function decodePack(pack) {
+  if (!isRecord(pack) || !isRecord(pack.groups)) return pack;
+  const { groupOrder, categoryOrder, ...rest } = pack;
+  const groups = orderedObject(pack.groups, groupOrder);
+  return {
+    ...rest,
+    groups: Object.fromEntries(Object.entries(groups).map(([group, categories]) => [group, isRecord(categories) ? orderedObject(categories, categoryOrder?.[group]) : categories])),
+  };
+}
+
+export function encodePaletteData(data) {
+  if (!isRecord(data) || !isRecord(data.packs)) return data;
+  return { ...data, packOrder: Object.keys(data.packs), packs: Object.fromEntries(Object.entries(data.packs).map(([packId, pack]) => [packId, encodePack(pack)])) };
+}
+
+export function decodePaletteData(data) {
+  if (!isRecord(data) || !isRecord(data.packs)) return data;
+  const { packOrder, ...rest } = data;
+  const packs = orderedObject(data.packs, packOrder);
+  return { ...rest, packs: Object.fromEntries(Object.entries(packs).map(([packId, pack]) => [packId, decodePack(pack)])) };
 }
 
 /** Pack JSON as exported to a file and shown in the editor. */

@@ -88,6 +88,8 @@ const OPEN_SWITCHER = `(() => { const root = ${ROOT}; if (root.querySelector("#l
 const pointOf = (selector) => `(() => {
   const root = ${ROOT};
   const element = root.querySelector(${JSON.stringify(selector)});
+  // A user scrolls the tagger to reach it first.
+  element.scrollIntoView({ block: "nearest" });
   const rect = element.getBoundingClientRect();
   const x = Math.round(rect.left + rect.width / 2);
   const y = Math.round(rect.top + Math.min(rect.height / 2, 14));

@@ -886,22 +886,27 @@
   font-size: 11px;
 }
 
-.lazymod-ai-status {
+/* AI group messages in the palette (loading / empty / error). */
+.lazymod-ai-message {
   display: flex;
-  min-height: 28px;
+  flex: 1 0 100%;
   align-items: center;
   gap: 8px;
-  margin: -1px 0 8px;
   color: var(--lm-muted);
   font-size: 11px;
   line-height: 1.4;
 }
 
-.lazymod-ai-status[hidden] {
-  display: none;
+.lazymod-ai-message[data-state="busy"] {
+  color: #a9cbff;
 }
 
-.lazymod-ai-status[data-state="working"]::before {
+.lazymod-ai-message[data-state="busy"]::before,
+.lazymod-ai-button.is-busy .lazymod-action-icon {
+  animation: lm-ai-spin 0.9s linear infinite;
+}
+
+.lazymod-ai-message[data-state="busy"]::before {
   width: 12px;
   height: 12px;
   flex: 0 0 12px;
@@ -909,46 +914,55 @@
   border-top-color: var(--lm-accent);
   border-radius: 50%;
   content: "";
-  animation: lm-ai-spin 0.75s linear infinite;
 }
 
-.lazymod-ai-status[data-state="working"] {
-  color: #a9cbff;
-}
-
-.lazymod-ai-status[data-state="success"] {
-  color: #77d9a4;
-}
-
-.lazymod-ai-status[data-state="success"]::before {
-  color: #77d9a4;
-  content: "✓";
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.lazymod-ai-status[data-state="error"] {
+.lazymod-ai-message[data-state="error"] {
   color: #f08b93;
 }
 
-.lazymod-ai-status[data-state="error"]::before {
-  color: #f08b93;
-  content: "!";
-  font-size: 13px;
-  font-weight: 700;
+/* The AI group tab: accent, with a pulsing dot while analyzing. */
+.lazymod-ai-tab {
+  font-weight: 650;
 }
 
-.lazymod-ai-status[data-state="info"] {
-  color: var(--lm-muted);
-}
-
-.lazymod-ai-status[data-state="info"]::before {
+.lazymod-ai-tab[data-state="busy"]::after {
+  display: inline-block;
   width: 6px;
   height: 6px;
-  flex: 0 0 6px;
+  margin-left: 6px;
   border-radius: 50%;
   background: var(--lm-accent);
   content: "";
+  vertical-align: middle;
+  animation: lm-ai-pulse 1s ease-in-out infinite alternate;
+}
+
+.lazymod-ai-tab[data-state="error"]::after {
+  margin-left: 5px;
+  color: #f08b93;
+  content: "!";
+  font-weight: 700;
+}
+
+@keyframes lm-ai-pulse {
+  from {
+    opacity: 0.25;
+  }
+}
+
+/* Flat view: category labels between the chips. */
+.lazymod-chip-group-label {
+  flex: 1 0 100%;
+  margin: 6px 0 0;
+  color: var(--lm-muted);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lazymod-chip-group-label:first-child {
+  margin-top: 0;
 }
 
 @keyframes lm-ai-spin {
@@ -1772,11 +1786,6 @@
   margin-bottom: 10px;
 }
 
-#lazymod-window #lm-ai-chips .lazymod-ai-placeholder {
-  color: #6e7681;
-  font-size: 11px;
-}
-
 /* --- Robustness against page and theme styles ---------------------------
    Inherited text properties cross the Shadow DOM boundary, and page rules
    that target the host element beat :host. Reset the ones that change layout
@@ -2534,4 +2543,35 @@
   .lazymod-pack-ghost[data-visible="true"] {
     transition: none;
   }
+}
+
+/* --- Tagging view fills the window: the palette takes the free height --- */
+#lazymod-body {
+  display: flex;
+  flex-direction: column;
+}
+
+#lm-view-main {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+#lm-view-main .lazymod-palette-section {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+/* .lazymod-input has `flex: 1` (for input rows); here it would take half the
+   free height, so the search keeps its natural height. */
+#lazymod-window #lm-palette-search {
+  flex: 0 0 auto;
+}
+
+#lazymod-window #lm-user-chips {
+  flex: 1 1 0;
+  align-content: flex-start;
+  min-height: 150px;
+  max-height: none;
 }

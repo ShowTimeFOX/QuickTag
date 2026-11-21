@@ -386,7 +386,9 @@
   color: var(--lm-danger, #f85149);
 }
 
-/* --- Image --- */
+/* --- Image (pan and zoom: focus-image.js sizes and positions the image) --- */
+/* A calm, low-glare surface instead of a checkerboard: a soft vignette of the
+   panel colors with a faint accent tint. */
 #lm-focus-root .lm-focus-image-viewport {
   position: relative;
   display: grid;
@@ -394,44 +396,62 @@
   min-width: 0;
   min-height: 0;
   place-items: center;
-  overflow: auto;
-  background:
-    repeating-conic-gradient(color-mix(in srgb, var(--lm-border, #253246) 45%, transparent) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px,
-    var(--lm-theme-input, var(--lm-bg, #0b0f16));
-  border-radius: 8px;
-}
-
-/* Fit: the image is taken out of the flow, so it never sizes the viewport
-   (an in-flow image made the grid track as large as the image, and the
-   percentage max sizes then resolved against the image itself). Centered
-   with inset + auto margins; max sizes resolve against the viewport, and
-   only shrink the image (small images keep their natural size). */
-#lm-focus-root .lm-focus-image-viewport[data-zoom="fit"] {
   overflow: hidden;
-}
-
-#lm-focus-root .lm-focus-image-viewport[data-zoom="fit"] .lm-focus-image {
-  position: absolute;
-  inset: 0;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  margin: auto;
-  object-fit: contain;
-}
-
-#lm-focus-root .lm-focus-image-viewport[data-zoom="actual"] {
-  place-items: start;
-}
-
-#lm-focus-root .lm-focus-image-viewport[data-zoom="actual"] .lm-focus-image {
-  max-width: none;
-  max-height: none;
+  background:
+    radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--lm-accent, #7cafff) 6%, var(--lm-surface-raised, #172131)) 0%, transparent 70%),
+    linear-gradient(160deg, var(--lm-surface-raised, #172131), var(--lm-theme-input, var(--lm-bg, #0b0f16)));
+  border-radius: 8px;
+  touch-action: none;
+  user-select: none;
 }
 
 #lm-focus-root .lm-focus-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
+  max-width: none;
+  max-height: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+#lm-focus-root .lm-focus-image-viewport.has-image {
+  cursor: zoom-in;
+}
+
+#lm-focus-root .lm-focus-image-viewport.has-image.can-pan {
+  cursor: grab;
+}
+
+#lm-focus-root .lm-focus-image-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+#lm-focus-root .lm-focus-zoom-label {
+  min-width: 46px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Compact image toolbar: the image keeps its height in narrow panels. */
+#lm-focus-root .lm-focus-image-panel .lm-focus-toolbar {
+  gap: 4px;
+}
+
+#lm-focus-root .lm-focus-image-panel .lm-focus-toolbar .lazymod-btn {
+  min-height: 26px;
+  padding: 2px 7px;
+}
+
+#lm-focus-root .lm-focus-image-panel .lm-focus-toolbar .lm-focus-icon-btn {
+  width: 26px;
+  padding: 0;
+}
+
+#lm-focus-root .lm-focus-image-panel .lm-focus-meta {
+  font-size: 10.5px;
+  white-space: nowrap;
 }
 
 #lm-focus-root .lm-focus-image-viewport .lm-focus-empty {
@@ -822,8 +842,7 @@
     grid-area: auto !important;
   }
 
-  /* Stacked rows are auto-sized; keep a 1:1 image scrolling inside its
-     panel instead of making the panel as tall as the image. */
+  /* Stacked rows are auto-sized; give the image panel a fixed height. */
   #lm-focus-root .lm-focus-grid > .lm-focus-image-panel {
     height: min(70vh, 520px);
   }
@@ -841,11 +860,11 @@
   }
 }
 
-/* --- Palette: "+ all" toggles and AI suggestions --- */
+/* --- Palette: group row ("+ All", Flat view), category tabs, AI group --- */
 #lm-focus-root .lm-focus-group-row {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -854,9 +873,17 @@
   min-width: 0;
 }
 
+#lm-focus-root .lm-focus-flat {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+  color: var(--lm-muted, #91a0b5);
+  font-size: 11px;
+}
+
 #lm-focus-root .lm-focus-all-toggle {
   flex: 0 0 auto;
   min-height: 26px;
+  margin-bottom: 4px;
   padding: 2px 9px;
   font-weight: 600;
 }
@@ -866,53 +893,64 @@
   color: var(--lm-accent, #7cafff);
 }
 
-#lm-focus-root .lm-focus-group-row .lm-focus-all-toggle {
-  margin-bottom: 4px;
-}
-
-#lm-focus-root .lm-focus-ai {
+#lm-focus-root .lm-focus-categories {
   display: flex;
   flex: 0 0 auto;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
-  background: var(--lm-theme-input, var(--lm-bg, #0b0f16));
-  border: 1px solid var(--lm-border, #253246);
-  border-radius: 8px;
-}
-
-#lm-focus-root .lm-focus-ai-header {
-  display: flex;
   flex-wrap: wrap;
+  gap: 4px;
+}
+
+#lm-focus-root .lazymod-subtab {
+  margin: 0;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--lm-border, #253246);
+  border-radius: 99px;
+  color: var(--lm-muted, #91a0b5);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+#lm-focus-root .lazymod-subtab.active {
+  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
+  border-color: var(--lm-accent, #7cafff);
+  color: var(--lm-accent, #7cafff);
+  font-weight: 600;
+}
+
+#lm-focus-root .lm-focus-ai-button {
+  flex: 0 0 auto;
+}
+
+#lm-focus-root .lm-focus-ai-button.is-busy .lazymod-action-icon {
+  animation: lm-ai-spin 0.9s linear infinite;
+}
+
+#lm-focus-root .lm-focus-ai-message {
+  display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-#lm-focus-root .lm-focus-ai-header .lm-focus-category-title {
-  margin: 0 auto 0 0;
-}
-
-#lm-focus-root .lm-focus-ai-analyze {
-  min-height: 26px;
-  padding-block: 2px;
-}
-
-#lm-focus-root .lm-focus-ai-status {
+  gap: 8px;
   margin: 0;
   color: var(--lm-muted, #91a0b5);
-  font-size: 11px;
+  font-size: 12px;
 }
 
-#lm-focus-root .lm-focus-ai-status[data-state="error"] {
+#lm-focus-root .lm-focus-ai-message[data-state="busy"] {
+  color: var(--lm-accent, #7cafff);
+}
+
+#lm-focus-root .lm-focus-ai-message[data-state="busy"]::before {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 2px solid color-mix(in srgb, var(--lm-accent, #7cafff) 25%, transparent);
+  border-top-color: var(--lm-accent, #7cafff);
+  border-radius: 50%;
+  content: "";
+  animation: lm-ai-spin 0.9s linear infinite;
+}
+
+#lm-focus-root .lm-focus-ai-message[data-state="error"] {
   color: var(--lm-danger, #f85149);
-}
-
-#lm-focus-root .lm-focus-ai-status[data-state="success"] {
-  color: var(--lm-success, #3fb950);
-}
-
-#lm-focus-root .lm-focus-ai-chips {
-  max-height: 120px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }

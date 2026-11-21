@@ -2,7 +2,7 @@
 // No shadow-DOM rendering here; see ui/palette-panel.js.
 import { LOG_PREFIX, STORAGE_KEYS, DEFAULT_PALETTE_FILES } from "../shared/constants.js";
 import { loadData, saveData } from "../shared/storage.js";
-import { normalizePalettePack, firstPaletteLocation } from "../shared/palette.js";
+import { normalizePalettePack, firstPaletteLocation, decodePaletteData, encodePaletteData } from "../shared/palette.js";
 import { formatTag } from "../shared/tags.js";
 import { state } from "./state.js";
 import { searchPack } from "./fuzzy-search.js";
@@ -31,14 +31,14 @@ async function fetchDefaultPacks() {
  * "My palettes" pack.
  */
 export async function loadInitialPalettes() {
-  const saved = await loadData(STORAGE_KEYS.palettes, null);
+  const saved = decodePaletteData(await loadData(STORAGE_KEYS.palettes, null));
   const paletteData = await buildInitialPalettes(saved);
   // First initialization (or migration): save right away, so the editor page
   // can open default packs and deleted defaults are never re-added. Unknown
   // saved fields (e.g. legacy `folders`) are kept.
   if (!saved || saved.defaultPacksLoaded !== true) {
     const persisted = { ...(saved || {}), ...paletteData };
-    await saveData(STORAGE_KEYS.palettes, persisted);
+    await saveData(STORAGE_KEYS.palettes, encodePaletteData(persisted));
     return persisted;
   }
   return paletteData;
@@ -96,12 +96,12 @@ export function getActivePack() {
 
 /** Fire-and-forget save of the current palette state (selection changes). */
 export function savePaletteData() {
-  return saveData(STORAGE_KEYS.palettes, state.paletteData);
+  return saveData(STORAGE_KEYS.palettes, encodePaletteData(state.paletteData));
 }
 
 /** Saves `nextData` and only adopts it once storage accepted it. Throws. */
 async function commitPaletteData(nextData) {
-  await chrome.storage.local.set({ [STORAGE_KEYS.palettes]: nextData });
+  await chrome.storage.local.set({ [STORAGE_KEYS.palettes]: encodePaletteData(nextData) });
   state.paletteData = nextData;
 }
 

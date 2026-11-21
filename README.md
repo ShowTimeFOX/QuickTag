@@ -22,8 +22,9 @@ ComfyUI installation with the WD14 Tagger node.
   the tag list, and the palette side by side.
 - Browse and install community tag packs from
   [File Hub](https://showtimefox-file-hub.pages.dev/) in the **Assets** tab.
-- Analyze the current image with ComfyUI-WD14-Tagger and adjust the confidence
-  threshold for suggestions.
+- Analyze the current image with ComfyUI-WD14-Tagger (**AI** in the tag
+  palettes); suggested tags appear as an "AI" group at the start of the groups.
+  Adjust the confidence threshold in Settings.
 - Configure site profiles: selectors for tag fields, images, and source links,
   and the tag separator each site uses (space, comma, or another character).
 - Move, resize, dock, collapse, or hide the tagger. Its layout is remembered
@@ -61,6 +62,16 @@ least one group and category; names are labels shown in the tagger.
 sections; each group’s properties are category names, and each category’s
 value must be an array of strings. Save the file as `.json`, then choose
 **Import** in the tagger to add it.
+
+## Tag palettes
+
+Tags are organized as packs, groups (tabs), and categories (sub-tabs). **Flat
+view** shows every category of the group at once, each under its label.
+**+ All** adds every visible tag, or removes them when they are all in the
+tag field. **AI** analyzes the page image with ComfyUI; while it runs, the
+button shows a spinner, and the "AI" group at the start of the groups shows
+the progress, the suggested tags, or what went wrong. The "AI" group is not
+saved into the pack. The palette uses the full height of the tagger window.
 
 ## Site profiles and tag separator
 
@@ -100,17 +111,20 @@ Mode**, to open a full-screen workspace:
 - **Top bar:** the page host and site profile, the layout preset, the number
   of active and muted tags, the **Live sync** switch, and **Exit**.
 - **Image:** the page image found by the site profile, fitted to the panel or
-  at 1:1 (double-click to switch), with its dimensions.
+  at 1:1, with its dimensions. Scroll to zoom around the pointer and drag to
+  move the image; double-click, the zoom percentage, **Fit**, or **1:1** reset
+  the view.
 - **Tags:** click a badge to mute it (it leaves the page's tag field but stays
   in the list) and click again to switch it back on; `×` removes it. Type in
   the input to add tags (Enter, space, or comma separate them). Next to the
   **Tags** heading: switch between **Badges** and **Raw text**, and the Sort
   (A–Z, Z–A, added order, or by pack group), Deduplicate, Copy (all active tags
   as one string, joined with the site's tag separator), and Clear buttons.
-- **Palette:** **AI Suggestions** (Analyze image, the same analysis and results
-  as the tagger's AI panel), then every category of the selected group.
-  Clicking a tag adds it or removes it; **+ all** next to the groups adds every
-  tag of the group, or removes them when all are active.
+- **Palette:** laid out like the tagger palette: group tabs and category tabs,
+  or **Flat view** (every category of the group under its label). **AI** runs
+  the image analysis; its suggestions are the "AI" group at the start of the
+  groups (shared with the tagger). Clicking a tag adds it or removes it;
+  **+ All** adds every visible tag, or removes them when all are active.
 
 With **Live sync** on, the page's tag field follows every change, and edits
 made on the page appear in Focus Mode. With it off, use **Apply to page** and
@@ -227,7 +241,8 @@ Firefox closes. Unpacked extensions are not installed or updated automatically.
    installation instructions in its
    [GitHub repository](https://github.com/pythongosssss/ComfyUI-WD14-Tagger).
 3. Restart ComfyUI after installing the node.
-4. Open a page with an image and select **Analyze image** in QuickTag LazyMod.
+4. Open a page with an image and select **AI** in the tag palettes. The
+   suggested tags appear in the "AI" group at the start of the groups.
 
 The extension's **About** page contains more detailed setup instructions.
 Palette editing, tagging, and other non-AI features do not require ComfyUI.

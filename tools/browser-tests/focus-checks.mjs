@@ -225,16 +225,44 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   await evaluate(page, showPageImage("/tall.svg"));
   const tallFit = await waitFor(evaluate, page, IMAGE_FIT_STATE, (state) => /300 × 3000 px/.test(state.meta));
   check("Focus image: Fit scales a tall image to fit inside its tile without pushing the tags tile", fitsInside(tallFit), tallFit);
+  // Wheel zoom around the pointer, double-click reset, drag to pan.
+  const VIEWPORT = `${FOCUS}.querySelector(".lm-focus-image-viewport")`;
+  const ZOOM = `(() => ({ label: ${FOCUS}.querySelector(".lm-focus-zoom-label").textContent, background: getComputedStyle(${VIEWPORT}).backgroundImage }))()`;
+  const wheelAt = (deltaY) =>
+    `(() => { const v = ${VIEWPORT}; const r = v.getBoundingClientRect(); const e = new WheelEvent("wheel", { deltaY: ${deltaY}, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, cancelable: true }); v.dispatchEvent(e); return e.defaultPrevented; })()`;
+  const drag = (dx, dy) =>
+    `(() => { const v = ${VIEWPORT}; const r = v.getBoundingClientRect(); const x = r.left + r.width / 2, y = r.top + r.height / 2; const opts = (cx, cy) => ({ pointerId: 7, button: 0, buttons: 1, clientX: cx, clientY: cy, bubbles: true, cancelable: true, pointerType: "mouse" }); v.dispatchEvent(new PointerEvent("pointerdown", opts(x, y))); v.dispatchEvent(new PointerEvent("pointermove", opts(x + ${dx}, y + ${dy}))); v.dispatchEvent(new PointerEvent("pointerup", opts(x + ${dx}, y + ${dy}))); return true; })()`;
+  const fitZoom = await evaluate(page, ZOOM);
+  const wheelPrevented = await evaluate(page, wheelAt(-600));
+  const zoomedIn = await evaluate(page, IMAGE_FIT_STATE);
+  const zoomedLabel = (await evaluate(page, ZOOM)).label;
+  await evaluate(page, `(() => { ${VIEWPORT}.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })); return true; })()`);
+  const resetLabel = (await evaluate(page, ZOOM)).label;
+  check(
+    "Focus image: wheel zooms in around the pointer (page not scrolled), double-click resets; calm gradient background",
+    wheelPrevented &&
+      parseInt(zoomedLabel, 10) > parseInt(fitZoom.label, 10) &&
+      zoomedIn.image.height > tallFit.image.height * 1.5 &&
+      resetLabel === fitZoom.label &&
+      /gradient/.test(fitZoom.background) &&
+      !/conic/.test(fitZoom.background),
+    { fit: fitZoom.label, zoomed: zoomedLabel, reset: resetLabel, background: fitZoom.background.slice(0, 60) },
+  );
   await evaluate(page, clickImageZoom("1:1"));
   const tallActual = await evaluate(page, IMAGE_FIT_STATE);
+  await evaluate(page, drag(-40, -120));
+  const panned = await evaluate(page, IMAGE_FIT_STATE);
+  await evaluate(page, `(() => { ${FOCUS}.querySelector(".lm-focus-zoom-label").click(); return true; })()`);
+  const labelReset = await evaluate(page, IMAGE_FIT_STATE);
   check(
-    "Focus image: 1:1 shows the natural size and scrolls inside the tile (tags tile unchanged)",
+    "Focus image: 1:1 shows the natural size, drag pans it inside the tile, the zoom label resets (tags tile unchanged)",
     tallActual.zoom === "actual" &&
       Math.abs(tallActual.image.height - 3000) < 2 &&
-      tallActual.scrolls &&
+      Math.abs(panned.image.top - (tallActual.image.top - 120)) < 2 &&
+      Math.abs(labelReset.image.top - tallActual.image.top) < 2 &&
       tallActual.panel.bottom <= tallActual.tags.top + 1.5 &&
       Math.abs(tallActual.tags.top - tallFit.tags.top) < 1.5,
-    tallActual,
+    { actualTop: tallActual.image.top, pannedTop: panned.image.top, resetTop: labelReset.image.top },
   );
   await evaluate(page, clickImageZoom("Fit"));
   await evaluate(page, showPageImage("/wide.svg"));
@@ -330,7 +358,20 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
     { tag, chipActive, chipAfterSecond, field: afterRemove.field, badges: afterRemove.badges },
   );
 
-  // "+ all" toggles every tag of the active group.
+  // Palette layout like the tagger: category tabs by default, Flat view with labels.
+  const PALETTE_LAYOUT = `(() => { const focus = ${FOCUS}; const tabs = focus.querySelector(".lm-focus-categories"); return { tabsHidden: tabs.hidden, tabs: tabs.querySelectorAll(".lazymod-subtab").length, sections: focus.querySelectorAll(".lm-focus-palette-body .lm-focus-category").length, chips: focus.querySelectorAll(".lm-focus-palette-body .lazymod-chip").length, flat: focus.querySelector(".lm-focus-flat input").checked }; })()`;
+  const tabsLayout = await evaluate(page, PALETTE_LAYOUT);
+  await evaluate(page, clickIn(".lm-focus-flat input"));
+  const flatLayout = await evaluate(page, PALETTE_LAYOUT);
+  await evaluate(page, clickIn(".lm-focus-flat input"));
+  const backToTabs = await evaluate(page, PALETTE_LAYOUT);
+  check(
+    "Focus palette: category tabs by default; Flat view shows every category of the group with its label",
+    !tabsLayout.tabsHidden && tabsLayout.tabs > 1 && tabsLayout.sections === 0 && flatLayout.flat && flatLayout.tabsHidden && flatLayout.sections === tabsLayout.tabs && flatLayout.chips > tabsLayout.chips && !backToTabs.flat && backToTabs.sections === 0,
+    { tabsLayout, flatLayout, backToTabs },
+  );
+
+  // "+ All" toggles every visible tag (the active category).
   const GROUP_ALL = `(() => { const focus = ${FOCUS}; const toggle = focus.querySelector(".lm-focus-group-all"); const tags = [...new Set([...focus.querySelectorAll(".lm-focus-palette-body .lazymod-chip")].map((chip) => chip.dataset.tag))]; return { label: toggle.textContent, pressed: toggle.getAttribute("aria-pressed"), tags, besideGroups: toggle.parentElement.classList.contains("lm-focus-group-row") }; })()`;
   const beforeAll = await evaluate(page, GROUP_ALL);
   await evaluate(page, clickIn(".lm-focus-group-all"));
@@ -340,26 +381,43 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   const allRemoved = await evaluate(page, FOCUS_STATE);
   const fieldTags = (state) => state.field.split(/\s+/).filter(Boolean);
   check(
-    'Focus palette: "+ all" next to the groups adds every tag of the group, then removes them',
-    beforeAll.label === "+ all" &&
+    'Focus palette: "+ All" next to the groups adds every visible tag, then removes them',
+    beforeAll.label === "+ All" &&
       beforeAll.besideGroups &&
       beforeAll.tags.length > 1 &&
       beforeAll.tags.every((groupTag) => fieldTags(allAdded).includes(groupTag)) &&
-      allState.label === "− all" &&
+      allState.label === "− All" &&
       allState.pressed === "true" &&
       beforeAll.tags.every((groupTag) => !fieldTags(allRemoved).includes(groupTag)),
     { beforeAll: { label: beforeAll.label, count: beforeAll.tags.length }, added: allAdded.field, after: allState.label, removed: allRemoved.field },
   );
 
-  // AI suggestions in Focus Mode share the tagger's analysis (ComfyUI is offline here).
-  await evaluate(page, clickIn(".lm-focus-ai-analyze"));
-  const AI_STATE = `(() => { const focus = ${FOCUS}; const status = focus.querySelector(".lm-focus-ai-status"); return { focus: status.hidden ? "" : status.textContent, focusState: status.dataset.state, tagger: ${ROOT}.querySelector("#lm-ai-status").textContent, analyzeEnabled: !focus.querySelector(".lm-focus-ai-analyze").disabled }; })()`;
-  const ai = await waitFor(evaluate, page, AI_STATE, (state) => state.focusState === "error" && state.analyzeEnabled, 20000);
+  // AI: the button runs the shared analysis; its results are the first group (ComfyUI is offline here).
+  const AI_STATE = `(() => {
+    const focus = ${FOCUS};
+    const button = focus.querySelector(".lm-focus-ai-button");
+    const tabs = [...focus.querySelectorAll(".lm-focus-groups .lazymod-tab")];
+    const message = focus.querySelector(".lm-focus-palette-body .lm-focus-ai-message");
+    return { busy: button.getAttribute("aria-busy") === "true", label: button.textContent.trim(), firstTab: tabs[0]?.textContent, firstActive: tabs[0]?.classList.contains("active"), aiState: tabs[0]?.dataset.state, message: message?.textContent || "", messageState: message?.dataset.state || "", subtab: focus.querySelector(".lm-focus-categories .lazymod-subtab")?.textContent, taggerAiTab: ${ROOT}.querySelector("#lm-palette-tabs .lazymod-ai-tab")?.dataset.state };
+  })()`;
+  const aiBusy = await evaluate(page, `(() => { ${FOCUS}.querySelector(".lm-focus-ai-button").click(); return ${AI_STATE}; })()`);
+  const ai = await waitFor(evaluate, page, AI_STATE, (state) => state.messageState === "error" && !state.busy, 20000);
   check(
-    "Focus palette: AI Suggestions analyze the page image like the tagger (same status in both)",
-    /Analysis failed|Could not/.test(ai.focus) && ai.focus === ai.tagger && ai.analyzeEnabled,
-    ai,
+    'Focus palette: the AI button shows loading, then the "AI" group comes first with the result state (shared with the tagger)',
+    aiBusy.busy &&
+      aiBusy.label === "AI…" &&
+      aiBusy.messageState === "busy" &&
+      ai.firstTab === "AI" &&
+      ai.firstActive &&
+      ai.aiState === "error" &&
+      ai.subtab === "Suggestions" &&
+      /Analysis failed|Could not/.test(ai.message) &&
+      ai.label === "AI" &&
+      ai.taggerAiTab === "error",
+    { aiBusy, ai },
   );
+  // Back to the pack's first group for the following checks.
+  await evaluate(page, `(() => { ${FOCUS}.querySelectorAll(".lm-focus-groups .lazymod-tab")[1]?.click(); return true; })()`);
 
   // Esc closes the topmost menu first, then Focus Mode.
   // The keyup of the same Esc press must not exit as well.

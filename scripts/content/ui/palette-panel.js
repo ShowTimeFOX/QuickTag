@@ -1,10 +1,16 @@
-// Palette view: pack selector, group/category tabs, tag chips, fuzzy search,
-// and type-to-search when focus is outside an editable field.
+// Palette view: group/category tabs (or Flat view with category labels), tag
+// chips, fuzzy search, type-to-search when focus is outside an editable field,
+// and the AI group: the AI button analyzes the page image, and its suggested
+// tags appear as an extra group at the start of the group tabs (never saved
+// into the pack). The analysis lives in ../ai-analysis.js.
 import { LOG_PREFIX, STORAGE_KEYS, MESSAGE_ACTIONS } from "../../shared/constants.js";
+import { formatTag } from "../../shared/tags.js";
 import { onLocalStorageChange } from "../../shared/storage.js";
+import { decodePaletteData } from "../../shared/palette.js";
 import { state } from "../state.js";
 import { emit, on, EVENTS } from "../events.js";
 import { addTagToMain, getMainTags, isEditableTarget, setMainTags } from "../page.js";
+import { getAnalysisPhase, getAnalysisStatus, getSuggestedEntries, getSuggestedTags, startAnalysis } from "../ai-analysis.js";
 import { requestExtensionPage } from "../messaging.js";
 import {
   exportActivePack,
@@ -17,6 +23,7 @@ import {
 } from "../palettes.js";
 import { $, $$, shell, setIconPath, ICON_PATHS } from "./shell.js";
 import { createEmptyMessage, createTagChip, syncChipStates } from "./chips.js";
+import { el } from "./dom.js";
 import { isMainTabActive, showMainTab } from "./tabs.js";
 import { setTaggerCollapsed } from "./window-controls.js";
 import { attachScrollArrows, enableWheelScrolling } from "./scroll-arrows.js";
@@ -24,8 +31,13 @@ import { attachScrollArrows, enableWheelScrolling } from "./scroll-arrows.js";
 const TYPE_TO_SEARCH_RESET_MS = 1000;
 const NO_PACKS_MESSAGE = "No tag packs. Import a JSON pack to get started.";
 
+export const AI_GROUP_LABEL = "AI";
+const AI_CATEGORY_LABEL = "Suggestions";
+
 const view = {
   flatView: false,
+  /** The AI group is shown (view state only; selecting a pack group clears it). */
+  aiActive: false,
   searchQuery: "",
   highlightedResult: 0,
   typeBuffer: "",
@@ -42,7 +54,51 @@ function createTabButton(className, label, isActive, onClick) {
   return tab;
 }
 
+// --- AI group ---
+
+function hasAiGroup() {
+  return getAnalysisPhase() !== "idle";
+}
+
+/** The AI button shows the analysis state (spinner and "AI…" while running). */
+function renderAiButton() {
+  const button = $("#lm-fetch-ai");
+  const busy = getAnalysisPhase() === "busy";
+  button.disabled = busy;
+  button.classList.toggle("is-busy", busy);
+  if (busy) button.setAttribute("aria-busy", "true");
+  else button.removeAttribute("aria-busy");
+  button.querySelector("span").textContent = busy ? "AI…" : "AI";
+  button.title = busy ? "Analyzing the page image…" : "AI suggestions: analyze the page image with ComfyUI (WD14)";
+}
+
+/** Chips (or a loading / empty / error message) for the AI group. */
+function appendAiContent(container, mainTags) {
+  const phase = getAnalysisPhase();
+  const { message } = getAnalysisStatus();
+  if (phase === "busy") {
+    container.appendChild(el("div", { className: "lazymod-empty lazymod-ai-message", dataset: { state: "busy" }, text: message || "Analyzing the page image…" }));
+    return;
+  }
+  if (phase === "error") {
+    container.appendChild(el("div", { className: "lazymod-empty lazymod-ai-message", dataset: { state: "error" }, text: message }));
+    return;
+  }
+  const entries = getSuggestedEntries();
+  if (!entries.length) {
+    container.appendChild(el("div", { className: "lazymod-empty lazymod-ai-message", dataset: { state: "empty" }, text: "No suggested tags above the threshold." }));
+    return;
+  }
+  entries.forEach(([tag, score]) => container.appendChild(createTagChip(tag, { isActive: mainTags.includes(tag), score, title: "AI suggestion" })));
+}
+
 // --- Rendering ---
+
+/** Tags "+ All" acts on: the AI suggestions, or the visible palette tags. */
+function getVisibleTags() {
+  if (view.aiActive) return getAnalysisPhase() === "done" ? getSuggestedTags() : [];
+  return getVisiblePaletteTags(view.flatView);
+}
 
 function updatePaletteToggleButton() {
   const button = $("#lm-add-all-palette");
@@ -52,11 +108,13 @@ function updatePaletteToggleButton() {
     return;
   }
   button.hidden = false;
-  const visibleTags = getVisiblePaletteTags(view.flatView);
+  const visibleTags = getVisibleTags();
   const mainTags = getMainTags();
   const allSelected = visibleTags.length > 0 && visibleTags.every((tag) => mainTags.includes(tag));
 
-  button.querySelector("span").textContent = allSelected ? "Remove tags" : "Add tags";
+  button.disabled = visibleTags.length === 0;
+  button.title = allSelected ? "Remove all visible tags" : "Add all visible tags";
+  button.setAttribute("aria-pressed", String(allSelected));
   setIconPath(button, allSelected ? ICON_PATHS.minus : ICON_PATHS.plus);
   button.classList.toggle("lazymod-btn-danger", allSelected);
   button.classList.toggle("lazymod-btn-accent", !allSelected);
@@ -68,15 +126,33 @@ function renderUserChips() {
   container.replaceChildren();
   const mainTags = getMainTags();
   const searchResults = view.searchQuery ? searchActivePack(view.searchQuery) : null;
-  const tags = searchResults ? searchResults.map((result) => result.tag) : getVisiblePaletteTags(view.flatView);
-  const hasPack = Boolean(getActivePack());
+  const activePack = getActivePack();
+
+  if (!searchResults && view.aiActive) {
+    if (view.flatView) container.appendChild(el("div", { className: "lazymod-chip-group-label", text: AI_CATEGORY_LABEL }));
+    appendAiContent(container, mainTags);
+    updatePaletteToggleButton();
+    return;
+  }
 
   if (searchResults && searchResults.length === 0) {
-    container.appendChild(createEmptyMessage(hasPack ? "No matching tags found." : NO_PACKS_MESSAGE));
-  } else if (!hasPack) {
+    container.appendChild(createEmptyMessage(activePack ? "No matching tags found." : NO_PACKS_MESSAGE));
+  } else if (!activePack) {
     container.appendChild(createEmptyMessage(NO_PACKS_MESSAGE));
   }
 
+  if (!searchResults && activePack && view.flatView) {
+    // Flat view: every category of the group, each under its label.
+    Object.entries(activePack.groups[state.paletteData.activeGroup] || {}).forEach(([categoryName, tags]) => {
+      const cleanTags = [...new Set(tags.map(formatTag).filter(Boolean))];
+      container.appendChild(el("div", { className: "lazymod-chip-group-label", text: categoryName }));
+      cleanTags.forEach((tag) => container.appendChild(createTagChip(tag, { isActive: mainTags.includes(tag), title: categoryName })));
+    });
+    updatePaletteToggleButton();
+    return;
+  }
+
+  const tags = searchResults ? searchResults.map((result) => result.tag) : getVisiblePaletteTags(false);
   tags.forEach((tag, index) => {
     const result = searchResults?.[index];
     container.appendChild(
@@ -95,6 +171,11 @@ function renderCategoriesUI() {
   const tabsContainer = $("#lm-category-tabs");
   tabsContainer.hidden = view.flatView;
   tabsContainer.replaceChildren();
+  if (view.aiActive) {
+    if (!view.flatView) tabsContainer.appendChild(createTabButton("lazymod-subtab", AI_CATEGORY_LABEL, true, () => {}));
+    renderUserChips();
+    return;
+  }
   if (!activePack) {
     renderUserChips();
     return;
@@ -139,6 +220,17 @@ function renderPaletteView() {
 
   const groupTabs = $("#lm-palette-tabs");
   groupTabs.replaceChildren();
+  renderAiButton();
+  if (!hasAiGroup()) view.aiActive = false;
+  if (hasAiGroup()) {
+    const aiTab = createTabButton("lazymod-tab lazymod-ai-tab", AI_GROUP_LABEL, view.aiActive, () => {
+      view.aiActive = true;
+      renderPaletteView();
+    });
+    aiTab.dataset.state = getAnalysisPhase();
+    aiTab.title = "AI suggestions for this page's image";
+    groupTabs.appendChild(aiTab);
+  }
   if (!activePack) {
     renderCategoriesUI();
     return;
@@ -150,7 +242,8 @@ function renderPaletteView() {
   }
   groupNames.forEach((groupName) => {
     groupTabs.appendChild(
-      createTabButton("lazymod-tab", groupName, groupName === paletteData.activeGroup, () => {
+      createTabButton("lazymod-tab", groupName, !view.aiActive && groupName === paletteData.activeGroup, () => {
+        view.aiActive = false;
         selectGroup(groupName);
         renderPalettePanel();
       }),
@@ -280,7 +373,7 @@ async function handleImportPack(event) {
 }
 
 function handleToggleVisibleTags() {
-  const visibleTags = getVisiblePaletteTags(view.flatView);
+  const visibleTags = getVisibleTags();
   if (visibleTags.length === 0) return;
   const current = getMainTags();
   const allSelected = visibleTags.every((tag) => current.includes(tag));
@@ -315,6 +408,20 @@ export function initPalettePanel() {
   $("#lm-pack-file").onchange = handleImportPack;
   $("#lm-export-pack").onclick = exportActivePack;
   $("#lm-add-all-palette").onclick = handleToggleVisibleTags;
+  // AI: analyze the page image and show the AI group.
+  $("#lm-fetch-ai").onclick = () => {
+    view.aiActive = true;
+    // Show the AI group, not search results.
+    resetTypeBuffer();
+    view.searchQuery = "";
+    $("#lm-palette-search").value = "";
+    startAnalysis();
+    renderPaletteView();
+  };
+  on(EVENTS.aiSuggestionsChanged, () => renderPaletteView());
+  on(EVENTS.blacklistChanged, () => {
+    if (view.aiActive) renderUserChips();
+  });
 
   on(EVENTS.tagsChanged, () => {
     syncChipStates($("#lm-user-chips"), getMainTags());
@@ -327,7 +434,7 @@ export function initPalettePanel() {
 
   // Palette edits from the editor page or other tabs.
   onLocalStorageChange((changes) => {
-    const updated = changes[STORAGE_KEYS.palettes]?.newValue;
+    const updated = decodePaletteData(changes[STORAGE_KEYS.palettes]?.newValue);
     if (!updated || !updated.packs) return;
     state.paletteData = updated;
     renderPalettePanel();

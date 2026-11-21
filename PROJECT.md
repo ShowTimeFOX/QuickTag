@@ -12,7 +12,8 @@ source directory; `manifest.json` contains the shared browser configuration.
   from `data/character.json` and `data/anthro.json`. Import, export, edit, and
   delete any pack, including defaults. Organize tags into groups and categories.
 - **Tag management:** Toggle tags individually or add and remove visible tags
-  in batches. The same batch actions are available for AI suggestions.
+  in batches (**+ All**). AI suggestions appear as an "AI" group at the start
+  of the palette groups, with the same batch action.
 - **Fuzzy search:** Find approximate matches. Keyboard controls include the
   arrow keys, Enter, and Escape; typing mode can start a search when focus is
   outside an editable field, including when the page uses an open shadow root.
@@ -121,8 +122,8 @@ not require ComfyUI.
 4. Install the node's requirements in the Python environment used by ComfyUI,
    following the node repository's instructions, then restart ComfyUI. WD14
    models are downloaded on first use if they are not already available.
-5. Open a page containing an image and select **Analyze image** in QuickTag.
-   Progress and connection errors are shown in the AI suggestions section.
+5. Open a page containing an image and select **AI** in the tag palettes.
+   Progress and connection errors are shown in the "AI" group.
 
 Requirements may differ between portable installations, `comfy-cli`, and
 other ways of running ComfyUI. Refer to the
@@ -142,7 +143,7 @@ if you need help.
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
 | `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js`, `chips.js`, `ai-panel.js`, `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js` (tag palettes and the "AI" group), `chips.js`, `ai-settings.js` (AI threshold), `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/about-page.js` | About page module: the "What's new" demos, built on the shared ghost scroll, Focus Mode layout transforms, and pack summary, with sample data and no storage access. |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
@@ -267,11 +268,35 @@ if you need help.
   separators on their non-space part. Focus Mode's Copy, Raw text, and input
   parsing use it too.
 - **AI suggestions** (`content/ai-analysis.js`, no DOM) hold the analysis
-  state, request, and results; `aiSuggestionsChanged` updates the tagger's AI
-  panel (`ui/ai-panel.js`) and the Focus Mode palette's AI section, so one
-  analysis shows in both. Behavior of the tagger panel is unchanged.
-- **Focus Mode palette** chips add or remove tags (no muting; mute on the
-  badges); **+ all** toggles every tag of the active group (`toggleAllTags`).
+  state (`idle`, `busy`, `done`, `error`), request, and results;
+  `aiSuggestionsChanged` updates both palettes. The **AI** button sits in the
+  palette controls and shows `aria-busy` and a spinner while running. Its
+  results are a virtual "AI" group placed first in the group tabs (category
+  "Suggestions") once an analysis has run; selecting it is view state in each
+  palette, never written to `lazymod_global_palettes`, so it cannot clash
+  with a pack group named "AI". The threshold control is in Settings
+  (`ui/ai-settings.js`).
+- **Palettes** in the tagger and Focus Mode share one structure: group tabs,
+  category sub-tabs, or Flat view (category labels with all tags of the
+  group; Focus Mode saves it as the `paletteFlat` pref), and **+ All** on the
+  visible tags. Focus Mode palette chips add or remove tags (no muting; mute
+  on the badges). In the tagger, the Tagging view is a flex column and the
+  chips take the free height (`#lm-user-chips` `flex: 1 1 0`).
+- **Order in storage.** Chrome's `storage.local` returns object keys sorted
+  alphabetically (Firefox keeps insertion order), which reordered groups,
+  categories, and packs after the first save. Palette data is written with
+  `encodePaletteData()` (adds `packOrder`, and `groupOrder` / `categoryOrder`
+  per pack) and read with `decodePaletteData()` (`shared/palette.js`). Site
+  profiles, which are matched in order, store their key order in
+  `lazymod_site_profile_order`. Integer-like keys (e.g. a group named "2024")
+  still sort first: JavaScript orders them before other keys.
+- **Focus Mode image** (`ui/focus-image.js`): one pan/zoom model for Fit and
+  1:1. The image is absolutely positioned and sized from a scale and offset;
+  the wheel zooms around the pointer (handled only inside the image area,
+  `passive: false`), dragging pans (pointer capture), and the offset is
+  clamped so the image stays in view. Fit, 1:1, double-click, and the zoom
+  label reset the view; a `ResizeObserver` refits when the panel changes size.
+  The background is a soft gradient instead of a checkerboard.
 - **Reduce visual effects** (`ui/visual-effects.js`, `lazymod_reduced_effects`)
   toggles `lm-reduced-effects` on the shadow host; `:host(.lm-reduced-effects)`
   rules in `tagger.css` and `focus-mode.css` cover every element in the shadow

@@ -1,7 +1,7 @@
 // Site profile and AI blacklist state for the current page.
 import { LOG_PREFIX, STORAGE_KEYS, DEFAULT_AI_BLACKLIST, FALLBACK_SITE_KEY, createDefaultSiteConfigs } from "../shared/constants.js";
 import { loadData, onLocalStorageChange } from "../shared/storage.js";
-import { detectSiteKey } from "../shared/site-configs.js";
+import { detectSiteKey, orderSiteConfigs } from "../shared/site-configs.js";
 import { normalizeTagList } from "../shared/tags.js";
 import { state } from "./state.js";
 import { emit, EVENTS } from "./events.js";
@@ -13,7 +13,7 @@ export async function loadSiteProfileState() {
     blacklist = DEFAULT_AI_BLACKLIST;
   }
   state.tagBlacklist = normalizeTagList(blacklist);
-  state.siteConfigs = await loadData(STORAGE_KEYS.siteConfigs, createDefaultSiteConfigs());
+  state.siteConfigs = orderSiteConfigs(await loadData(STORAGE_KEYS.siteConfigs, createDefaultSiteConfigs()), await loadData(STORAGE_KEYS.siteProfileOrder, null));
   state.activeSiteKey = detectSiteKey(state.siteConfigs, window.location.href);
 }
 
@@ -57,7 +57,7 @@ export function refreshActiveSiteKey() {
 
 export async function saveSiteConfigs(siteConfigs) {
   state.siteConfigs = siteConfigs;
-  await chrome.storage.local.set({ [STORAGE_KEYS.siteConfigs]: siteConfigs });
+  await chrome.storage.local.set({ [STORAGE_KEYS.siteConfigs]: siteConfigs, [STORAGE_KEYS.siteProfileOrder]: Object.keys(siteConfigs) });
   emit(EVENTS.siteProfilesChanged);
 }
 
@@ -99,8 +99,11 @@ export async function saveActiveProfileFields(fields) {
 /** Keeps profiles and blacklist in sync with edits made in other tabs/pages. */
 export function watchSiteProfileStorage() {
   onLocalStorageChange((changes) => {
-    const updatedConfigs = changes[STORAGE_KEYS.siteConfigs]?.newValue;
-    if (updatedConfigs) {
+    const changedConfigs = changes[STORAGE_KEYS.siteConfigs]?.newValue;
+    if (changedConfigs) {
+      // The order comes with the same write; otherwise keep the known order.
+      const order = changes[STORAGE_KEYS.siteProfileOrder]?.newValue || Object.keys(state.siteConfigs);
+      const updatedConfigs = orderSiteConfigs(changedConfigs, order);
       state.siteConfigs = updatedConfigs;
       state.activeSiteKey = resolveActiveSiteKey(updatedConfigs);
       emit(EVENTS.siteProfilesChanged);

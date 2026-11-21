@@ -10,6 +10,7 @@ import { runAssetsChecks } from "./assets-checks.mjs";
 import { runPackBrowserChecks } from "./pack-checks.mjs";
 import { runAboutChecks } from "./about-checks.mjs";
 import { runSettingsChecks, runPermissionPageChecks } from "./settings-checks.mjs";
+import { runPaletteChecks } from "./palette-checks.mjs";
 
 const chromeExe = browserPath("chrome");
 const profileDir = makeTempDir("chrome-profile");
@@ -155,7 +156,7 @@ try {
   check("Plain page: default packs loaded and chips rendered", plainState?.packOptions?.length >= 2 && plainState.chipCount > 0, plainState?.packOptions);
   check("Plain page: first visit starts hidden with edge handle", plainState?.windowHidden === true && plainState.showButtonVisible === true, plainState);
 
-  check("Initial view state (Settings hidden, AI 'Add all' hidden, moved styles apply)", plainState?.sitesViewDisplay === "none" && plainState.addAllAiDisplay === "none" && plainState.placeholderFont === "11px" && plainState.tabsMargin === "10px", plainState);
+  check("Initial view state (Settings hidden, AI button in the palette, no AI group before analysis, moved styles apply)", plainState?.sitesViewDisplay === "none" && plainState.mainViewDisplay === "flex" && plainState.aiButton === "AI" && plainState.noAiGroup && plainState.tabsMargin === "10px", plainState);
   await evaluate(plain.sessionId, PROBES.showTagger);
   await sleep(300);
   const chip = await evaluate(plain.sessionId, PROBES.clickFirstChip);
@@ -198,7 +199,7 @@ try {
   const cspState = await waitFor(csp.sessionId, PROBES.hostState, (state) => state?.visibility === "visible" && state.chipCount > 0);
   check("Strict CSP page: modules load and tagger mounts", cspState?.visibility === "visible" && cspState.window && cspState.chipCount > 0, cspState);
   check("Strict CSP page: shadow-root styles apply", cspState?.styleCount >= 2 && cspState.windowPosition === "fixed", { styles: cspState?.styleCount, position: cspState?.windowPosition, bg: cspState?.windowBg });
-  check("Strict CSP page: theme CSS + template styles match plain page", cspState?.themeClass === plainState?.themeClass && cspState.windowBg === plainState.windowBg && cspState.sitesViewDisplay === "none" && cspState.addAllAiDisplay === "none" && cspState.placeholderFont === "11px", { csp: cspState, plain: { tabBg: plainState?.tabBg, windowBg: plainState?.windowBg } });
+  check("Strict CSP page: theme CSS + template styles match plain page", cspState?.themeClass === plainState?.themeClass && cspState.windowBg === plainState.windowBg && cspState.sitesViewDisplay === "none" && cspState.mainViewDisplay === "flex" && cspState.aiButton === "AI", { csp: cspState, plain: { tabBg: plainState?.tabBg, windowBg: plainState?.windowBg } });
 
   // Shared checks (checks.mjs)
   // Real (trusted) input through the DevTools protocol, viewport coordinates.
@@ -228,6 +229,7 @@ try {
   await runAssetsChecks(adapters);
   await runPackBrowserChecks(adapters);
   await runSettingsChecks(adapters);
+  await runPaletteChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");

@@ -839,7 +839,7 @@ pre code {
 }
 
 .demo-panel[data-panel="image"] {
-  background: repeating-conic-gradient(rgba(37, 50, 70, 0.5) 0% 25%, transparent 0% 50%) 0 0 / 14px 14px, var(--panel);
+  background: radial-gradient(ellipse at 50% 40%, rgba(124, 175, 255, 0.08), transparent 70%), linear-gradient(160deg, #172131, var(--panel));
 }
 
 .demo-panel[data-panel="palette"] {

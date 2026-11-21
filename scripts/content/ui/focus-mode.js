@@ -82,6 +82,7 @@ function normalizePrefs(raw) {
     tagView: FOCUS_TAG_VIEWS.includes(prefs.tagView) ? prefs.tagView : DEFAULT_FOCUS_PREFS.tagView,
     imageZoom: FOCUS_IMAGE_ZOOMS.includes(prefs.imageZoom) ? prefs.imageZoom : DEFAULT_FOCUS_PREFS.imageZoom,
     scale: isValidFocusScale(prefs.scale) ? prefs.scale : DEFAULT_FOCUS_PREFS.scale,
+    paletteFlat: typeof prefs.paletteFlat === "boolean" ? prefs.paletteFlat : DEFAULT_FOCUS_PREFS.paletteFlat,
   };
 }
 

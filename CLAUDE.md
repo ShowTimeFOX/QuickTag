@@ -52,8 +52,8 @@ scripts/
     focus-tags.js       Focus Mode tag model (active/muted, sort, page sync) — no DOM
     file-hub.js         File Hub install records (Assets tab) — no DOM
     pack-manager.js     uninstall/undo and installed-pack search — no DOM
-    ai-analysis.js      AI suggestion state/request shared by the AI panel and Focus palette — no DOM
-    ui/                 Shadow-DOM interface components (shell, theme, tabs, palette-panel, ai-panel, ...)
+    ai-analysis.js      AI suggestion state/request; results are the "AI" palette group (tagger + Focus) — no DOM
+    ui/                 Shadow-DOM interface components (shell, theme, tabs, palette-panel, ai-settings, ...)
       dom.js            el()/icon()/button() — the safe way to build UI from JS
       shortcut-recorder.js  reusable "press a shortcut" buttons
       focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
@@ -61,6 +61,7 @@ scripts/
       assets-panel.js   Assets tab (File Hub browse/install)
       pack-browser.js   pack switcher dropdown: search, ghost scroll, uninstall with undo
       visual-effects.js Reduce visual effects (class on the shadow host)
+      ai-settings.js    AI threshold control (Settings)
   background.js         background entry (registers listeners synchronously)
   background/           messages.js, updates.js, comfyui.js, file-hub.js (all File Hub network requests)
   shared/               used by every context; NO window/document at module level (service worker imports it)
@@ -84,6 +85,9 @@ docs/                   project documents that are not part of the extension (v1
 
 ## Conventions
 
+- Chrome's `storage.local` returns object keys sorted. Never rely on stored
+  object key order: palettes go through `encodePaletteData` /
+  `decodePaletteData`, site profiles through `lazymod_site_profile_order`.
 - Storage: `chrome.storage.local` only; every key starts with `lazymod_` and is
   defined in `STORAGE_KEYS` in `scripts/shared/constants.js`. Per-origin layout
   keys are `lazymod_site_layout_<encoded origin>`. Config backup import rejects

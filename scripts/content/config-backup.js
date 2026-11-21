@@ -41,6 +41,7 @@ function isValidPaletteData(palettes) {
 const VALIDATION_RULES = [
   [STORAGE_KEYS.aiBlacklist, isStringArray, "The AI blacklist in this backup is invalid."],
   [STORAGE_KEYS.siteConfigs, isValidSiteConfigs, "The site profiles in this backup are invalid."],
+  [STORAGE_KEYS.siteProfileOrder, isStringArray, "The site profile order in this backup is invalid."],
   [STORAGE_KEYS.builtinPaletteOverride, isValidPalettePack, "The built-in palette in this backup is invalid."],
   [STORAGE_KEYS.palettes, isValidPaletteData, "The palettes in this backup are invalid."],
   ...[STORAGE_KEYS.enabled, LEGACY_STORAGE_KEYS.docked, STORAGE_KEYS.ghostMode, STORAGE_KEYS.ghostHoldMode, STORAGE_KEYS.reducedEffects].map((key) => [

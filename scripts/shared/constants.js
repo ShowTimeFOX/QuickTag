@@ -10,6 +10,8 @@ export const STORAGE_KEYS = Object.freeze({
   enabled: "lazymod_enabled",
   palettes: "lazymod_global_palettes",
   siteConfigs: "lazymod_global_site_configs",
+  // Profile keys in order (Chrome's storage returns object keys sorted).
+  siteProfileOrder: "lazymod_site_profile_order",
   aiBlacklist: "lazymod_global_ai_blacklist",
   builtinPaletteOverride: "lazymod_builtin_palette_override",
   theme: "lazymod_theme",
@@ -79,6 +81,8 @@ export const DEFAULT_FOCUS_PREFS = Object.freeze({
   liveSync: true,
   // "window" follows the tagger's Window scale; a number is a fixed scale.
   scale: "window",
+  // Palette Flat view (every category of a group, with labels).
+  paletteFlat: false,
   tagView: "badges",
   imageZoom: "fit",
 });

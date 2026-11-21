@@ -1,9 +1,18 @@
 // Site profiles: URL patterns mapped to page selectors.
 import { FALLBACK_SITE_KEY, SITE_SELECTOR_KEYS } from "./constants.js";
-import { isRecord } from "./validation.js";
+import { isRecord, orderedObject } from "./validation.js";
 import { MAX_TAG_SEPARATOR_LENGTH } from "./tags.js";
 
 const isValidSeparator = (value) => value === undefined || (typeof value === "string" && value.length <= MAX_TAG_SEPARATOR_LENGTH);
+
+/**
+ * Profiles in their saved order. Chrome's storage.local returns keys sorted,
+ * and detection uses the first matching profile, so the order is stored
+ * separately (`lazymod_site_profile_order`) and restored here.
+ */
+export function orderSiteConfigs(configs, order) {
+  return orderedObject(configs, order);
+}
 
 /** Returns the first non-fallback profile key whose pattern matches `url`. */
 export function detectSiteKey(siteConfigs, url) {

@@ -12,8 +12,3 @@ function setStatus(element, message, statusState) {
 export function setConfigStatus(message, statusState = "info") {
   setStatus($("#lm-config-status"), message, statusState);
 }
-
-/** Status line in the AI suggestions section. */
-export function setAiStatus(message, statusState = "info") {
-  setStatus($("#lm-ai-status"), message, statusState);
-}

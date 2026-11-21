@@ -16,7 +16,8 @@ function showTab(name) {
   Object.entries(TABS).forEach(([tabName, tab]) => {
     const isActive = tabName === name;
     $(tab.button).classList.toggle("active", isActive);
-    $(tab.view).style.display = isActive ? "block" : "none";
+    // "" lets tagger.css decide (the Tagging view is a flex column).
+    $(tab.view).style.display = isActive ? "" : "none";
   });
   TABS[name].onShow();
 }

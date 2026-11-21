@@ -140,8 +140,9 @@ export const PROBES = {
       themeClass: win ? [...win.classList].find((c) => c.startsWith("theme-")) : null,
       tabBg: root?.querySelector("#lm-tab-btn-main") ? getComputedStyle(root.querySelector("#lm-tab-btn-main")).backgroundColor : null,
       sitesViewDisplay: root?.querySelector("#lm-view-sites") ? getComputedStyle(root.querySelector("#lm-view-sites")).display : null,
-      addAllAiDisplay: root?.querySelector("#lm-add-all-ai") ? getComputedStyle(root.querySelector("#lm-add-all-ai")).display : null,
-      placeholderFont: root?.querySelector(".lazymod-ai-placeholder") ? getComputedStyle(root.querySelector(".lazymod-ai-placeholder")).fontSize : null,
+      mainViewDisplay: root?.querySelector("#lm-view-main") ? getComputedStyle(root.querySelector("#lm-view-main")).display : null,
+      aiButton: root?.querySelector("#lm-fetch-ai")?.textContent.trim() || null,
+      noAiGroup: root ? !root.querySelector("#lm-palette-tabs .lazymod-ai-tab") : null,
       tabsMargin: root?.querySelector("#lm-main-tabs") ? getComputedStyle(root.querySelector("#lm-main-tabs")).marginBottom : null,
     };
   })()`,
@@ -182,7 +183,8 @@ export const PROBES = {
     return { profile: root.querySelector("#lm-settings-profile").textContent, blacklist: root.querySelector("#lm-blacklist-count").textContent, sitesVisible: root.querySelector("#lm-view-sites").style.display };
   })()`,
   analyze: `(() => { document.getElementById("quicktag-extension-root").shadowRoot.querySelector("#lm-fetch-ai").click(); return true; })()`,
-  aiStatus: `document.getElementById("quicktag-extension-root").shadowRoot.querySelector("#lm-ai-status").textContent`,
+  // The AI group in the palette shows the analysis state.
+  aiStatus: `document.getElementById("quicktag-extension-root").shadowRoot.querySelector("#lm-user-chips .lazymod-ai-message")?.textContent || ""`,
   clickAbout: `(() => { document.getElementById("quicktag-extension-root").shadowRoot.querySelector("#lm-tab-btn-about").click(); return true; })()`,
   hostDisplay: `document.getElementById("quicktag-extension-root")?.style.display`,
   popupState: `(() => ({

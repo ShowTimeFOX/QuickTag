@@ -3,8 +3,8 @@
 //   ?mode=site-configs   site profiles JSON
 //   ?mode=ai-blacklist   AI blacklist JSON
 import { LOG_PREFIX, STORAGE_KEYS, DEFAULT_AI_BLACKLIST, createDefaultSiteConfigs } from "./shared/constants.js";
-import { normalizePalettePack, serializePalettePack } from "./shared/palette.js";
-import { normalizeSiteConfigs } from "./shared/site-configs.js";
+import { normalizePalettePack, serializePalettePack, decodePack, decodePaletteData, encodePack, encodePaletteData } from "./shared/palette.js";
+import { normalizeSiteConfigs, orderSiteConfigs } from "./shared/site-configs.js";
 import { normalizeTagList } from "./shared/tags.js";
 import { parsePaletteEasy, serializePaletteEasy } from "./editor/easy-json.js";
 import { createCodeEditor } from "./editor/code-editor.js";
@@ -107,7 +107,7 @@ async function loadPack() {
   if (!packId) throw new Error("Missing palette ID in the editor URL.");
 
   const stored = await chrome.storage.local.get([STORAGE_KEYS.palettes, STORAGE_KEYS.builtinPaletteOverride]);
-  const savedPalettes = stored[STORAGE_KEYS.palettes];
+  const savedPalettes = decodePaletteData(stored[STORAGE_KEYS.palettes]);
   paletteData =
     savedPalettes && savedPalettes.packs
       ? { ...savedPalettes, packs: { ...savedPalettes.packs } }
@@ -116,7 +116,7 @@ async function loadPack() {
   // Legacy sources: the pre-pack built-in palette override and `folders` data.
   let sourcePack = paletteData.packs[packId];
   if (packId === "builtin-import" && stored[STORAGE_KEYS.builtinPaletteOverride]) {
-    sourcePack = stored[STORAGE_KEYS.builtinPaletteOverride];
+    sourcePack = decodePack(stored[STORAGE_KEYS.builtinPaletteOverride]);
   }
   if (!sourcePack && packId === "legacy-saved" && paletteData.folders) {
     sourcePack = { name: "My palettes", groups: paletteData.folders };
@@ -166,8 +166,8 @@ async function savePalette() {
     },
     updatedPack,
   );
-  const values = { [STORAGE_KEYS.palettes]: nextData };
-  if (packId === "builtin-import") values[STORAGE_KEYS.builtinPaletteOverride] = updatedPack;
+  const values = { [STORAGE_KEYS.palettes]: encodePaletteData(nextData) };
+  if (packId === "builtin-import") values[STORAGE_KEYS.builtinPaletteOverride] = encodePack(updatedPack);
 
   await persist(values, {
     failureLabel: "Could not save palette",
@@ -202,8 +202,8 @@ function toggleEasyJson() {
 // --- Site profiles mode ---
 
 async function loadSiteConfigs() {
-  const stored = await chrome.storage.local.get(STORAGE_KEYS.siteConfigs);
-  const siteConfigs = normalizeSiteConfigs(stored[STORAGE_KEYS.siteConfigs] || createDefaultSiteConfigs());
+  const stored = await chrome.storage.local.get([STORAGE_KEYS.siteConfigs, STORAGE_KEYS.siteProfileOrder]);
+  const siteConfigs = normalizeSiteConfigs(orderSiteConfigs(stored[STORAGE_KEYS.siteConfigs] || createDefaultSiteConfigs(), stored[STORAGE_KEYS.siteProfileOrder]));
   document.title = "QuickTag Settings Editor";
   editorTitle.textContent = "Settings editor";
   paletteName.textContent = "URL patterns and page selectors";
@@ -222,7 +222,7 @@ async function saveSiteConfigs() {
     return;
   }
   await persist(
-    { [STORAGE_KEYS.siteConfigs]: updatedConfigs },
+    { [STORAGE_KEYS.siteConfigs]: updatedConfigs, [STORAGE_KEYS.siteProfileOrder]: Object.keys(updatedConfigs) },
     {
       failureLabel: "Could not save settings",
       savedMessage: "Saved · settings updated",
