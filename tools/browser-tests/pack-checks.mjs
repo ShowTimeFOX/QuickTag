@@ -28,7 +28,8 @@ const SHOW_TAGGING = `(() => {
 const PACK_STATE = `(() => {
   const root = ${ROOT};
   const list = root.querySelector("#lm-pack-list");
-  const body = root.querySelector("#lazymod-body");
+  // The active view scrolls (title bar and tab strip stay fixed).
+  const body = root.querySelector("#lm-view-main");
   const ghost = root.querySelector("#lm-pack-ghost");
   const status = root.querySelector("#lm-pack-status");
   const items = [...list.querySelectorAll(".lazymod-pack-item")];

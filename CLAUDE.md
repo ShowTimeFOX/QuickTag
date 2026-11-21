@@ -85,6 +85,9 @@ docs/                   project documents that are not part of the extension (v1
 
 ## Conventions
 
+- Tagger window: title bar and tab strip never shrink; each tab view is its own
+  scroll area. Don't give `.lazymod-body` id-level `display` rules (they would
+  override the collapse rules).
 - Chrome's `storage.local` returns object keys sorted. Never rely on stored
   object key order: palettes go through `encodePaletteData` /
   `decodePaletteData`, site profiles through `lazymod_site_profile_order`.

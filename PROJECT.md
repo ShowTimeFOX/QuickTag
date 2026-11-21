@@ -282,6 +282,13 @@ if you need help.
   visible tags. Focus Mode palette chips add or remove tags (no muting; mute
   on the badges). In the tagger, the Tagging view is a flex column and the
   chips take the free height (`#lm-user-chips` `flex: 1 1 0`).
+- **Window layout.** The tagger window is a flex column: the title bar and
+  the tab strip (`#lm-main-tabs`) are `flex: 0 0 auto` and never shrink (the
+  strip's `overflow-x: auto` would otherwise let it collapse to its padding in
+  a short window); the active view (`#lm-view-main`, `#lm-view-sites`,
+  `#lm-view-assets`) is the scroll area (`flex: 1 1 auto; min-height: 0;
+  overflow-y: auto`). The body's flex layout uses a class selector so the
+  collapse rules (`display: none`) still win.
 - **Order in storage.** Chrome's `storage.local` returns object keys sorted
   alphabetically (Firefox keeps insertion order), which reordered groups,
   categories, and packs after the first save. Palette data is written with

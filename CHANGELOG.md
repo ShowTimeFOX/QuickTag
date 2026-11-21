@@ -92,6 +92,8 @@
 - The separate AI Suggestions section is gone (now the AI button and "AI"
   group in the palettes). "Add tags" is now "+ All", Flat view shows category
   labels, and the palette uses the full height of the Tagging tab.
+- The title bar and tab strip stay in place; each tab's content scrolls in its
+  own area below them (and keeps its scroll position when you switch tabs).
 - The Focus Mode image area uses a calm gradient instead of a checkerboard.
 - Focus Mode: the tag list controls sit next to the "Tags" heading as compact
   buttons, badges use the normal chip size, and palette chips add or remove

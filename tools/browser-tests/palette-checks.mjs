@@ -43,9 +43,9 @@ const PALETTE = `(() => {
     hasAiSection: Boolean(root.querySelector("#lm-ai-chips, #lm-ai-status")),
     chipsHeight: Math.round(chips.getBoundingClientRect().height),
     sectionBottomGap: Math.round(root.querySelector(".lazymod-palette-section").getBoundingClientRect().bottom - chips.getBoundingClientRect().bottom),
-    // Unused space below the footer inside the tagger body (0 when the palette fills it).
-    bodyGap: (() => { const body = root.querySelector("#lazymod-body"); return Math.round(body.getBoundingClientRect().bottom - root.querySelector(".lazymod-footer-actions").getBoundingClientRect().bottom); })(),
-    bodyScrolls: (() => { const body = root.querySelector("#lazymod-body"); return body.scrollHeight > body.clientHeight + 1; })(),
+    // Unused space below the footer in the Tagging view, its scroll area (0 when the palette fills it).
+    bodyGap: (() => { const view = root.querySelector("#lm-view-main"); return Math.round(view.getBoundingClientRect().bottom - root.querySelector(".lazymod-footer-actions").getBoundingClientRect().bottom); })(),
+    bodyScrolls: (() => { const view = root.querySelector("#lm-view-main"); return view.scrollHeight > view.clientHeight + 1; })(),
   };
 })()`;
 const clickGroup = (name) => `(() => { [...${ROOT}.querySelectorAll("#lm-palette-tabs .lazymod-tab")].find((tab) => tab.textContent === ${JSON.stringify(name)}).click(); return true; })()`;

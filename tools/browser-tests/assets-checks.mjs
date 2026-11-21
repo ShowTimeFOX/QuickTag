@@ -98,6 +98,33 @@ async function install(evaluate, page, id) {
   return waitFor(evaluate, page, ASSETS_STATE, (state) => Boolean(card(state, id).result) && !/Installing/.test(card(state, id).action), 15000);
 }
 
+/** Title bar, tab strip, and active view in order; measured for one tab. */
+const TAB_LAYOUT = `(() => {
+  const root = ${ROOT};
+  const rect = (element) => element.getBoundingClientRect();
+  const header = rect(root.querySelector(".lazymod-header-bar"));
+  const tabs = root.querySelector("#lm-main-tabs");
+  const tabsRect = rect(tabs);
+  const body = rect(root.querySelector("#lazymod-body"));
+  const view = [...root.querySelectorAll("#lm-view-main, #lm-view-sites, #lm-view-assets")].find((element) => getComputedStyle(element).display !== "none");
+  const viewRect = rect(view);
+  const tab = root.querySelector("#lm-tab-btn-assets");
+  const tabRect = rect(tab);
+  const hit = root.elementFromPoint(tabRect.left + tabRect.width / 2, tabRect.top + tabRect.height / 2);
+  return {
+    view: view.id,
+    headerBottom: Math.round(header.bottom),
+    tabsTop: Math.round(tabsRect.top),
+    tabsBottom: Math.round(tabsRect.bottom),
+    tabsHeight: Math.round(tabsRect.height),
+    viewTop: Math.round(viewRect.top),
+    viewBottom: Math.round(viewRect.bottom),
+    bodyBottom: Math.round(body.bottom),
+    viewScrolls: view.scrollHeight > view.clientHeight + 1,
+    tabClickable: Boolean(hit && tab.contains(hit)),
+  };
+})()`;
+
 export async function runAssetsChecks({ open, evaluate, check, origin }) {
   const page = await open(`${origin}/plain`);
   await waitFor(evaluate, page, READY, Boolean, 10000);
@@ -251,6 +278,36 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
   const failed = await waitFor(evaluate, page, ASSETS_STATE, (state) => state.statusState === "error", 10000);
   hubState.failCatalogue = false;
   check("Assets: an API error shows a clear message and keeps the last list", /HTTP error 503/.test(failed.status) && failed.cards.length === 6, { status: failed.status, cards: failed.cards.length });
+
+  // Layout: in a short window the title bar and tab strip keep their size and
+  // every view scrolls below the strip (regression: the strip collapsed and
+  // File Hub content ran into it).
+  const tall = await evaluate(page, TAB_LAYOUT);
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lazymod-window").style.height = "420px"; return true; })()`);
+  const layouts = {};
+  for (const [tabId, viewId] of [["#lm-tab-btn-main", "lm-view-main"], ["#lm-tab-btn-sites", "lm-view-sites"], ["#lm-tab-btn-assets", "lm-view-assets"]]) {
+    await evaluate(page, `(() => { ${ROOT}.querySelector(${JSON.stringify(tabId)}).click(); return true; })()`);
+    await sleep(150);
+    const before = await evaluate(page, TAB_LAYOUT);
+    await evaluate(page, `(() => { const view = ${ROOT}.querySelector("#${viewId}"); view.scrollTop = view.scrollHeight; return true; })()`);
+    await sleep(100);
+    layouts[viewId] = { before, scrolled: await evaluate(page, TAB_LAYOUT) };
+  }
+  const separated = (state) => state.tabsHeight === tall.tabsHeight && state.headerBottom <= state.tabsTop && state.tabsBottom <= state.viewTop && state.viewBottom <= state.bodyBottom + 1 && state.tabClickable;
+  check(
+    "Window layout: in a short window the tab strip keeps its height and every tab's content scrolls below it (Tagging, Settings, File Hub)",
+    tall.tabsHeight >= 28 &&
+      Object.values(layouts).every(({ before, scrolled }) => separated(before) && separated(scrolled) && scrolled.tabsTop === before.tabsTop) &&
+      layouts["lm-view-assets"].before.viewScrolls &&
+      layouts["lm-view-sites"].before.viewScrolls,
+    { tall: tall.tabsHeight, layouts },
+  );
+  // Collapsing still hides the body (the flex layout must not override it).
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-toggle-body").click(); return true; })()`);
+  const collapsed = await evaluate(page, `(() => ({ bodyDisplay: getComputedStyle(${ROOT}.querySelector("#lazymod-body")).display, height: Math.round(${ROOT}.querySelector("#lazymod-window").getBoundingClientRect().height) }))()`);
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-toggle-body").click(); ${ROOT}.querySelector("#lazymod-window").style.height = ""; return true; })()`);
+  const expanded = await evaluate(page, `getComputedStyle(${ROOT}.querySelector("#lazymod-body")).display`);
+  check("Window layout: collapsing the tagger hides its body; expanding shows it again", collapsed.bodyDisplay === "none" && collapsed.height < 80 && expanded === "flex", { collapsed, expanded });
 
   const csp = await open(`${origin}/csp`);
   await waitFor(evaluate, csp, READY, Boolean, 10000);

@@ -2545,15 +2545,48 @@
   }
 }
 
-/* --- Tagging view fills the window: the palette takes the free height --- */
-#lazymod-body {
+/* --- Window layout: title bar, tab strip, then the active view ---
+   The title bar and tab strip never shrink (the strip has overflow-x: auto,
+   which would otherwise let it collapse to its padding in a short window).
+   The active view is the scroll area, so tall content (File Hub, Settings)
+   scrolls below the tab strip instead of running into it. Class selectors
+   for the body keep the collapse rules (`.is-collapsed .lazymod-body`,
+   `.lazymod-body.collapsed`: display none) in charge. */
+.lazymod-header-bar {
+  flex: 0 0 auto;
+}
+
+.lazymod-body {
   display: flex;
   flex-direction: column;
 }
 
+#lazymod-window #lm-main-tabs {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+}
+
+#lm-view-main,
+#lm-view-sites,
+#lm-view-assets {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+#lm-view-main::-webkit-scrollbar,
+#lm-view-sites::-webkit-scrollbar,
+#lm-view-assets::-webkit-scrollbar {
+  display: none;
+}
+
+/* The Tagging view: the palette takes the free height. */
 #lm-view-main {
   display: flex;
-  flex: 1 0 auto;
   flex-direction: column;
 }
 
