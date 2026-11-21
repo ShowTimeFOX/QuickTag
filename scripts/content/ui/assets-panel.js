@@ -3,12 +3,12 @@
 // The catalogue is requested only when the tab is first opened (or on
 // Refresh), never at page load. Requests, checksum checks, and validation
 // run in the background script; see content/file-hub.js.
-import { LOG_PREFIX, STORAGE_KEYS, FILE_HUB_BASE_URL } from "../../shared/constants.js";
+import { LOG_PREFIX, STORAGE_KEYS, FILE_HUB_BASE_URL, MESSAGE_ACTIONS } from "../../shared/constants.js";
 import { onLocalStorageChange } from "../../shared/storage.js";
 import { HUB_SORT_MODES, filterHubPackages, hubPackageUrl, isInstallableHubPackage, sortHubPackages, summarizePack } from "../../shared/file-hub.js";
 import { on, EVENTS } from "../events.js";
-import { fetchHubCatalogue, getHubInstallStatus, installHubPackage, loadHubInstalls, previewHubPackage } from "../file-hub.js";
-import { uninstallPack, undoUninstall } from "../pack-manager.js";
+import { fetchHubCatalogue, getHubInstallStatus, installHubPackage, loadHubInstalls, previewHubPackage, requestHubPermission } from "../file-hub.js";
+import { UNDO_TIMEOUT_MS, uninstallPack, undoUninstall } from "../pack-manager.js";
 import { $ } from "./shell.js";
 import { el, icon, ICONS } from "./dom.js";
 
@@ -140,6 +140,15 @@ function packageCard(item) {
       ? el("div", { className: "lazymod-asset-result", dataset: { state: result.state }, attrs: { role: "status" } }, [
           el("span", { text: result.text }),
           result.removal ? el("button", { className: "lazymod-btn lazymod-asset-undo", text: "Undo", attrs: { type: "button" }, on: { click: () => handleUndo(item) } }) : null,
+          result.permission
+            ? el("button", {
+                className: "lazymod-btn lazymod-asset-allow",
+                text: "Allow access",
+                title: "Open the QuickTag window that asks the browser for access",
+                attrs: { type: "button" },
+                on: { click: () => handleAllowAccess(item, result.permission) },
+              })
+            : null,
         ])
       : null,
   ]);
@@ -204,9 +213,55 @@ async function togglePreview(item) {
     const { pack, verified } = await previewHubPackage(item);
     view.previews.set(item.id, { open: view.previews.get(item.id)?.open !== false, state: "ready", version: item.version, summary: summarizePack(pack), verified });
   } catch (error) {
-    view.previews.set(item.id, { open: true, state: "error", version: item.version, error: error.message });
+    if (error.permission) {
+      view.previews.delete(item.id);
+      view.results.set(item.id, permissionResult(error, "preview"));
+    } else {
+      view.previews.set(item.id, { open: true, state: "error", version: item.version, error: error.message });
+    }
   }
   renderList();
+}
+
+// --- Missing host access (Firefox lets users withhold it) ---
+
+const MANUAL_ACCESS_STEPS = navigator.userAgent.includes("Firefox")
+  ? "Allow it in about:addons › QuickTag LazyMod › Permissions, then try again."
+  : "Allow it in chrome://extensions › QuickTag LazyMod › Details › Site access, then try again.";
+
+/** The background already opened the permission window; this line waits for it. */
+function permissionResult(error, purpose) {
+  return { text: `${error.message} Confirm in the QuickTag window that opened.`, state: "info", permission: purpose };
+}
+
+async function handleAllowAccess(item, purpose) {
+  try {
+    const { missing } = await requestHubPermission(item, purpose);
+    if (!missing) retryAfterPermission(item, purpose);
+  } catch (error) {
+    view.results.set(item.id, { text: `Could not ask for access: ${error.message} ${MANUAL_ACCESS_STEPS}`, state: "error" });
+    renderList();
+  }
+}
+
+/** After access is granted, continue what the user started. */
+function retryAfterPermission(item, purpose) {
+  view.results.delete(item.id);
+  if (purpose === "preview") {
+    togglePreview(item);
+    return;
+  }
+  handleInstall(item, getHubInstallStatus(item, view.installs).status);
+}
+
+function handlePermissionResult({ granted, packageId, purpose }) {
+  const item = view.packages?.find((entry) => entry.id === packageId);
+  if (!item) return;
+  if (granted) retryAfterPermission(item, purpose);
+  else {
+    view.results.set(item.id, { text: `QuickTag was not given access, so the package was not downloaded. ${MANUAL_ACCESS_STEPS}`, state: "error", permission: purpose });
+    renderList();
+  }
 }
 
 function renderList() {
@@ -279,8 +334,12 @@ async function handleInstall(item, status) {
       state: "success",
     });
   } catch (error) {
-    console.warn(`${LOG_PREFIX} Could not install ${item.id}.`, error);
-    view.results.set(item.id, { text: `Could not install: ${error.message}`, state: "error" });
+    if (error.permission) {
+      view.results.set(item.id, permissionResult(error, "install"));
+    } else {
+      console.warn(`${LOG_PREFIX} Could not install ${item.id}.`, error);
+      view.results.set(item.id, { text: `Could not install: ${error.message}`, state: "error" });
+    }
   } finally {
     view.installing.delete(item.id);
     renderList();
@@ -296,7 +355,14 @@ async function handleUninstall(item) {
   try {
     const removal = await uninstallPack(record.packId, "assets");
     view.installs = await loadHubInstalls();
-    view.results.set(item.id, { text: `Uninstalled "${removal.pack.name}".`, state: "success", removal });
+    const result = { text: `Uninstalled "${removal.pack.name}".`, state: "success", removal };
+    view.results.set(item.id, result);
+    // Undo expires like the pack switcher's; the line then disappears.
+    setTimeout(() => {
+      if (view.results.get(item.id) !== result) return;
+      view.results.delete(item.id);
+      renderList();
+    }, UNDO_TIMEOUT_MS);
   } catch (error) {
     console.warn(`${LOG_PREFIX} Could not uninstall ${item.id}.`, error);
     view.results.set(item.id, { text: `Could not uninstall: ${error.message}`, state: "error" });
@@ -345,6 +411,10 @@ export function initAssetsPanel() {
   elements.category.addEventListener("change", renderList);
   elements.sort.addEventListener("change", renderList);
   elements.refresh.addEventListener("click", () => loadCatalogue({ force: true }));
+  // Result from the permission window (pages/permissions.html, via the background).
+  chrome.runtime.onMessage.addListener((request) => {
+    if (request.action === MESSAGE_ACTIONS.fileHubPermissionResult) handlePermissionResult(request);
+  });
 
   // Install states follow pack deletions and installs from other tabs.
   const refreshInstalls = async () => {

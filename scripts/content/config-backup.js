@@ -43,7 +43,7 @@ const VALIDATION_RULES = [
   [STORAGE_KEYS.siteConfigs, isValidSiteConfigs, "The site profiles in this backup are invalid."],
   [STORAGE_KEYS.builtinPaletteOverride, isValidPalettePack, "The built-in palette in this backup is invalid."],
   [STORAGE_KEYS.palettes, isValidPaletteData, "The palettes in this backup are invalid."],
-  ...[STORAGE_KEYS.enabled, LEGACY_STORAGE_KEYS.docked, STORAGE_KEYS.ghostMode, STORAGE_KEYS.ghostHoldMode].map((key) => [
+  ...[STORAGE_KEYS.enabled, LEGACY_STORAGE_KEYS.docked, STORAGE_KEYS.ghostMode, STORAGE_KEYS.ghostHoldMode, STORAGE_KEYS.reducedEffects].map((key) => [
     key,
     (value) => typeof value === "boolean",
     `The ${key} setting in this backup is invalid.`,

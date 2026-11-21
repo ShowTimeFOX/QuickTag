@@ -25,7 +25,8 @@ source directory; `manifest.json` contains the shared browser configuration.
 - **Restore defaults:** Clear saved extension data and restore the default
   values after the page is reloaded.
 - **Site profiles:** Configure CSS selectors for tag fields, images, and
-  source links. The element picker highlights the selected element.
+  source links, and the tag separator per site. The element picker
+  highlights the selected element; changes save into the site's profile.
 - **Toolbar popup:** Show or hide the tagger across all pages, check the
   ComfyUI connection and available updates, and open the About page. Global
   visibility changes apply immediately without reloading pages. A newer
@@ -59,7 +60,8 @@ source directory; `manifest.json` contains the shared browser configuration.
   has been saved for it.
 - **Themes:** Choose Dark mode, Light mode, Femboy, Halloween, Minimalistic, or
   Cyberpunk, or select a custom accent color. The theme and custom accent are
-  saved locally and included in configuration backups.
+  saved locally and included in configuration backups. **Reduce visual
+  effects** turns off blur, shadows, filters, transitions, and animations.
 - **Quick actions:** Copy tags, clear the tag field, and view the tag count.
 - **Consistent interface:** The tagger, editor, and About page use English
   labels, consistent control states, and lightweight SVG action icons. Themes
@@ -249,6 +251,33 @@ if you need help.
   auto-repeat (`event.repeat`): opening Focus Mode moves focus into the
   overlay, so the `keyup` of the same press arrives there and must not toggle
   again.
+- **Site profiles** (`content/site-profiles.js`). "Add profile for this site"
+  creates a profile keyed by `location.host` (port included) whose pattern
+  matches every page of that origin, starting from the `.*` selectors, and
+  puts it first so it wins on later loads. The active profile is kept while
+  it still matches the URL (`resolveActiveSiteKey`), so storage echoes and the
+  1.5 s page watcher cannot switch away from a profile the user just added.
+  `saveActiveProfileFields()` saves picks and the tag separator; on the `.*`
+  fallback it creates this site's profile first. (Before, the profile pattern
+  was host + path without the port, so it never matched on ports and only
+  matched one page, and picks on `.*` changed every site.)
+- **Tag separator** (`tagSeparator` in a site profile, default a space;
+  `shared/tags.js` `splitTagText` / `joinTags`). `page.js` reads and writes
+  the tag field with it; whitespace separators split on any whitespace, other
+  separators on their non-space part. Focus Mode's Copy, Raw text, and input
+  parsing use it too.
+- **AI suggestions** (`content/ai-analysis.js`, no DOM) hold the analysis
+  state, request, and results; `aiSuggestionsChanged` updates the tagger's AI
+  panel (`ui/ai-panel.js`) and the Focus Mode palette's AI section, so one
+  analysis shows in both. Behavior of the tagger panel is unchanged.
+- **Focus Mode palette** chips add or remove tags (no muting; mute on the
+  badges); **+ all** toggles every tag of the active group (`toggleAllTags`).
+- **Reduce visual effects** (`ui/visual-effects.js`, `lazymod_reduced_effects`)
+  toggles `lm-reduced-effects` on the shadow host; `:host(.lm-reduced-effects)`
+  rules in `tagger.css` and `focus-mode.css` cover every element in the shadow
+  root, including theme styles.
+- **Undo** after an uninstall is offered for `UNDO_TIMEOUT_MS` (5 s,
+  `content/pack-manager.js`) in the pack switcher notice and on Assets cards.
 - **Focus Mode scale** is CSS `zoom` on `#lm-focus-root`, so text,
   controls, and gaps scale together while the overlay still fills the
   viewport (Firefox supports `zoom` since version 126). The tagger window's
@@ -293,8 +322,18 @@ if you need help.
     without `__proto__`, `constructor`, or `prototype` keys at any depth, and
     have an explicit `groups` object in the tag pack format, within size
     limits. Checks live in `shared/file-hub.js`.
-  - In Firefox, users can withhold MV3 host permissions; the download then
-    reports how to allow access instead of failing with a CORS error.
+  - Host access: before downloading, the background checks the origins in
+    `hubPermissionOrigins()` (the hub, the `downloadUrl` host, and GitHub's
+    release-asset hosts). Firefox lets users withhold MV3 host permissions;
+    if any is missing, the background opens `pages/permissions.html` in a
+    popup window (content scripts cannot use `chrome.permissions`, and
+    `permissions.request()` needs a user gesture in an extension page). Its
+    **Allow access** click calls `permissions.request()` first thing, then
+    sends `file_hub_permission_result` to the background, which forwards it
+    to the tab; the Assets card retries the install or preview, or explains
+    the manual steps. The page accepts only https origins (http on loopback)
+    validated by `isValidPermissionOrigin()`. Origins are within the declared
+    `<all_urls>` host permission, so the manifest is unchanged.
   - Installs are stored as normal packs (`hub-<package id>`) in
     `lazymod_global_palettes` and recorded in `lazymod_hub_packages`
     (`{ [package id]: { packId, version, sha256, name, installedAt } }`). A

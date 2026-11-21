@@ -1,17 +1,31 @@
-// Focus Mode palette: full-height pack/group browser showing every category of
-// the active group, with chips that reflect the Focus Mode tag states.
-// Click: not in list → add, active → mute, muted → switch on.
+// Focus Mode palette: AI suggestions, then a full-height pack/group browser
+// showing every category of the active group, with chips that reflect the
+// Focus Mode tag states. Click: active → remove, absent or muted → add.
+// "+ all" toggles every tag of the active group.
 import { formatTag } from "../../shared/tags.js";
 import { state } from "../state.js";
 import { emit, on, EVENTS } from "../events.js";
 import { getActivePack, searchActivePack, selectGroup, selectPack } from "../palettes.js";
-import { getTagState, togglePaletteTag } from "../focus-tags.js";
-import { el } from "./dom.js";
+import { getTagState, toggleAllTags, togglePaletteTag } from "../focus-tags.js";
+import { getAnalysisPhase, getAnalysisStatus, getSuggestedEntries, getSuggestedTags, startAnalysis } from "../ai-analysis.js";
+import { el, button, ICONS } from "./dom.js";
 import { createEmptyMessage, createTagChip } from "./chips.js";
 import { attachScrollArrows, enableWheelScrolling } from "./scroll-arrows.js";
 
-const STATE_ICONS = { active: "−", muted: "○", none: "+" };
-const STATE_TITLES = { active: "Active: click to mute", muted: "Muted: click to switch on", none: "Click to add" };
+const STATE_ICONS = { active: "−", muted: "+", none: "+" };
+const STATE_TITLES = { active: "Active: click to remove", muted: "Muted in the tag list: click to switch on", none: "Click to add" };
+
+function allActive(tags) {
+  return tags.length > 0 && tags.every((tag) => getTagState(tag) === "active");
+}
+
+function setAllToggle(toggle, tags, what) {
+  const active = allActive(tags);
+  toggle.disabled = tags.length === 0;
+  toggle.textContent = active ? "− all" : "+ all";
+  toggle.title = active ? `Remove all ${what}` : `Add all ${what}`;
+  toggle.setAttribute("aria-pressed", String(active));
+}
 
 function applyChipState(chip) {
   const tagState = getTagState(chip.dataset.tag);
@@ -22,11 +36,16 @@ function applyChipState(chip) {
   if (icon) icon.textContent = STATE_ICONS[tagState];
 }
 
-function chip(tag, location) {
-  const element = createTagChip(tag, { onClick: togglePaletteTag });
+function chip(tag, location, score = null) {
+  const element = createTagChip(tag, { onClick: togglePaletteTag, score });
   if (location) element.dataset.location = location;
   applyChipState(element);
   return element;
+}
+
+function groupTags(pack) {
+  const categories = pack?.groups[state.paletteData.activeGroup] || {};
+  return [...new Set(Object.values(categories).flat().map(formatTag).filter(Boolean))];
 }
 
 export function createFocusPalettePanel() {
@@ -37,10 +56,23 @@ export function createFocusPalettePanel() {
     attrs: { type: "search", placeholder: "Search this pack…", "aria-label": "Search tags in this pack", autocomplete: "off" },
   });
   const body = el("div", { className: "lm-focus-palette-body" });
+  const groupAllToggle = el("button", { className: "lazymod-btn lm-focus-all-toggle lm-focus-group-all", text: "+ all", attrs: { type: "button", "aria-pressed": "false" } });
+
+  // AI suggestions (same analysis and results as the tagger's AI panel).
+  const aiAnalyze = button("Analyze image", { iconPath: ICONS.sync, className: "lazymod-btn lm-focus-ai-analyze", title: "Analyze the page image with ComfyUI WD14" });
+  const aiAllToggle = el("button", { className: "lazymod-btn lm-focus-all-toggle lm-focus-ai-all", text: "+ all", hidden: true, attrs: { type: "button", "aria-pressed": "false" } });
+  const aiStatus = el("p", { className: "lm-focus-ai-status", hidden: true, attrs: { role: "status", "aria-live": "polite" } });
+  const aiChips = el("div", { className: "lazymod-chips lm-focus-chips lm-focus-ai-chips", hidden: true });
+  const aiSection = el("div", { className: "lm-focus-ai", attrs: { role: "group", "aria-label": "AI suggestions" } }, [
+    el("div", { className: "lm-focus-ai-header" }, [el("h3", { className: "lm-focus-category-title", text: "AI Suggestions" }), aiAllToggle, aiAnalyze]),
+    aiStatus,
+    aiChips,
+  ]);
 
   const element = el("section", { className: "lm-focus-panel lm-focus-palette-panel", attrs: { "aria-label": "Palette" } }, [
     el("div", { className: "lm-focus-panel-header" }, [el("h2", { className: "lazymod-title", text: "Palette" }), packSelect]),
-    groupTabs,
+    aiSection,
+    el("div", { className: "lm-focus-group-row" }, [groupTabs, groupAllToggle]),
     filterInput,
     body,
   ]);
@@ -102,6 +134,22 @@ export function createFocusPalettePanel() {
     });
   }
 
+  function renderAi() {
+    const phase = getAnalysisPhase();
+    const { message, state: statusState } = getAnalysisStatus();
+    aiAnalyze.disabled = phase === "busy";
+    aiAnalyze.lastElementChild.textContent = phase === "busy" ? "Analyzing…" : "Analyze image";
+    aiStatus.textContent = message;
+    aiStatus.dataset.state = statusState;
+    aiStatus.hidden = !message;
+    const entries = phase === "done" ? getSuggestedEntries() : [];
+    aiChips.replaceChildren(...entries.map(([tag, score]) => chip(tag, "AI suggestion", score)));
+    if (phase === "done" && !entries.length) aiChips.appendChild(createEmptyMessage("No suggested tags."));
+    aiChips.hidden = phase !== "done";
+    aiAllToggle.hidden = !entries.length;
+    setAllToggle(aiAllToggle, getSuggestedTags(), "suggested tags");
+  }
+
   function render() {
     if (!state.paletteData) return;
     const pack = getActivePack();
@@ -111,6 +159,8 @@ export function createFocusPalettePanel() {
     renderPacks();
     renderGroups(pack);
     renderBody(pack);
+    setAllToggle(groupAllToggle, groupTags(pack), `tags in ${state.paletteData.activeGroup || "this group"}`);
+    renderAi();
   }
 
   packSelect.addEventListener("change", () => {
@@ -119,8 +169,21 @@ export function createFocusPalettePanel() {
     render();
   });
   filterInput.addEventListener("input", () => renderBody(getActivePack()));
+  groupAllToggle.addEventListener("click", () => toggleAllTags(groupTags(getActivePack())));
+  aiAllToggle.addEventListener("click", () => toggleAllTags(getSuggestedTags()));
+  aiAnalyze.addEventListener("click", startAnalysis);
 
-  on(EVENTS.focusTagsChanged, () => body.querySelectorAll(".lazymod-chip").forEach(applyChipState));
+  on(EVENTS.focusTagsChanged, () => {
+    element.querySelectorAll(".lazymod-chip").forEach(applyChipState);
+    setAllToggle(groupAllToggle, groupTags(getActivePack()), `tags in ${state.paletteData.activeGroup || "this group"}`);
+    setAllToggle(aiAllToggle, getSuggestedTags(), "suggested tags");
+  });
+  on(EVENTS.aiSuggestionsChanged, () => {
+    if (state.focusModeActive) renderAi();
+  });
+  on(EVENTS.blacklistChanged, () => {
+    if (state.focusModeActive) renderAi();
+  });
   on(EVENTS.paletteChanged, ({ source }) => {
     if (source !== "focus" && state.focusModeActive) render();
   });

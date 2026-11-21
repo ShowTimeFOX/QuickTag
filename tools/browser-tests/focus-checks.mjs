@@ -94,7 +94,7 @@ const clickBadge = (tag, part) => `(() => { ${FOCUS}.querySelector('.lm-focus-ba
 const setPageField = (text) => `(() => { const field = ${FIELD}; field.value = ${JSON.stringify(text)}; field.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
 const clickIn = (selector) => `(() => { ${FOCUS}.querySelector(${JSON.stringify(selector)}).click(); return true; })()`;
 const clickButtonByText = (text) =>
-  `(() => { [...${FOCUS}.querySelectorAll("button")].find((button) => button.textContent.trim() === ${JSON.stringify(text)}).click(); return true; })()`;
+  `(() => { [...${FOCUS}.querySelectorAll("button")].find((button) => button.textContent.trim() === ${JSON.stringify(text)} || button.getAttribute("aria-label") === ${JSON.stringify(text)}).click(); return true; })()`;
 const RAW_STATE = `(() => { const raw = ${FOCUS}.querySelector(".lm-focus-raw"); return { hidden: raw.hidden, value: raw.value }; })()`;
 const setRaw = (text) => `(() => { const raw = ${FOCUS}.querySelector(".lm-focus-raw"); raw.value = ${JSON.stringify(text)}; raw.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
 const CLICK_FIRST_PALETTE_CHIP = `(() => { const chip = ${FOCUS}.querySelector(".lm-focus-palette-body .lazymod-chip"); chip.click(); return chip.dataset.tag; })()`;
@@ -254,18 +254,26 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
       const focus = ${FOCUS};
       const height = (selector) => focus.querySelector(selector).getBoundingClientRect().height;
       const remove = focus.querySelector(".lm-focus-badge-remove").getBoundingClientRect();
+      const header = focus.querySelector(".lm-focus-tags-panel .lm-focus-panel-header");
+      const title = header.querySelector(".lazymod-title").getBoundingClientRect();
+      const sort = [...header.querySelectorAll("button")].find((button) => button.getAttribute("aria-label") === "Sort");
       return {
         addInput: height(".lm-focus-add-input"),
         filter: height(".lm-focus-filter"),
         badgeFont: parseFloat(getComputedStyle(focus.querySelector(".lm-focus-badge-toggle")).fontSize),
+        chipFont: parseFloat(getComputedStyle(focus.querySelector(".lm-focus-palette-body .lazymod-chip")).fontSize),
         badge: height(".lm-focus-badge"),
         remove: [remove.width, remove.height],
+        toolbarInHeader: Boolean(sort) && !focus.querySelector(".lm-focus-tags-panel > .lm-focus-tags-toolbar"),
+        sortBesideTitle: Boolean(sort) && Math.abs(sort.getBoundingClientRect().top + sort.getBoundingClientRect().height / 2 - (title.top + title.height / 2)) < 12,
+        headerWidth: Math.round(header.getBoundingClientRect().width),
+        iconOnly: [...header.querySelectorAll(".lm-focus-tags-toolbar > button, .lm-focus-tags-toolbar > .lm-focus-menu-anchor > button")].every((button) => !button.textContent.trim() && button.getAttribute("aria-label") && button.title),
       };
     })()`,
   );
   check(
-    "Focus tags: compact inputs (add tags, palette search) and larger badges with a 32px × target",
-    sizes.addInput <= 32 && sizes.filter <= 32 && sizes.badgeFont >= 14 && sizes.badge >= 32 && sizes.remove[0] >= 31.5 && sizes.remove[1] >= 31.5,
+    "Focus tags: controls sit next to the Tags heading; badges match the palette chip size; compact inputs",
+    sizes.addInput <= 32 && sizes.filter <= 32 && sizes.badgeFont === sizes.chipFont && sizes.badge >= 22 && sizes.badge <= 30 && sizes.remove[0] >= 20 && sizes.toolbarInHeader && sizes.iconOnly && (sizes.sortBesideTitle || sizes.headerWidth < 380),
     sizes,
   );
 
@@ -304,22 +312,53 @@ export async function runFocusModeChecks({ open, evaluate, check, origin }) {
   check("Focus tags: Raw text view shows and edits the active tags", !raw.hidden && raw.value === "x_tag y_tag" && rawSynced.field === "a_tag b_tag", { raw, field: rawSynced.field });
   await evaluate(page, clickButtonByText("Badges"));
 
-  // Palette panel synchronized with the tag states.
+  // Palette panel synchronized with the tag states: add, then remove (no mute).
   const tag = await evaluate(page, CLICK_FIRST_PALETTE_CHIP);
   const afterAdd = await evaluate(page, FOCUS_STATE);
   const chipActive = await evaluate(page, paletteChipState(tag));
   await evaluate(page, `(() => { ${paletteChip(tag)}.click(); return true; })()`);
-  const chipMuted = await evaluate(page, paletteChipState(tag));
-  const afterMute = await evaluate(page, FOCUS_STATE);
+  const chipAfterSecond = await evaluate(page, paletteChipState(tag));
+  const afterRemove = await evaluate(page, FOCUS_STATE);
   check(
-    "Focus palette: chips add, then mute, tags (synchronized with the tag list and page)",
+    "Focus palette: chips add, then remove, tags (no mute; synchronized with the tag list and page)",
     afterAdd.paletteChips > 0 &&
       afterAdd.field.split(" ").includes(tag) &&
       chipActive === "active" &&
-      chipMuted === "muted" &&
-      !afterMute.field.split(" ").includes(tag) &&
-      afterMute.badges.includes(`~${tag}`),
-    { tag, chipActive, chipMuted, field: afterMute.field },
+      chipAfterSecond === "none" &&
+      !afterRemove.field.split(" ").includes(tag) &&
+      !afterRemove.badges.some((badge) => badge.replace("~", "") === tag),
+    { tag, chipActive, chipAfterSecond, field: afterRemove.field, badges: afterRemove.badges },
+  );
+
+  // "+ all" toggles every tag of the active group.
+  const GROUP_ALL = `(() => { const focus = ${FOCUS}; const toggle = focus.querySelector(".lm-focus-group-all"); const tags = [...new Set([...focus.querySelectorAll(".lm-focus-palette-body .lazymod-chip")].map((chip) => chip.dataset.tag))]; return { label: toggle.textContent, pressed: toggle.getAttribute("aria-pressed"), tags, besideGroups: toggle.parentElement.classList.contains("lm-focus-group-row") }; })()`;
+  const beforeAll = await evaluate(page, GROUP_ALL);
+  await evaluate(page, clickIn(".lm-focus-group-all"));
+  const allAdded = await evaluate(page, FOCUS_STATE);
+  const allState = await evaluate(page, GROUP_ALL);
+  await evaluate(page, clickIn(".lm-focus-group-all"));
+  const allRemoved = await evaluate(page, FOCUS_STATE);
+  const fieldTags = (state) => state.field.split(/\s+/).filter(Boolean);
+  check(
+    'Focus palette: "+ all" next to the groups adds every tag of the group, then removes them',
+    beforeAll.label === "+ all" &&
+      beforeAll.besideGroups &&
+      beforeAll.tags.length > 1 &&
+      beforeAll.tags.every((groupTag) => fieldTags(allAdded).includes(groupTag)) &&
+      allState.label === "− all" &&
+      allState.pressed === "true" &&
+      beforeAll.tags.every((groupTag) => !fieldTags(allRemoved).includes(groupTag)),
+    { beforeAll: { label: beforeAll.label, count: beforeAll.tags.length }, added: allAdded.field, after: allState.label, removed: allRemoved.field },
+  );
+
+  // AI suggestions in Focus Mode share the tagger's analysis (ComfyUI is offline here).
+  await evaluate(page, clickIn(".lm-focus-ai-analyze"));
+  const AI_STATE = `(() => { const focus = ${FOCUS}; const status = focus.querySelector(".lm-focus-ai-status"); return { focus: status.hidden ? "" : status.textContent, focusState: status.dataset.state, tagger: ${ROOT}.querySelector("#lm-ai-status").textContent, analyzeEnabled: !focus.querySelector(".lm-focus-ai-analyze").disabled }; })()`;
+  const ai = await waitFor(evaluate, page, AI_STATE, (state) => state.focusState === "error" && state.analyzeEnabled, 20000);
+  check(
+    "Focus palette: AI Suggestions analyze the page image like the tagger (same status in both)",
+    /Analysis failed|Could not/.test(ai.focus) && ai.focus === ai.tagger && ai.analyzeEnabled,
+    ai,
   );
 
   // Esc closes the topmost menu first, then Focus Mode.

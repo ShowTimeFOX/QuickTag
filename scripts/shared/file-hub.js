@@ -122,6 +122,25 @@ export function isInstallableHubPackage(item) {
   return HUB_INSTALLABLE_TYPES.includes(item.fileType) && Boolean(item.assetId || item.downloadUrl);
 }
 
+// GitHub release downloads redirect to these hosts.
+const GITHUB_ASSET_ORIGINS = Object.freeze(["https://release-assets.githubusercontent.com", "https://objects.githubusercontent.com"]);
+
+/** Host permission patterns needed to download a package (`https://host/*`). */
+export function hubPermissionOrigins(item, hubBaseUrl = FILE_HUB_BASE_URL) {
+  const origins = new Set();
+  for (const url of hubDownloadUrls(item, hubBaseUrl)) {
+    const { origin, hostname } = new URL(url);
+    origins.add(origin);
+    if (hostname === "github.com") GITHUB_ASSET_ORIGINS.forEach((assetOrigin) => origins.add(assetOrigin));
+  }
+  return [...origins].map((origin) => `${origin}/*`);
+}
+
+/** A host permission pattern the permission page accepts: https, or http on loopback. */
+export function isValidPermissionOrigin(value) {
+  return typeof value === "string" && /^(?:https:\/\/[a-z0-9.-]+|http:\/\/(?:127\.0\.0\.1|localhost))(?::\d{1,5})?\/\*$/i.test(value);
+}
+
 /** Download sources in order: the hub endpoint (needs an asset id), then `downloadUrl`. */
 export function hubDownloadUrls(item, hubBaseUrl = FILE_HUB_BASE_URL) {
   const urls = [];

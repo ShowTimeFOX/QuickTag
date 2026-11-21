@@ -51,6 +51,15 @@
 - Assets cards: Preview shows a package's groups, categories, and first tags
   before installing (validated like an install, nothing is saved), and Show
   in Hub opens File Hub filtered to QuickTag packages in its category.
+- Tag separator per site profile (Settings › Current page profile): how tags
+  are joined and split in the site's tag field, for example `, ` for
+  comma-separated sites; a space by default.
+- Reduce visual effects (Settings › Appearance): turns off blur, shadows, and
+  animations in the tagger and Focus Mode for slower computers.
+- Focus Mode palette: AI Suggestions (same analysis as the tagger's AI panel)
+  and a "+ all" toggle next to the groups.
+- File Hub: when QuickTag lacks access to the download sites, a small QuickTag
+  window asks the browser for it and the install or preview continues.
 - Automated browser tests in `tools/browser-tests/` that load the extension
   into installed Chrome and Firefox (headless, no dependencies) and check the
   tagger, background script, popup, and editor on a plain page and a
@@ -74,6 +83,14 @@
 - Storage keys, message actions, and defaults are defined once in
   `scripts/shared/constants.js` instead of being repeated across scripts.
 - Replaced the remaining `innerHTML` assignments with `replaceChildren()`.
+- Focus Mode: the tag list controls sit next to the "Tags" heading as compact
+  buttons, badges use the normal chip size, and palette chips add or remove
+  tags (muting stays on the badges).
+- The Undo prompt after an uninstall disappears after 5 seconds (and can be
+  dismissed); on Assets cards it now expires too.
+- "Add current page profile" is now "Add profile for this site": the profile
+  covers every page of the site (host and port) and starts from the `.*`
+  selectors.
 - The palette header's Delete button is now Uninstall: packs are removed the
   same way everywhere, right away with Undo for 10 seconds, instead of after
   a confirmation dialog.
@@ -112,6 +129,11 @@
   and theme styles are inserted with their content.
 - Importing a tag pack threw an error after the import and did not reset the
   file picker, so selecting the same file again did nothing.
+- Settings › Current page profile: changes did not reliably stay. A new
+  profile only matched its exact page and never matched sites with a port, so
+  the tagger switched back to `.*` right away, and element picks on `.*`
+  changed the fallback for every site. Picks and the separator now save into
+  this site's profile, which stays active.
 - Opening the legacy `builtin-import` pack, whose `data/import.json` is no
   longer bundled, now shows a clear error in both browsers instead of
   "Failed to fetch" or "The operation was aborted".

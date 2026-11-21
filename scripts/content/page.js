@@ -1,5 +1,5 @@
 // Helpers that read or change the host page (outside the tagger's shadow DOM).
-import { formatTag } from "../shared/tags.js";
+import { formatTag, joinTags, normalizeTagSeparator, splitTagText } from "../shared/tags.js";
 import { FALLBACK_SITE_KEY, LOG_PREFIX } from "../shared/constants.js";
 import { state } from "./state.js";
 import { emit, EVENTS } from "./events.js";
@@ -79,10 +79,15 @@ export function getTargetImageURL() {
 
 // --- Page tag field ---
 
+/** The current page profile's tag separator (a space by default). */
+export function getTagSeparator() {
+  return normalizeTagSeparator(getActiveSiteConfig()?.tagSeparator);
+}
+
 export function getMainTags() {
   const input = getMainInput();
   if (!input) return [];
-  return input.value.split(/\s+/).map(formatTag).filter(Boolean);
+  return splitTagText(input.value, getTagSeparator());
 }
 
 export function notifyTagsChanged() {
@@ -93,7 +98,7 @@ export function notifyTagsChanged() {
 export function setMainTags(tags) {
   const input = getMainInput();
   if (!input) return;
-  input.value = tags.join(" ");
+  input.value = joinTags(tags, getTagSeparator());
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
   notifyTagsChanged();

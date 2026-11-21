@@ -1,6 +1,9 @@
 // Site profiles: URL patterns mapped to page selectors.
 import { FALLBACK_SITE_KEY, SITE_SELECTOR_KEYS } from "./constants.js";
 import { isRecord } from "./validation.js";
+import { MAX_TAG_SEPARATOR_LENGTH } from "./tags.js";
+
+const isValidSeparator = (value) => value === undefined || (typeof value === "string" && value.length <= MAX_TAG_SEPARATOR_LENGTH);
 
 /** Returns the first non-fallback profile key whose pattern matches `url`. */
 export function detectSiteKey(siteConfigs, url) {
@@ -20,7 +23,8 @@ export function isValidSiteConfigs(configs) {
       (config) =>
         isRecord(config) &&
         ["urlPattern", ...SITE_SELECTOR_KEYS].every((key) => config[key] === undefined || typeof config[key] === "string") &&
-        (config.isXPath === undefined || typeof config.isXPath === "boolean"),
+        (config.isXPath === undefined || typeof config.isXPath === "boolean") &&
+        isValidSeparator(config.tagSeparator),
     )
   );
 }
@@ -59,6 +63,9 @@ export function normalizeSiteConfigs(rawConfigs) {
     }
     if (config.isXPath !== undefined && typeof config.isXPath !== "boolean") {
       throw new Error(`Profile "${profileKey}" isXPath must be true or false.`);
+    }
+    if (!isValidSeparator(config.tagSeparator)) {
+      throw new Error(`Profile "${profileKey}" tagSeparator must be text of up to ${MAX_TAG_SEPARATOR_LENGTH} characters.`);
     }
 
     normalized[profileKey] = {

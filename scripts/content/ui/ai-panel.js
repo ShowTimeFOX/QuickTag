@@ -1,56 +1,34 @@
-// AI suggestions: sends the page image to ComfyUI (via the background script)
-// and lists suggested tags, minus the AI blacklist.
-import { LOG_PREFIX, STORAGE_KEYS, MESSAGE_ACTIONS } from "../../shared/constants.js";
+// AI suggestions panel in the tagger: threshold, Analyze button, suggested
+// tag chips, and Add all / Remove all. The analysis itself and its results
+// live in ../ai-analysis.js (shared with the Focus Mode palette).
+import { LOG_PREFIX, STORAGE_KEYS } from "../../shared/constants.js";
 import { loadData } from "../../shared/storage.js";
-import { formatTag } from "../../shared/tags.js";
-import { state } from "../state.js";
 import { on, EVENTS } from "../events.js";
-import { getMainTags, getTargetImageURL, setMainTags } from "../page.js";
+import { getMainTags, setMainTags } from "../page.js";
+import {
+  getAnalysisPhase,
+  getAnalysisStatus,
+  getLastThreshold,
+  getSuggestedEntries,
+  getSuggestedTags,
+  hasSuggestions,
+  initAiAnalysis,
+  isScoreList,
+  setThreshold,
+  startAnalysis,
+} from "../ai-analysis.js";
 import { $, setIconPath, ICON_PATHS } from "./shell.js";
 import { createTagChip, syncChipStates } from "./chips.js";
 import { setAiStatus } from "./status.js";
 
-const analysis = {
-  /**
-   * WD14 returns an array of tags already filtered by threshold. An object of
-   * `{ tag: score }` is also supported and filtered locally by threshold.
-   */
-  rawTags: {},
-  activeId: null,
-  lastThreshold: null,
-  lastValidThreshold: "",
-};
-
 let thresholdInput;
 let analyzeButton;
-
-function hasResults() {
-  return Array.isArray(analysis.rawTags) ? analysis.rawTags.length > 0 : Object.keys(analysis.rawTags).length > 0;
-}
+let lastValidThreshold = "";
 
 function updateThresholdStatus() {
-  if (
-    Array.isArray(analysis.rawTags) &&
-    analysis.rawTags.length > 0 &&
-    analysis.lastThreshold !== null &&
-    Number(thresholdInput.value) !== analysis.lastThreshold
-  ) {
+  if (!isScoreList() && hasSuggestions() && getLastThreshold() !== null && Number(thresholdInput.value) !== getLastThreshold()) {
     setAiStatus("Threshold changed. Analyze the image again to refresh tags.", "info");
   }
-}
-
-function refreshForThreshold() {
-  if (Array.isArray(analysis.rawTags)) updateThresholdStatus();
-  else if (Object.keys(analysis.rawTags).length > 0) renderAiChips();
-}
-
-function getFilteredEntries() {
-  const isAllowed = (tag) => !state.tagBlacklist.includes(formatTag(tag));
-  if (Array.isArray(analysis.rawTags)) {
-    return analysis.rawTags.filter(isAllowed).map((tag) => [tag, null]);
-  }
-  const threshold = parseFloat(thresholdInput.value);
-  return Object.entries(analysis.rawTags).filter(([tag, score]) => score >= threshold && isAllowed(tag));
 }
 
 function updateAiToggleButton() {
@@ -69,29 +47,27 @@ function renderAiChips() {
   const container = $("#lm-ai-chips");
   const addAllButton = $("#lm-add-all-ai");
   container.replaceChildren();
-  const entries = getFilteredEntries();
+  const entries = getSuggestedEntries();
 
   if (entries.length === 0) {
-    container.textContent = Array.isArray(analysis.rawTags) ? "No tags returned above the WD14 threshold." : "No tags above threshold.";
+    container.textContent = isScoreList() ? "No tags above threshold." : "No tags returned above the WD14 threshold.";
     addAllButton.style.display = "none";
     return;
   }
 
   const mainTags = getMainTags();
-  entries.forEach(([tag, score]) => {
-    const cleanTag = formatTag(tag);
-    container.appendChild(createTagChip(cleanTag, { isActive: mainTags.includes(cleanTag), score }));
-  });
-
+  entries.forEach(([tag, score]) => container.appendChild(createTagChip(tag, { isActive: mainTags.includes(tag), score })));
   addAllButton.style.display = "inline-flex";
-  addAllButton.onclick = () => {
-    const current = getMainTags();
-    const suggestedTags = [...new Set(entries.map(([tag]) => formatTag(tag)).filter(Boolean))];
-    const shouldRemove = suggestedTags.every((tag) => current.includes(tag));
-    const suggestedSet = new Set(suggestedTags);
-    setMainTags(shouldRemove ? current.filter((tag) => !suggestedSet.has(tag)) : [...current, ...suggestedTags.filter((tag) => !current.includes(tag))]);
-    updateAiToggleButton();
-  };
+  updateAiToggleButton();
+}
+
+function toggleAllSuggestions() {
+  const current = getMainTags();
+  const suggestedTags = getSuggestedTags();
+  if (!suggestedTags.length) return;
+  const shouldRemove = suggestedTags.every((tag) => current.includes(tag));
+  const suggestedSet = new Set(suggestedTags);
+  setMainTags(shouldRemove ? current.filter((tag) => !suggestedSet.has(tag)) : [...current, ...suggestedTags.filter((tag) => !current.includes(tag))]);
   updateAiToggleButton();
 }
 
@@ -102,42 +78,20 @@ function setAnalyzeButtonBusy(busy) {
   analyzeButton.querySelector("span").textContent = busy ? "Analyzing…" : "Analyze image";
 }
 
-function analyzeImage() {
-  const container = $("#lm-ai-chips");
-  const imgUrl = getTargetImageURL();
-  if (!imgUrl) {
-    setAiStatus("No image found on this page.", "error");
-    return;
+/** Renders the shared analysis state (started here or in Focus Mode). */
+function renderAnalysis() {
+  const phase = getAnalysisPhase();
+  const { message, state: statusState } = getAnalysisStatus();
+  setAnalyzeButtonBusy(phase === "busy");
+  if (message) setAiStatus(message, statusState);
+  if (phase === "busy" || phase === "error") {
+    // Same as before: no chips while analyzing or after a failure.
+    $("#lm-ai-chips").replaceChildren();
+    $("#lm-add-all-ai").style.display = "none";
+  } else if (phase === "done") {
+    renderAiChips();
+    updateThresholdStatus();
   }
-
-  const analysisId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const requestedThreshold = Number(thresholdInput.value || analysis.lastValidThreshold);
-  analysis.activeId = analysisId;
-  analysis.rawTags = [];
-  container.replaceChildren();
-  setAnalyzeButtonBusy(true);
-  setAiStatus("Connecting to ComfyUI...", "working");
-
-  chrome.runtime.sendMessage({ action: MESSAGE_ACTIONS.analyzeImage, analysisId, imgUrl, threshold: requestedThreshold }, (response) => {
-    const runtimeError = chrome.runtime.lastError;
-    setAnalyzeButtonBusy(false);
-    if (analysisId !== analysis.activeId) return;
-    analysis.activeId = null;
-    if (runtimeError) {
-      setAiStatus(`Could not start analysis: ${runtimeError.message}`, "error");
-      return;
-    }
-    if (response?.success && Array.isArray(response.data)) {
-      analysis.rawTags = response.data;
-      analysis.lastThreshold = requestedThreshold;
-      renderAiChips();
-      setAiStatus(`Fetched ${response.data.length} tags using threshold ${requestedThreshold.toFixed(2)}.`, "success");
-      updateThresholdStatus();
-    } else {
-      container.replaceChildren();
-      setAiStatus(`Analysis failed: ${response?.error || "ComfyUI returned an invalid response."}`, "error");
-    }
-  });
 }
 
 export async function initAiPanel() {
@@ -152,37 +106,36 @@ export async function initAiPanel() {
   } else {
     console.warn(`${LOG_PREFIX} Saved AI threshold is invalid; using the default value.`);
   }
-  analysis.lastValidThreshold = thresholdInput.value;
-
-  chrome.runtime.onMessage.addListener((request) => {
-    if (request.action === MESSAGE_ACTIONS.analysisProgress && request.analysisId === analysis.activeId) {
-      setAiStatus(request.message, "working");
-    }
-  });
+  lastValidThreshold = thresholdInput.value;
+  initAiAnalysis({ threshold: Number(thresholdInput.value) });
 
   thresholdInput.oninput = () => {
     if (thresholdInput.value === "" || !thresholdInput.validity.valid) return;
-    analysis.lastValidThreshold = thresholdInput.value;
-    refreshForThreshold();
+    lastValidThreshold = thresholdInput.value;
+    setThreshold(lastValidThreshold);
+    updateThresholdStatus();
   };
 
   thresholdInput.onblur = () => {
-    if (!thresholdInput.validity.valid) thresholdInput.value = analysis.lastValidThreshold;
-    analysis.lastValidThreshold = thresholdInput.value;
-    chrome.storage.local.set({ [STORAGE_KEYS.aiThreshold]: Number(analysis.lastValidThreshold) }).catch((error) => {
+    if (!thresholdInput.validity.valid) thresholdInput.value = lastValidThreshold;
+    lastValidThreshold = thresholdInput.value;
+    setThreshold(lastValidThreshold);
+    chrome.storage.local.set({ [STORAGE_KEYS.aiThreshold]: Number(lastValidThreshold) }).catch((error) => {
       console.error(`${LOG_PREFIX} Could not save the AI threshold.`, error);
       setAiStatus(`Could not save AI threshold: ${error.message}`, "error");
     });
-    refreshForThreshold();
+    updateThresholdStatus();
   };
 
-  analyzeButton.onclick = analyzeImage;
+  analyzeButton.onclick = startAnalysis;
+  $("#lm-add-all-ai").onclick = toggleAllSuggestions;
 
+  on(EVENTS.aiSuggestionsChanged, renderAnalysis);
   on(EVENTS.tagsChanged, () => {
     syncChipStates($("#lm-ai-chips"), getMainTags());
     updateAiToggleButton();
   });
   on(EVENTS.blacklistChanged, () => {
-    if (hasResults()) renderAiChips();
+    if (hasSuggestions()) renderAiChips();
   });
 }

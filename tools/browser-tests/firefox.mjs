@@ -11,6 +11,7 @@ import { runFocusModeChecks } from "./focus-checks.mjs";
 import { runAssetsChecks } from "./assets-checks.mjs";
 import { runPackBrowserChecks } from "./pack-checks.mjs";
 import { runAboutChecks } from "./about-checks.mjs";
+import { runSettingsChecks, runPermissionPageChecks } from "./settings-checks.mjs";
 
 const firefoxExe = browserPath("firefox");
 const profileDir = makeTempDir("firefox-profile");
@@ -192,6 +193,7 @@ try {
   await runFocusModeChecks(adapters);
   await runAssetsChecks(adapters);
   await runPackBrowserChecks(adapters);
+  await runSettingsChecks(adapters);
 
   // BiDi refuses direct navigation to moz-extension:// URLs, so a web page
   // navigates there itself (the test copy exposes these pages as WAR).
@@ -213,6 +215,14 @@ try {
   const shownDisplay = await waitFor(plain, PROBES.hostDisplay, (display) => display === "");
   check("Global toggle on shows tagger again", shownDisplay === "", shownDisplay);
 
+  await runPermissionPageChecks({
+    openPage: (query) => openExtensionPage(`pages/permissions.html?${query}`),
+    evaluate,
+    clickAsUser: (context, expression) => send("script.evaluate", { expression, target: { context }, awaitPromise: false, userActivation: true }),
+    check,
+    origin,
+    realGesture: false,
+  });
   await runAboutChecks({ openAbout: () => openExtensionPage("pages/about.html"), evaluate, check });
 
   const editorUrl = (query) => `${base}/pages/palette-editor.html?${query}`;

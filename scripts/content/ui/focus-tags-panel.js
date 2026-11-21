@@ -23,15 +23,17 @@ const RAW_INPUT_DELAY_MS = 350;
 export function createFocusTagsPanel(api) {
   const badgesViewButton = el("button", { className: "lm-focus-segment", text: "Badges", attrs: { type: "button" } });
   const rawViewButton = el("button", { className: "lm-focus-segment", text: "Raw text", attrs: { type: "button" } });
-  const sortButton = button("Sort", { iconPath: ICONS.sort, title: "Sort tags", attrs: { "aria-haspopup": "menu", "aria-expanded": "false" } });
+  // Compact icon buttons so the controls fit beside the "Tags" heading.
+  const iconButton = (label, iconPath, title, className = "lazymod-btn lm-focus-icon-btn", attrs = {}) => button("", { iconPath, className, title, attrs: { "aria-label": label, ...attrs } });
+  const sortButton = iconButton("Sort", ICONS.sort, "Sort tags", undefined, { "aria-haspopup": "menu", "aria-expanded": "false" });
   const sortMenu = el(
     "div",
     { className: "lm-focus-menu", hidden: true, attrs: { role: "menu", "aria-label": "Sort tags" } },
     Object.entries(SORT_MODES).map(([mode, label]) => el("button", { className: "lm-focus-menu-item", text: label, dataset: { sort: mode }, attrs: { type: "button", role: "menuitem" } })),
   );
-  const dedupeButton = button("Deduplicate", { iconPath: ICONS.dedupe, title: "Remove duplicate tags from the page's tag field" });
-  const copyButton = button("Copy", { iconPath: ICONS.copy, title: "Copy the active tags as one space-separated string" });
-  const clearButton = button("Clear", { iconPath: ICONS.trash, className: "lazymod-btn lazymod-btn-danger", title: "Remove all tags" });
+  const dedupeButton = iconButton("Deduplicate", ICONS.dedupe, "Deduplicate: remove duplicate tags from the page's tag field");
+  const copyButton = iconButton("Copy", ICONS.copy, "Copy the active tags as one string (joined with this site's tag separator)");
+  const clearButton = iconButton("Clear", ICONS.trash, "Clear: remove all tags", "lazymod-btn lazymod-btn-danger lm-focus-icon-btn");
   const warning = el("p", {
     className: "lm-focus-warning",
     hidden: true,
@@ -50,11 +52,12 @@ export function createFocusTagsPanel(api) {
   });
 
   const element = el("section", { className: "lm-focus-panel lm-focus-tags-panel", attrs: { "aria-label": "Tags" } }, [
-    el("div", { className: "lm-focus-panel-header" }, [
+    // Controls share the heading row, leaving the panel's height to the tags.
+    el("div", { className: "lm-focus-panel-header lm-focus-tags-header" }, [
       el("h2", { className: "lazymod-title", text: "Tags" }),
       el("div", { className: "lm-focus-segmented", attrs: { role: "group", "aria-label": "Tag view" } }, [badgesViewButton, rawViewButton]),
+      el("div", { className: "lm-focus-toolbar lm-focus-tags-toolbar" }, [el("div", { className: "lm-focus-menu-anchor" }, [sortButton, sortMenu]), dedupeButton, copyButton, clearButton]),
     ]),
-    el("div", { className: "lm-focus-toolbar lm-focus-tags-toolbar" }, [el("div", { className: "lm-focus-menu-anchor" }, [sortButton, sortMenu]), dedupeButton, copyButton, clearButton]),
     warning,
     el("div", { className: "lm-focus-tags-body" }, [badgesView, rawText]),
   ]);

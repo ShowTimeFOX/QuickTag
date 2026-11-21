@@ -12,10 +12,10 @@
 //   dropped (muted tags are kept), new page tags are appended.
 // - With live sync off, changes stay in Focus Mode until applied; page edits
 //   are ignored until the list is reloaded from the page.
-import { formatTag } from "../shared/tags.js";
+import { formatTag, joinTags } from "../shared/tags.js";
 import { state } from "./state.js";
 import { emit, on, EVENTS } from "./events.js";
-import { getMainInput, getMainTags, setMainTags } from "./page.js";
+import { getMainInput, getMainTags, getTagSeparator, setMainTags } from "./page.js";
 import { getActivePack } from "./palettes.js";
 
 const model = {
@@ -39,10 +39,17 @@ function findEntry(tag) {
   return model.entries.find((entry) => entry.tag === tag);
 }
 
-/** Splits user input ("a b, c") into formatted tags. Underscores are kept. */
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Splits user input ("a b, c") into formatted tags: on whitespace, commas,
+ * and the site profile's tag separator (e.g. "|"). Underscores are kept.
+ */
 export function parseTagInput(text) {
+  const separator = getTagSeparator().trim();
+  const pattern = separator && separator !== "," ? new RegExp(`[\\s,]+|${escapeRegExp(separator)}`) : /[\s,]+/;
   return text
-    .split(/[\s,]+/)
+    .split(pattern)
     .map(formatTag)
     .filter(Boolean);
 }
@@ -142,8 +149,14 @@ export function addTags(tags) {
 }
 
 export function removeTag(tag) {
+  removeTags([tag]);
+}
+
+/** Removes several tags in one change (palette and AI "all" toggles). */
+export function removeTags(tags) {
+  const remove = new Set(tags);
   const before = model.entries.length;
-  model.entries = model.entries.filter((entry) => entry.tag !== tag);
+  model.entries = model.entries.filter((entry) => !remove.has(entry.tag));
   if (model.entries.length !== before) commit("user");
 }
 
@@ -154,11 +167,23 @@ export function toggleMuted(tag) {
   commit("user");
 }
 
-/** Palette click: absent → active, active → muted, muted → active. */
+/**
+ * Palette and AI chip click: an active tag is removed; an absent or muted tag
+ * becomes active. (Muting is done on the badges in the tag list.)
+ */
 export function togglePaletteTag(tag) {
-  const entry = findEntry(tag);
-  if (!entry) addTags([tag]);
-  else toggleMuted(tag);
+  if (getTagState(tag) === "active") removeTag(tag);
+  else addTags([tag]);
+}
+
+/** "+ all" toggles: removes every tag if all are active, otherwise adds the missing ones. */
+export function toggleAllTags(tags) {
+  const unique = [...new Set(tags)];
+  if (!unique.length) return false;
+  const allActive = unique.every((tag) => getTagState(tag) === "active");
+  if (allActive) removeTags(unique);
+  else addTags(unique);
+  return !allActive;
 }
 
 /** Raw-text edit: the text becomes the active tags; muted tags are kept. */
@@ -232,8 +257,9 @@ export function clearTags() {
   commit("user");
 }
 
+/** Active tags as one string, joined like the page's tag field (profile separator). */
 export function getTagString() {
-  return getActiveTags().join(" ");
+  return joinTags(getActiveTags(), getTagSeparator());
 }
 
 export function setLiveSync(enabled) {

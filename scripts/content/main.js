@@ -31,6 +31,7 @@ import { initElementPicker } from "./ui/element-picker.js";
 import { initWindowControls } from "./ui/window-controls.js";
 import { initGhostMode } from "./ui/ghost-mode.js";
 import { initFocusMode } from "./ui/focus-mode.js";
+import { initVisualEffects } from "./ui/visual-effects.js";
 
 const PAGE_WATCH_INTERVAL_MS = 1500;
 
@@ -79,6 +80,7 @@ async function main() {
   initAssetsPanel();
   watchSiteProfileStorage();
   initThemeControls();
+  await initVisualEffects();
   initElementPicker();
   initWindowControls();
   await initGhostMode();

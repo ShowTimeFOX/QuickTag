@@ -4,7 +4,7 @@ import { LOG_PREFIX } from "../../shared/constants.js";
 import { state } from "../state.js";
 import { on, EVENTS } from "../events.js";
 import { getUniqueElementSelector } from "../page.js";
-import { getActiveSiteConfig, getFallbackSiteConfig, saveSiteConfigs } from "../site-profiles.js";
+import { getActiveSiteConfig, saveActiveProfileFields } from "../site-profiles.js";
 import { $$, shell } from "./shell.js";
 
 const FIELD_LABELS = {
@@ -111,12 +111,8 @@ function handlePickerClick(event) {
     return;
   }
 
-  const profileKey = picker.profileKey;
-  const config = state.siteConfigs[profileKey] || getFallbackSiteConfig();
-  saveSiteConfigs({
-    ...state.siteConfigs,
-    [profileKey]: { ...config, [selectorKey]: getUniqueElementSelector(target), isXPath: false },
-  }).catch((error) => {
+  // Saved into this site's profile (created from ".*" if needed).
+  saveActiveProfileFields({ [selectorKey]: getUniqueElementSelector(target), isXPath: false }).catch((error) => {
     console.error(`${LOG_PREFIX} Could not save the picked selector.`, error);
     alert(`Could not save selector: ${error.message}`);
   });

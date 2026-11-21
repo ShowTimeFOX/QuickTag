@@ -22,7 +22,9 @@ async function sendMessage(message) {
   } catch (error) {
     throw new Error(`The extension background is not available. Reload the page and try again. (${error.message})`);
   }
-  if (!response?.success) throw new Error(response?.error || "Unknown error.");
+  if (!response?.success) {
+    throw Object.assign(new Error(response?.error || "Unknown error."), { permission: response?.permission === true, origins: response?.origins || [] });
+  }
   return response;
 }
 
@@ -35,8 +37,13 @@ export async function fetchHubCatalogue({ force = false } = {}) {
  * saving anything; resolves to `{ pack, verified }` for a contents preview.
  */
 export async function previewHubPackage(item) {
-  const { pack, verified } = await sendMessage({ action: MESSAGE_ACTIONS.fileHubDownload, packageId: item.id });
+  const { pack, verified } = await sendMessage({ action: MESSAGE_ACTIONS.fileHubDownload, packageId: item.id, purpose: "preview" });
   return { pack, verified };
+}
+
+/** Reopens the permission page for a package (from an "Allow access" click). */
+export async function requestHubPermission(item, purpose) {
+  return sendMessage({ action: MESSAGE_ACTIONS.fileHubRequestPermission, packageId: item.id, purpose });
 }
 
 /** Saved install records, without malformed entries. */
@@ -81,7 +88,7 @@ export function getHubInstallStatus(item, installs) {
  * `{ packName, verified }`. Throws user-facing errors.
  */
 export async function installHubPackage(item) {
-  const { pack, item: verifiedItem, verified } = await sendMessage({ action: MESSAGE_ACTIONS.fileHubDownload, packageId: item.id });
+  const { pack, item: verifiedItem, verified } = await sendMessage({ action: MESSAGE_ACTIONS.fileHubDownload, packageId: item.id, purpose: "install" });
   const installs = await loadHubInstalls();
   const previous = installs[item.id];
   const packId = previous && state.paletteData.packs[previous.packId] ? previous.packId : hubPackId(item.id);

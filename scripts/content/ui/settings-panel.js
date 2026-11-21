@@ -4,9 +4,10 @@ import { LOG_PREFIX, MESSAGE_ACTIONS } from "../../shared/constants.js";
 import { state } from "../state.js";
 import { on, EVENTS } from "../events.js";
 import { requestExtensionPage } from "../messaging.js";
-import { addProfileForCurrentPage, getActiveSiteConfig } from "../site-profiles.js";
+import { addProfileForCurrentPage, getActiveSiteConfig, saveActiveProfileFields } from "../site-profiles.js";
+import { DEFAULT_TAG_SEPARATOR, normalizeTagSeparator } from "../../shared/tags.js";
 import { exportConfiguration, readBackupFile, replaceConfiguration, resetConfiguration } from "../config-backup.js";
-import { $ } from "./shell.js";
+import { $, shell } from "./shell.js";
 import { setConfigStatus } from "./status.js";
 
 const BLACKLIST_PREVIEW_COUNT = 6;
@@ -32,6 +33,12 @@ export function renderSettingsUI() {
     field.textContent = value || "Not configured";
     field.title = value || "Not configured";
   });
+  // Don't overwrite what the user is typing.
+  const separatorInput = $("#lm-tag-separator");
+  if (separatorInput !== shell.root.activeElement) {
+    const separator = normalizeTagSeparator(config.tagSeparator);
+    separatorInput.value = separator === DEFAULT_TAG_SEPARATOR ? "" : separator;
+  }
 
   const blacklist = state.tagBlacklist;
   $("#lm-blacklist-count").textContent = `${blacklist.length} ${blacklist.length === 1 ? "tag" : "tags"} excluded`;
@@ -97,15 +104,37 @@ function initConfigBackup() {
   };
 }
 
+/** Saves the tag separator into this site's profile (a blank value means a space). */
+async function saveTagSeparator() {
+  const input = $("#lm-tag-separator");
+  const value = input.value;
+  const tagSeparator = value.trim() ? value : undefined;
+  if (tagSeparator === getActiveSiteConfig().tagSeparator) return;
+  try {
+    await saveActiveProfileFields({ tagSeparator });
+    setConfigStatus(tagSeparator ? `Tag separator "${tagSeparator}" saved for ${state.activeSiteKey}.` : `Tags are separated by spaces on ${state.activeSiteKey}.`, "success");
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Could not save the tag separator.`, error);
+    setConfigStatus(`Could not save the tag separator: ${error.message}`, "error");
+  }
+}
+
 export function initSettingsPanel() {
   $("#lm-add-current-site").onclick = () => {
     const saving = addProfileForCurrentPage();
     renderActiveSiteBadge();
+    renderSettingsUI();
     saving.catch((error) => {
-      console.error(`${LOG_PREFIX} Could not save the current page profile.`, error);
-      alert(`Could not save the current page profile: ${error.message}`);
+      console.error(`${LOG_PREFIX} Could not save the site profile.`, error);
+      alert(`Could not save the site profile: ${error.message}`);
     });
   };
+  // Saved when the field is left or Enter is pressed (not on every keystroke).
+  const separatorInput = $("#lm-tag-separator");
+  separatorInput.addEventListener("change", saveTagSeparator);
+  separatorInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") separatorInput.blur();
+  });
 
   $("#lm-edit-site-configs").onclick = () => {
     requestExtensionPage({ action: MESSAGE_ACTIONS.openSiteConfigEditor }, "Could not open settings editor");

@@ -18,6 +18,8 @@ export const EVENTS = Object.freeze({
   focusModeChanged: "focus-mode-changed",
   /** The Focus Mode tag list changed; detail: { source }. */
   focusTagsChanged: "focus-tags-changed",
+  /** AI analysis started, progressed, or finished (content/ai-analysis.js); detail: { phase }. */
+  aiSuggestionsChanged: "ai-suggestions-changed",
 });
 
 const bus = new EventTarget();

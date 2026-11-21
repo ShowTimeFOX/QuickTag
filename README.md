@@ -24,10 +24,12 @@ ComfyUI installation with the WD14 Tagger node.
   [File Hub](https://showtimefox-file-hub.pages.dev/) in the **Assets** tab.
 - Analyze the current image with ComfyUI-WD14-Tagger and adjust the confidence
   threshold for suggestions.
-- Configure page-specific selectors for tag fields, images, and source links.
+- Configure site profiles: selectors for tag fields, images, and source links,
+  and the tag separator each site uses (space, comma, or another character).
 - Move, resize, dock, collapse, or hide the tagger. Its layout is remembered
   separately for each site.
-- Choose a built-in theme or a custom accent color.
+- Choose a built-in theme or a custom accent color, and reduce visual effects
+  (blur, shadows, animations) for slower computers.
 - Show or hide QuickTag across all pages from the toolbar popup.
 - Export or import the extension configuration and restore default settings.
 - Check for a newer version from the toolbar popup.
@@ -60,6 +62,17 @@ sections; each group’s properties are category names, and each category’s
 value must be an array of strings. Save the file as `.json`, then choose
 **Import** in the tagger to add it.
 
+## Site profiles and tag separator
+
+**Settings › Current page profile** shows the profile used on this page. Pick
+an element to set the tag field, image, or source selector. Changes are saved
+right away in the profile for this site; if the page only matched the `.*`
+fallback, a profile for this site (its host, including any port) is created
+first, so changes never apply to every site. **Add profile for this site**
+creates that profile directly. **Tag separator** sets how tags are joined and
+split in this site's tag field: leave it empty for a space, or enter for
+example `, ` for comma-separated sites. Tags themselves keep underscores.
+
 ## Switching, searching, and uninstalling tag packs
 
 Click the tag pack selector (it shows the selected pack) to open the pack
@@ -90,11 +103,14 @@ Mode**, to open a full-screen workspace:
   at 1:1 (double-click to switch), with its dimensions.
 - **Tags:** click a badge to mute it (it leaves the page's tag field but stays
   in the list) and click again to switch it back on; `×` removes it. Type in
-  the input to add tags (Enter, space, or comma separate them). Switch between
-  **Badges** and **Raw text**, sort (A–Z, Z–A, added order, or by pack group),
-  deduplicate, copy all active tags as one string, or clear.
-- **Palette:** every category of the selected group; clicking a tag adds it,
-  mutes it, or switches it back on.
+  the input to add tags (Enter, space, or comma separate them). Next to the
+  **Tags** heading: switch between **Badges** and **Raw text**, and the Sort
+  (A–Z, Z–A, added order, or by pack group), Deduplicate, Copy (all active tags
+  as one string, joined with the site's tag separator), and Clear buttons.
+- **Palette:** **AI Suggestions** (Analyze image, the same analysis and results
+  as the tagger's AI panel), then every category of the selected group.
+  Clicking a tag adds it or removes it; **+ all** next to the groups adds every
+  tag of the group, or removes them when all are active.
 
 With **Live sync** on, the page's tag field follows every change, and edits
 made on the page appear in Focus Mode. With it off, use **Apply to page** and
@@ -175,9 +191,11 @@ next to **Website** reloads the package list.
 QuickTag contacts File Hub only when you open the Assets tab or select
 **Refresh**. Package files are checked before anything is saved: at most
 2 MB, matching the SHA-256 checksum published on File Hub, and valid tag pack
-JSON. Only JSON tag packs can be installed. In Firefox, installing requires
-QuickTag's permission to access websites; if it is turned off, the error
-message explains how to allow it.
+JSON. Only JSON tag packs can be installed. If QuickTag is not allowed to
+access the download sites (Firefox lets you turn this off), a small QuickTag
+window asks for access when you select **Install** or **Preview**; after you
+allow it, the download continues. If the browser refuses, the card explains
+where to allow access manually.
 
 ## Requirements
 

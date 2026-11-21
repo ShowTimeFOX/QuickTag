@@ -19,13 +19,12 @@ import { state } from "../state.js";
 import { emit, on, EVENTS } from "../events.js";
 import { selectPack } from "../palettes.js";
 import { loadHubInstalls } from "../file-hub.js";
-import { hubRecordsByPack, searchInstalledPacks, uninstallPack, undoUninstall } from "../pack-manager.js";
+import { UNDO_TIMEOUT_MS, hubRecordsByPack, searchInstalledPacks, uninstallPack, undoUninstall } from "../pack-manager.js";
 import { attachGhostScroll } from "../../shared/ghost-scroll.js";
 import { $, shell } from "./shell.js";
 import { el } from "./dom.js";
 
 const SOURCE = "packs";
-const UNDO_TIMEOUT_MS = 10000;
 const MATCH_LABELS = { source: "", group: "group", category: "category", tag: "tag" };
 
 const view = {
@@ -70,6 +69,7 @@ function renderNotice() {
     notice.replaceChildren(
       el("span", { text: `Uninstalled "${view.removal.pack.name}".` }),
       el("button", { className: "lazymod-btn lazymod-pack-undo", id: "lm-pack-undo", text: "Undo", attrs: { type: "button", disabled: view.busy }, on: { click: handleUndo } }),
+      el("button", { className: "lazymod-pack-notice-close", text: "×", title: "Dismiss", attrs: { type: "button", "aria-label": "Dismiss" }, on: { click: dismissUndo } }),
     );
     notice.dataset.state = "success";
   } else if (view.error) {
@@ -79,6 +79,12 @@ function renderNotice() {
     notice.replaceChildren();
   }
   notice.hidden = !view.removal && !view.error;
+}
+
+/** Hides the Undo notice (the removal stays done). */
+function dismissUndo() {
+  clearUndo();
+  render();
 }
 
 function showUndo(removal) {

@@ -295,6 +295,20 @@ export async function runPackBrowserChecks(adapters) {
     { goodCard, fallbackCard, fallbackRemoved, fallbackRestored },
   );
 
+  // Undo hides by itself after a few seconds (the pack stays uninstalled).
+  await evaluate(page, SHOW_TAGGING);
+  await evaluate(page, OPEN_SWITCHER);
+  const before12 = await evaluate(page, PACK_STATE);
+  await evaluate(page, clickInRow(rowIdByName(before12, "Ghost Pack 12"), ".lazymod-pack-uninstall"));
+  const shownUndo = await waitFor(evaluate, page, PACK_STATE, (state) => state.hasUndo && state.idle);
+  await sleep(5600);
+  const expired = await evaluate(page, PACK_STATE);
+  check(
+    "Uninstall: the Undo notice disappears on its own after about 5 seconds",
+    shownUndo.noticeVisible && !expired.hasUndo && !expired.noticeVisible && !expired.options.includes("Ghost Pack 12"),
+    { shown: shownUndo.notice, expired: { hasUndo: expired.hasUndo, notice: expired.notice } },
+  );
+
   // Uninstalling every pack leaves a clean empty state; Undo brings one back.
   await evaluate(page, SHOW_TAGGING);
   await evaluate(page, OPEN_SWITCHER);

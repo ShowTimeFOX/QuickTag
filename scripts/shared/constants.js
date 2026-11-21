@@ -27,6 +27,8 @@ export const STORAGE_KEYS = Object.freeze({
   focusPrefs: "lazymod_focus_prefs",
   // Packs installed from File Hub: { [hubPackageId]: { packId, version, sha256, name, installedAt } }.
   hubPackages: "lazymod_hub_packages",
+  // Settings › Reduce visual effects (no blur, shadows, or animations).
+  reducedEffects: "lazymod_reduced_effects",
   // Per-origin layout: `${siteLayoutPrefix}${encodeURIComponent(origin)}`.
   siteLayoutPrefix: "lazymod_site_layout_",
 });
@@ -51,6 +53,8 @@ export const MESSAGE_ACTIONS = Object.freeze({
   openAiBlacklistEditor: "open_ai_blacklist_editor",
   fileHubCatalogue: "file_hub_catalogue",
   fileHubDownload: "file_hub_download",
+  fileHubRequestPermission: "file_hub_request_permission",
+  fileHubPermissionResult: "file_hub_permission_result",
 });
 
 export const THEME_NAMES = Object.freeze(["dark", "light", "femboy", "halloween", "minimalistic", "cyberpunk", "custom"]);
@@ -100,13 +104,6 @@ const DEFAULT_SITE_CONFIGS = Object.freeze({
 export function createDefaultSiteConfigs() {
   return structuredClone(DEFAULT_SITE_CONFIGS);
 }
-
-// Selectors used when the user adds a profile for the current page.
-export const NEW_SITE_PROFILE_SELECTORS = Object.freeze({
-  tagInputSelector: "#tags, textarea[name='tags']",
-  imgSelector: "#image, img",
-  linkSelector: "a.image-link, input[name='source']",
-});
 
 export const DEFAULT_PALETTE_FILES = Object.freeze({
   "default-character": "data/character.json",

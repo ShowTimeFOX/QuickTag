@@ -52,6 +52,7 @@ scripts/
     focus-tags.js       Focus Mode tag model (active/muted, sort, page sync) — no DOM
     file-hub.js         File Hub install records (Assets tab) — no DOM
     pack-manager.js     uninstall/undo and installed-pack search — no DOM
+    ai-analysis.js      AI suggestion state/request shared by the AI panel and Focus palette — no DOM
     ui/                 Shadow-DOM interface components (shell, theme, tabs, palette-panel, ai-panel, ...)
       dom.js            el()/icon()/button() — the safe way to build UI from JS
       shortcut-recorder.js  reusable "press a shortcut" buttons
@@ -59,6 +60,7 @@ scripts/
       focus-layout-editor.js  Customize: move/resize panels, save as new layout
       assets-panel.js   Assets tab (File Hub browse/install)
       pack-browser.js   pack switcher dropdown: search, ghost scroll, uninstall with undo
+      visual-effects.js Reduce visual effects (class on the shadow host)
   background.js         background entry (registers listeners synchronously)
   background/           messages.js, updates.js, comfyui.js, file-hub.js (all File Hub network requests)
   shared/               used by every context; NO window/document at module level (service worker imports it)
@@ -67,7 +69,7 @@ scripts/
     file-hub.js         File Hub catalogue/pack validation (unsafe keys, limits, sha256)
     ghost-scroll.js     ghost scroll (pack switcher, About demo); DOM only inside its functions
   editor/               palette editor components
-  extension-popup.js, palette-editor.js, about-page.js   page entry modules (<script type="module">)
+  extension-popup.js, palette-editor.js, about-page.js, permissions-page.js   page entry modules (<script type="module">)
 docs/                   project documents that are not part of the extension (v1.2.0-todo.html checklist)
 ```
 
@@ -91,6 +93,9 @@ docs/                   project documents that are not part of the extension (v1
 - Log prefix: `LOG_PREFIX` (`[QuickTag]`).
 - DOM ids/classes in the tagger use `lm-` / `lazymod-` prefixes.
 - ComfyUI URL is `COMFYUI_BASE_URL`; changing it also requires `host_permissions`.
+- `chrome.permissions.request()` only works in an extension page during a
+  user click (not in content scripts or the background); File Hub opens
+  `pages/permissions.html` for that.
 - File Hub URL is `FILE_HUB_BASE_URL`. Network requests to it (and package
   downloads) go through the background script, never the content script.
   Untrusted JSON must be checked with `hasUnsafeKeys`/`isSafeKey`

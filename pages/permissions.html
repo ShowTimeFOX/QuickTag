@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QuickTag — Allow access</title>
+    <link rel="stylesheet" href="../styles/permissions.css" />
+    <script type="module" src="../scripts/permissions-page.js"></script>
+  </head>
+  <body>
+    <main class="permission-card">
+      <h1>
+        <img class="permission-icon" src="../assets/icon.png" alt="" />
+        Allow QuickTag to download File Hub packages
+      </h1>
+      <p>To install or preview this package, QuickTag needs access to:</p>
+      <ul class="permission-origins" id="permission-origins"></ul>
+      <p class="permission-note">QuickTag only downloads the package file from these sites. The browser asks you to confirm.</p>
+      <div class="permission-actions">
+        <button type="button" class="permission-button permission-primary" id="permission-allow">Allow access</button>
+        <button type="button" class="permission-button" id="permission-cancel">Not now</button>
+      </div>
+      <p class="permission-status" id="permission-status" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>

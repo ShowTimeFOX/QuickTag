@@ -5,6 +5,9 @@ import { emit, EVENTS } from "./events.js";
 import { removePack, restorePack } from "./palettes.js";
 import { removeHubRecordsForPack, restoreHubRecords } from "./file-hub.js";
 
+/** How long Undo stays offered after an uninstall (pack switcher and Assets). */
+export const UNDO_TIMEOUT_MS = 5000;
+
 /**
  * Removes a pack and its File Hub install record. Resolves to a removal
  * object for `undoUninstall`. The active pack falls back to a neighbor.

@@ -2,7 +2,7 @@
 import { LOG_PREFIX, MESSAGE_ACTIONS } from "../shared/constants.js";
 import { checkForUpdate } from "./updates.js";
 import { analyzeImageWithWd14 } from "./comfyui.js";
-import { getHubCatalogue, downloadHubPackage } from "./file-hub.js";
+import { getHubCatalogue, downloadHubPackage, getMissingHubPermissions, openPermissionPrompt } from "./file-hub.js";
 
 const EDITOR_PAGE = "pages/palette-editor.html";
 
@@ -66,10 +66,35 @@ export function handleMessage(request, sender, sendResponse) {
   }
 
   if (request.action === MESSAGE_ACTIONS.fileHubDownload) {
-    downloadHubPackage(request.packageId)
+    const purpose = request.purpose === "preview" ? "preview" : "install";
+    downloadHubPackage(request.packageId, { tabId: sender.tab?.id, purpose })
       .then((result) => sendResponse({ success: true, ...result }))
+      .catch((error) => sendResponse({ success: false, error: error.message, permission: error.permission === true, origins: error.origins || [] }));
+    return true;
+  }
+
+  // "Allow access" on an Assets card: reopen the permission page.
+  if (request.action === MESSAGE_ACTIONS.fileHubRequestPermission) {
+    const purpose = request.purpose === "preview" ? "preview" : "install";
+    getMissingHubPermissions(String(request.packageId || ""))
+      .then(async (origins) => {
+        if (origins.length) await openPermissionPrompt({ origins, tabId: sender.tab?.id, packageId: String(request.packageId), purpose });
+        sendResponse({ success: true, missing: origins.length });
+      })
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true;
+  }
+
+  // From pages/permissions.html: tell the tab that asked, so it can retry.
+  if (request.action === MESSAGE_ACTIONS.fileHubPermissionResult) {
+    const tabId = Number(request.tabId);
+    if (Number.isInteger(tabId) && tabId >= 0) {
+      chrome.tabs
+        .sendMessage(tabId, { action: MESSAGE_ACTIONS.fileHubPermissionResult, granted: request.granted === true, packageId: String(request.packageId || ""), purpose: request.purpose === "preview" ? "preview" : "install" })
+        .catch((error) => console.debug(`${LOG_PREFIX} Permission result could not be delivered.`, error));
+    }
+    sendResponse({ success: true });
+    return false;
   }
 
   if (request.action === MESSAGE_ACTIONS.openAboutPage) {

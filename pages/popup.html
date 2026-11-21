@@ -249,7 +249,22 @@
             </div>
             <button type="button" class="lazymod-btn" data-pick-type="linkSelector">Pick element</button>
           </div>
-          <p class="lazymod-settings-hint">Pick an element on this page to set its selector in the active profile.</p>
+          <div class="lazymod-settings-field">
+            <label for="lm-tag-separator">
+              <strong>Tag separator</strong>
+              <span class="lazymod-settings-subtle">Joins and splits tags in this site's tag field. Empty means a space.</span>
+            </label>
+            <input
+              type="text"
+              class="lazymod-input lazymod-separator-input"
+              id="lm-tag-separator"
+              maxlength="5"
+              placeholder="Space"
+              spellcheck="false"
+              autocomplete="off"
+            />
+          </div>
+          <p class="lazymod-settings-hint">Picked selectors and the separator are saved right away in this site's profile (created when needed).</p>
         </div>
         <div class="lazymod-settings-actions">
           <button type="button" class="lazymod-btn lazymod-btn-accent" id="lm-edit-site-configs">
@@ -258,7 +273,7 @@
             </svg>
             <span>Edit profiles</span>
           </button>
-          <button type="button" class="lazymod-btn" id="lm-add-current-site">＋ Add current page profile</button>
+          <button type="button" class="lazymod-btn" id="lm-add-current-site" title="Create a profile for every page on this site and use it here">＋ Add profile for this site</button>
         </div>
       </div>
 
@@ -330,6 +345,16 @@
               <input type="color" id="lm-theme-color" value="#7cafff" aria-label="Custom accent color" />
             </label>
           </div>
+        </div>
+        <div class="lazymod-settings-control lazymod-settings-control-separated">
+          <div>
+            <strong>Reduce visual effects</strong>
+            <p>Turns off blur, shadows, and animations so QuickTag stays fast on slower computers.</p>
+          </div>
+          <label class="lazymod-checkbox-option" for="lm-reduce-effects">
+            <input type="checkbox" id="lm-reduce-effects" />
+            <span>On</span>
+          </label>
         </div>
         <div class="lazymod-settings-control">
           <div>

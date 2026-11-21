@@ -9,6 +9,7 @@ import { runFocusModeChecks } from "./focus-checks.mjs";
 import { runAssetsChecks } from "./assets-checks.mjs";
 import { runPackBrowserChecks } from "./pack-checks.mjs";
 import { runAboutChecks } from "./about-checks.mjs";
+import { runSettingsChecks, runPermissionPageChecks } from "./settings-checks.mjs";
 
 const chromeExe = browserPath("chrome");
 const profileDir = makeTempDir("chrome-profile");
@@ -226,6 +227,7 @@ try {
   await runFocusModeChecks(adapters);
   await runAssetsChecks(adapters);
   await runPackBrowserChecks(adapters);
+  await runSettingsChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");
@@ -241,6 +243,14 @@ try {
   check("Global toggle on shows tagger again", shownDisplay === "", shownDisplay);
 
   // Editor modes
+  await runPermissionPageChecks({
+    openPage: (query) => openTab(`chrome-extension://${extensionId}/pages/permissions.html?${query}`, "permissions"),
+    evaluate: (handle, expression) => evaluate(handle.sessionId, expression),
+    clickAsUser: (handle, expression) => send("Runtime.evaluate", { expression, userGesture: true, awaitPromise: false }, handle.sessionId),
+    check,
+    origin,
+  });
+
   await runAboutChecks({
     openAbout: () => openTab(`chrome-extension://${extensionId}/pages/about.html`, "about"),
     evaluate: (handle, expression) => evaluate(handle.sessionId, expression),

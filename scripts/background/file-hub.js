@@ -5,7 +5,7 @@
 // The content script only sends a package id. The download URL, size, and
 // checksum always come from the catalogue fetched here.
 import { FILE_HUB, FILE_HUB_BASE_URL } from "../shared/constants.js";
-import { hubDownloadUrls, isAllowedHubUrl, isInstallableHubPackage, normalizeHubCatalogue, parseHubPack, sha256Hex } from "../shared/file-hub.js";
+import { hubDownloadUrls, hubPermissionOrigins, isAllowedHubUrl, isInstallableHubPackage, normalizeHubCatalogue, parseHubPack, sha256Hex } from "../shared/file-hub.js";
 
 let cached = null; // { fetchedAt, catalogue }
 
@@ -77,22 +77,41 @@ export async function getHubCatalogue({ force = false } = {}) {
   return catalogue;
 }
 
-/**
- * Firefox lets users withhold MV3 host permissions. Without access, the
- * download fails as a CORS error, so explain the fix instead.
- */
-async function ensureHostAccess(url) {
-  if (!chrome.permissions?.contains) return;
-  const { origin } = new URL(url);
-  const granted = await chrome.permissions.contains({ origins: [`${origin}/*`] }).catch(() => true);
-  if (!granted) {
-    throw new Error(`QuickTag is not allowed to access ${origin}. Allow access to all websites for QuickTag in the browser's add-on permissions, then try again.`);
+/** Host permissions (of `hubPermissionOrigins`) that are not granted. */
+async function missingHubPermissions(item) {
+  if (!chrome.permissions?.contains) return [];
+  const missing = [];
+  for (const origin of hubPermissionOrigins(item)) {
+    const granted = await chrome.permissions.contains({ origins: [origin] }).catch(() => true);
+    if (!granted) missing.push(origin);
   }
+  return missing;
+}
+
+/**
+ * Opens the permission page. permissions.request() only works during a user
+ * gesture in an extension page (not in a content script or the background),
+ * so the user confirms there; the result goes back to `tabId`.
+ */
+export async function openPermissionPrompt({ origins, tabId, packageId, purpose }) {
+  const params = new URLSearchParams({ origins: JSON.stringify(origins), packageId, purpose });
+  if (Number.isInteger(tabId)) params.set("tabId", String(tabId));
+  const url = chrome.runtime.getURL(`pages/permissions.html?${params}`);
+  try {
+    await chrome.windows.create({ url, type: "popup", width: 480, height: 460 });
+  } catch {
+    await chrome.tabs.create({ url });
+  }
+}
+
+/** Origins still missing for a package, for reopening the permission page. */
+export async function getMissingHubPermissions(packageId) {
+  const item = (await getHubCatalogue()).packages.find((entry) => entry.id === packageId);
+  return item ? missingHubPermissions(item) : [];
 }
 
 async function downloadFrom(url, item) {
   if (!isAllowedHubUrl(url)) throw new Error("The package download address is not allowed.");
-  await ensureHostAccess(url);
   const response = await fetchWithTimeout(url, { cache: "no-store" });
   if (!response.ok) throw retryableError(`The download failed with HTTP error ${response.status}.`);
   if (response.url && !isAllowedHubUrl(response.url)) throw new Error("The download was redirected to an address that is not allowed.");
@@ -106,14 +125,25 @@ async function downloadFrom(url, item) {
   return bytes;
 }
 
-/** Downloads, verifies, and validates a package. Resolves to `{ pack, item, verified }`. */
-export async function downloadHubPackage(packageId) {
+/**
+ * Downloads, verifies, and validates a package. Resolves to `{ pack, item, verified }`.
+ * If host access is missing (Firefox lets users withhold it), the permission
+ * page opens and the error carries `permission: true` and the origins.
+ */
+export async function downloadHubPackage(packageId, { tabId, purpose = "install" } = {}) {
   if (typeof packageId !== "string" || !packageId) throw new Error("Invalid package ID.");
   let item = (await getHubCatalogue()).packages.find((entry) => entry.id === packageId);
   if (!item) item = (await getHubCatalogue({ force: true })).packages.find((entry) => entry.id === packageId);
   if (!item) throw new Error("This package is no longer available on File Hub.");
   if (!isInstallableHubPackage(item)) throw new Error(`QuickTag cannot install ${item.fileType ? `${item.fileType.toUpperCase()} ` : ""}packages.`);
   if (item.fileSize > FILE_HUB.maxPackageBytes) throw new Error(`The package is larger than the ${Math.round(FILE_HUB.maxPackageBytes / 1024)} KB limit.`);
+
+  const missing = await missingHubPermissions(item);
+  if (missing.length) {
+    await openPermissionPrompt({ origins: missing, tabId, packageId, purpose }).catch(() => {});
+    const hosts = missing.map((origin) => new URL(origin.replace("/*", "/")).host).join(", ");
+    throw Object.assign(new Error(`QuickTag needs access to ${hosts} to download File Hub packages.`), { permission: true, origins: missing });
+  }
 
   let lastError = null;
   for (const url of hubDownloadUrls(item)) {
