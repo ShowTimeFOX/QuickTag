@@ -383,9 +383,10 @@ if you need help.
     install, but saves nothing; the card shows `summarizePack()` (groups,
     categories, tag counts, the first tags per category). Previews are cached
     per package version.
-  - **Show in Hub** links to `hubPackageUrl()`. File Hub has no per-package
-    address yet, so it opens the hub list filtered to QuickTag and the
-    package's category.
+  - **Show in Hub** links to `hubPackageUrl()`: the catalogue's `pageUrl`
+    when set, otherwise the package deep link `index.html?package=<id>`
+    (only a package without an id falls back to the hub list filtered to
+    QuickTag and its category).
 - **Pack switcher** (`ui/pack-browser.js`). The Tagging view's pack selector
   is a button (`#lm-pack-switcher`) that opens a dropdown panel, not a native
   `<select>`: browsers close a native select popup whenever an ancestor

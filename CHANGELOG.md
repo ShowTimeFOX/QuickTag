@@ -112,6 +112,9 @@
   `constructor`, or `prototype`.
 - The tag counter now also updates when the page's tag field is edited
   directly or the Palette tab is opened.
+- Assets: Show in Hub opens the package's own File Hub page (the catalogue's
+  `pageUrl`, or `index.html?package=<id>`) instead of the hub list filtered
+  to QuickTag and the package's category.
 
 ### Fixed
 

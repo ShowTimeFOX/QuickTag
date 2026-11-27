@@ -117,7 +117,7 @@ function packageCard(item) {
           "a",
           {
             className: "lazymod-btn lazymod-icon-btn lazymod-asset-hub",
-            title: "Show in Hub: open File Hub filtered to QuickTag packages in this category (new tab)",
+            title: "Show in Hub: open this package's page on File Hub (new tab)",
             attrs: { href: hubPackageUrl(item), target: "_blank", rel: "noopener noreferrer", "aria-label": `Show ${item.name} in File Hub` },
           },
           [icon(ICONS.external)],

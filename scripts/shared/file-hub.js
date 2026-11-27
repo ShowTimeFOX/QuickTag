@@ -186,14 +186,28 @@ const SORTERS = {
 };
 
 /**
- * File Hub page for a package. The hub has no per-package address yet, so
- * this opens its list filtered to QuickTag and the package's category, where
- * the package is listed. Change only this function when a deep link exists.
+ * File Hub page for a package: the catalogue's `pageUrl` when it has one,
+ * otherwise the package deep link `index.html?package=<id>`. Only a package
+ * without an id falls back to the hub list filtered to QuickTag and its
+ * category.
  */
 export function hubPackageUrl(item, hubBaseUrl = FILE_HUB_BASE_URL) {
+  if (item?.pageUrl) {
+    return item.pageUrl;
+  }
+
   const url = new URL("index.html", hubBaseUrl);
+  const packageId = item?.id ?? item?.packageId ?? item?.slug ?? item?.assetId;
+
+  if (packageId != null && String(packageId).trim() !== "") {
+    url.searchParams.set("package", String(packageId));
+    return url.href;
+  }
+
   url.searchParams.set("app", FILE_HUB.appId);
-  if (item.category) url.searchParams.set("category", item.category);
+  if (item?.category) {
+    url.searchParams.set("category", item.category);
+  }
   return url.href;
 }
 
@@ -250,10 +264,12 @@ export function parseHubPack(bytes, fallbackName) {
   if (groups.length > PACK_LIMITS.groups) throw new Error(`The tag pack has more than ${PACK_LIMITS.groups} groups.`);
   for (const [groupName, categories] of groups) {
     const entries = Array.isArray(categories) ? [[groupName, categories]] : Object.entries(categories);
-    if (groupName.length > PACK_LIMITS.nameLength || entries.length > PACK_LIMITS.categoriesPerGroup) throw new Error("The tag pack has too many categories or names that are too long.");
+    if (groupName.length > PACK_LIMITS.nameLength || entries.length > PACK_LIMITS.categoriesPerGroup)
+      throw new Error("The tag pack has too many categories or names that are too long.");
     for (const [categoryName, tags] of entries) {
       tagCount += tags.length;
-      if (categoryName.length > PACK_LIMITS.nameLength || tags.some((tag) => tag.length > PACK_LIMITS.tagLength)) throw new Error("The tag pack has names or tags that are too long.");
+      if (categoryName.length > PACK_LIMITS.nameLength || tags.some((tag) => tag.length > PACK_LIMITS.tagLength))
+        throw new Error("The tag pack has names or tags that are too long.");
     }
   }
   if (tagCount > PACK_LIMITS.tags) throw new Error(`The tag pack has more than ${PACK_LIMITS.tags} tags.`);

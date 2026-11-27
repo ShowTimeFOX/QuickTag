@@ -149,12 +149,12 @@ export async function runAssetsChecks({ open, evaluate, check, origin }) {
   // Polish: centered Website label, Show in Hub link, short profile button label.
   const polish = await evaluate(page, POLISH_STATE);
   check(
-    "Assets: Website label is centered; Show in Hub opens File Hub filtered to QuickTag and the category in a new tab",
+    "Assets: Website label is centered; Show in Hub opens the package page in File Hub (?package=<id>) in a new tab",
     polish.siteLabel === "Website" &&
       polish.siteIconRight &&
       polish.dx <= 1.5 &&
       polish.dy <= 1.5 &&
-      polish.hubHref === `${origin}/hub/index.html?app=quicktag&category=tags` &&
+      polish.hubHref === `${origin}/hub/index.html?package=good` &&
       polish.hubTarget === "_blank" &&
       /noopener/.test(polish.hubRel),
     polish,

@@ -198,8 +198,8 @@ it; an installed pack shows **Installed**, and **Update** appears when File
 Hub has a newer version (select it twice: updating replaces the installed
 pack, including your edits to it). On each card, the eye button (**Preview
 contents**) shows the groups, categories, and first tags of a package before
-you install it, and the open-in-new-tab button (**Show in Hub**) opens File
-Hub filtered to QuickTag packages in the same category. The refresh button
+you install it, and the open-in-new-tab button (**Show in Hub**) opens the
+package's page on File Hub. The refresh button
 next to **Website** reloads the package list.
 
 QuickTag contacts File Hub only when you open the Assets tab or select
