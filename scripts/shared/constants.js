@@ -31,6 +31,8 @@ export const STORAGE_KEYS = Object.freeze({
   hubPackages: "lazymod_hub_packages",
   // Settings › Reduce visual effects (no blur, shadows, or animations).
   reducedEffects: "lazymod_reduced_effects",
+  /** Ghost scroll on the pack switcher (wheel over it opens a floating list); default true. */
+  ghostScroll: "lazymod_ghost_scroll",
   // Per-origin layout: `${siteLayoutPrefix}${encodeURIComponent(origin)}`.
   siteLayoutPrefix: "lazymod_site_layout_",
 });

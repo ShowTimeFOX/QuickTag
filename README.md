@@ -91,10 +91,14 @@ list: every installed pack, local and from File Hub, with its source, group
 count, and tag count. Type to filter by pack name, File Hub version, or any
 group, category, or tag name (case-insensitive); a matching tag or category
 is shown under the pack. Click a pack, or use the arrow keys and Enter, to
-switch to it. While you scroll the list, the pack in the middle is shown
-larger and named in an overlay, and the others are dimmed. Scrolling the list
-never scrolls the tagger or the page. `Esc` or a click outside closes the
-list.
+switch to it. Scrolling the list never scrolls the tagger or the page. `Esc`
+or a click outside closes the list.
+
+**Ghost scroll:** without opening the list, scroll the mouse wheel over the
+pack selector to flip through your packs in a floating list. The pack under
+the pointer is highlighted; click it to switch. Move the pointer away, wait a
+moment, press `Esc`, or click elsewhere to close it without switching. Turn
+it off in **Settings › Interface › Ghost scroll on the pack selector**.
 
 **Uninstall** (in the list, or **Uninstall** in the palette header for the
 selected pack) removes a pack right away and offers **Undo** for 5 seconds

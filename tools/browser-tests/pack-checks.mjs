@@ -1,9 +1,11 @@
 // Pack switcher checks (dropdown stability with real mouse and wheel input,
-// search across installed packs, ghost scroll, uninstall with undo), shared
-// by chrome.mjs and firefox.mjs. Runs after assets-checks.mjs,
+// search across installed packs, native dropdown scrolling, wheel-over-switcher
+// ghost scroll and its setting, uninstall with undo), shared by chrome.mjs and
+// firefox.mjs. Runs after assets-checks.mjs,
 // so the mock File Hub packs "Mock Hub Pack" and "Fallback Pack" are installed.
 import { sleep } from "./pages.mjs";
 import { ROOT, READY, waitFor } from "./checks.mjs";
+import { runGhostScrollChecks } from "./ghost-scroll-checks.mjs";
 
 const GHOST_PACKS = Array.from({ length: 12 }, (_, index) => `Ghost Pack ${String(index + 1).padStart(2, "0")}`);
 const ghostTag = (name) => `ghost_tag_${name.slice(-2)}`;
@@ -30,13 +32,9 @@ const PACK_STATE = `(() => {
   const list = root.querySelector("#lm-pack-list");
   // The active view scrolls (title bar and tab strip stay fixed).
   const body = root.querySelector("#lm-view-main");
-  const ghost = root.querySelector("#lm-pack-ghost");
+  const ghostList = root.querySelector("#lm-pack-ghost-list");
   const status = root.querySelector("#lm-pack-status");
   const items = [...list.querySelectorAll(".lazymod-pack-item")];
-  const centered = list.querySelector(".is-centered");
-  const neighbor = centered && (centered.previousElementSibling || centered.nextElementSibling);
-  // Rendered size (ghost scroll scales names with a transform).
-  const nameSize = (item) => (item ? item.querySelector(".lazymod-pack-item-name").getBoundingClientRect().height : 0);
   return {
     open: !root.querySelector("#lm-pack-browser").hidden,
     expanded: root.querySelector("#lm-pack-switcher").getAttribute("aria-expanded"),
@@ -59,13 +57,9 @@ const PACK_STATE = `(() => {
     activePack: root.querySelector("#lm-pack-current").textContent,
     chips: root.querySelectorAll("#lm-user-chips .lazymod-chip").length,
     scrollable: list.scrollHeight > list.clientHeight + 4,
-    scrolling: list.classList.contains("is-ghost-scrolling"),
-    ghostVisible: ghost.dataset.visible,
-    ghostName: ghost.querySelector(".lazymod-pack-ghost-name")?.textContent || "",
-    centeredName: centered?.querySelector(".lazymod-pack-item-name").textContent || "",
-    centeredSize: nameSize(centered),
-    neighborSize: nameSize(neighbor),
-    neighborOpacity: neighbor ? parseFloat(getComputedStyle(neighbor).opacity) : 1,
+    // The dropdown list has no ghost effects (no extra classes, overlay, or transforms).
+    plainList: !/ghost/.test(list.className) && !list.querySelector(".is-centered, .is-hovered") && !root.querySelector("#lm-pack-ghost") && items.every((item) => getComputedStyle(item).opacity === "1"),
+    ghostOpen: !ghostList.hidden,
   };
 })()`;
 
@@ -129,17 +123,17 @@ async function runSwitcherInputChecks({ open, evaluate, pointer, check, origin }
   await sleep(150);
   const duringListWheel = await evaluate(page, PACK_STATE);
   check(
-    "Pack switcher (real wheel): stays open when the tagger scrolls; wheel over the list scrolls the list with ghost scroll, not the tagger",
+    "Pack switcher (real wheel): stays open when the tagger scrolls (no ghost list while open); the list scrolls natively, not the tagger, with no ghost effects",
     afterBodyWheel.open &&
+      !afterBodyWheel.ghostOpen &&
       listPoint.hits &&
       duringListWheel.open &&
       duringListWheel.listScrollTop !== before.listScrollTop &&
       duringListWheel.bodyScrollTop === before.bodyScrollTop &&
-      duringListWheel.ghostVisible === "true" &&
-      Boolean(duringListWheel.ghostName),
-    { afterBodyWheel: afterBodyWheel.open, listPoint, before: [before.listScrollTop, before.bodyScrollTop], during: [duringListWheel.listScrollTop, duringListWheel.bodyScrollTop, duringListWheel.ghostVisible, duringListWheel.ghostName] },
+      duringListWheel.plainList &&
+      !duringListWheel.ghostOpen,
+    { afterBodyWheel: [afterBodyWheel.open, afterBodyWheel.ghostOpen], listPoint, before: [before.listScrollTop, before.bodyScrollTop], during: [duringListWheel.listScrollTop, duringListWheel.bodyScrollTop, duringListWheel.plainList, duringListWheel.ghostOpen] },
   );
-  await sleep(700);
 
   // Clicks inside the panel keep it open; choosing a pack closes it.
   await realClick("#lm-pack-search");
@@ -147,7 +141,7 @@ async function runSwitcherInputChecks({ open, evaluate, pointer, check, origin }
   const afterInsideClick = await evaluate(page, PACK_STATE);
   const choice = afterInsideClick.items.find((item) => !item.active && item.name.startsWith("Ghost Pack"));
   await evaluate(page, `(() => { const row = ${ROOT}.querySelector('#lm-pack-list [data-pack-id="${choice.id}"]'); const list = row.parentElement; list.scrollTop = row.offsetTop - list.clientHeight / 2; return true; })()`);
-  await sleep(700); // let the ghost overlay fade so it is not under the pointer
+  await sleep(200);
   await realClick(`#lm-pack-list [data-pack-id="${choice.id}"] .lazymod-pack-item-select`);
   const chosen = await waitFor(evaluate, page, PACK_STATE, (state) => !state.open);
   check(
@@ -203,7 +197,7 @@ export async function runPackBrowserChecks(adapters) {
   const byCategory = await search("hub category");
   const none = await search("no-such-pack-anywhere");
   await sleep(100);
-  const noGhostWhileSearching = (await evaluate(page, PACK_STATE)).ghostVisible === "false";
+  const noGhostWhileSearching = !(await evaluate(page, PACK_STATE)).ghostOpen;
   await evaluate(page, setSearch(""));
   const cleared = await evaluate(page, PACK_STATE);
   check(
@@ -217,30 +211,22 @@ export async function runPackBrowserChecks(adapters) {
     { byName: byName.items, byTag: byTag.items, bySource: bySource.items.map((item) => item.name), byCategory: byCategory.items, none: none.status },
   );
 
-  // Ghost scroll.
-  // Right after the searches: their scroll resets must not swallow this scroll.
+  // The opened dropdown scrolls natively: no ghost effects, no wheel capture.
   await evaluate(page, SCROLL_LIST_TO_MIDDLE);
   await sleep(250);
   const scrolling = await evaluate(page, PACK_STATE);
   const wheel = await evaluate(page, WHEEL_NOT_CAPTURED);
-  await sleep(900);
+  check(
+    "Pack switcher: the opened list scrolls natively, with no ghost effects, and wheel events are never captured",
+    scrolling.scrollable && scrolling.listScrollTop > 0 && scrolling.plainList && !scrolling.ghostOpen && !wheel.inList && !wheel.onPage,
+    { scrollable: scrolling.scrollable, listScrollTop: scrolling.listScrollTop, plainList: scrolling.plainList, ghostOpen: scrolling.ghostOpen, wheel },
+  );
+
+  // Wheel over the closed switcher: the floating ghost list, and its setting.
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-pack-search").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true, composed: true })); return true; })()`);
+  await waitFor(evaluate, page, PACK_STATE, (state) => !state.open);
+  await runGhostScrollChecks(adapters, page, { PACK_STATE, pointOf });
   const idle = await evaluate(page, PACK_STATE);
-  check(
-    "Ghost scroll: scrolling the list shows the centered pack larger in a ghost overlay, with dimmed neighbors",
-    scrolling.scrollable &&
-      scrolling.scrolling &&
-      scrolling.ghostVisible === "true" &&
-      Boolean(scrolling.centeredName) &&
-      scrolling.ghostName === scrolling.centeredName &&
-      scrolling.centeredSize > scrolling.neighborSize &&
-      scrolling.neighborOpacity < 0.8,
-    { scrolling: { ...scrolling, items: scrolling.items.length } },
-  );
-  check(
-    "Ghost scroll: the overlay fades out after the idle timeout, and wheel events are never captured",
-    !idle.scrolling && idle.ghostVisible === "false" && !idle.centeredName && !wheel.inList && !wheel.onPage,
-    { scrolling: idle.scrolling, ghost: idle.ghostVisible, wheel },
-  );
 
   // Uninstall the active pack: falls back to its neighbor; Undo restores it.
   const target = rowIdByName(idle, "Ghost Pack 05");

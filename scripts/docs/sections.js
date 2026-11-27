@@ -36,7 +36,7 @@ export const RELEASES = [
     highlights: [
       "**Focus Mode** (`Alt+A`): a full-screen workspace with the image, your tags, and the palette side by side. Mute tags without deleting them, sort and clean up the list, and arrange the panels the way you like.",
       "**Assets tab**: browse and install community tag packs from File Hub in one click, preview what's inside first, and get updates when a newer version is published.",
-      "**Pack switcher**: one searchable list of all your packs. Type a pack name or any tag inside a pack to find it, and uninstall packs with Undo.",
+      "**Pack switcher**: one searchable list of all your packs. Type a pack name or any tag inside a pack to find it, and uninstall packs with Undo. Or scroll the mouse wheel over it to flip through packs without opening the list (you can turn this off in Settings).",
       "**AI suggestions in the palette**: the AI button puts suggested tags in an \"AI\" group at the start of your groups, in the tagger and in Focus Mode.",
       "**Tag separator per site**: sites that separate tags with commas (or anything else) now work as expected.",
       "**Reduce visual effects** for slower computers, and smoother clicks and dragging on the title bar.",
@@ -112,6 +112,11 @@ export const DOCS_SECTIONS = [
       {
         p: "**Uninstall** (in the list, or in the palette header) removes a pack right away. Changed your mind? Click **Undo** within a few seconds.",
       },
+      { heading: "Flip through packs with the mouse wheel", since: "1.2.0" },
+      {
+        p: "Without opening the list, scroll the mouse wheel over the pack selector. A small floating list of your packs appears right there. The pack under the pointer is highlighted; click it to switch. Move the pointer away, wait a moment, press `Esc`, or click elsewhere to close it without switching.",
+      },
+      { p: "Don't want it? Turn off **Settings › Interface › Ghost scroll on the pack selector**. The wheel then scrolls the tagger as usual." },
       { heading: "Import, export, and edit packs" },
       {
         list: [

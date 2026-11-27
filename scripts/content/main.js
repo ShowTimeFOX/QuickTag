@@ -23,6 +23,7 @@ import { restoreWindowLayout, updateDockPageSpace } from "./ui/window-layout.js"
 import { initTabs } from "./ui/tabs.js";
 import { initPalettePanel, renderPalettePanel } from "./ui/palette-panel.js";
 import { initPackBrowser } from "./ui/pack-browser.js";
+import { initPackGhostScroll } from "./ui/pack-ghost-scroll.js";
 import { initAiSettings } from "./ui/ai-settings.js";
 import { initQuickActions } from "./ui/quick-actions.js";
 import { initSettingsPanel, renderActiveSiteBadge } from "./ui/settings-panel.js";
@@ -74,6 +75,7 @@ async function main() {
   initPalettePanel();
   // After the palette panel: its storage listener updates state.paletteData first.
   initPackBrowser();
+  await initPackGhostScroll();
   await initAiSettings();
   initQuickActions();
   initSettingsPanel();

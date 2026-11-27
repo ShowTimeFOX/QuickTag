@@ -1,18 +1,16 @@
 // Pack switcher (Tagging view): a button showing the active pack opens a
 // dropdown panel to search all installed packs, switch packs, and uninstall
-// with undo. While the list scrolls, a "ghost" overlay names the pack at the
-// center and neighbors are dimmed ("ghost scroll").
+// with undo. The list scrolls natively; the wheel-over-switcher "ghost
+// scroll" list is a separate feature (pack-ghost-scroll.js).
 //
 // This replaces a native <select>: browsers close a native select popup
 // whenever an ancestor scrolls (e.g. a wheel over the select scrolling the
-// tagger body), and its popup cannot show ghost scroll. The panel closes only
+// tagger body). The panel closes only
 // on a pack choice, Escape, the switcher button, or a pointerdown outside it
 // (checked with composedPath(), since the tagger lives in a shadow root).
 //
-// Ghost scroll only listens to the list's own `scroll` events (passive, no
-// wheel handling, no preventDefault). The list uses `overscroll-behavior:
-// contain`, so scrolling through packs never scrolls the tagger or page.
-// Motion is CSS-only and disabled under prefers-reduced-motion.
+// The list has no wheel handling; `overscroll-behavior: contain` keeps
+// scrolling through packs from scrolling the tagger or page.
 import { LOG_PREFIX, STORAGE_KEYS } from "../../shared/constants.js";
 import { onLocalStorageChange } from "../../shared/storage.js";
 import { state } from "../state.js";
@@ -20,7 +18,6 @@ import { emit, on, EVENTS } from "../events.js";
 import { selectPack } from "../palettes.js";
 import { loadHubInstalls } from "../file-hub.js";
 import { UNDO_TIMEOUT_MS, hubRecordsByPack, searchInstalledPacks, uninstallPack, undoUninstall } from "../pack-manager.js";
-import { attachGhostScroll } from "../../shared/ghost-scroll.js";
 import { $, shell } from "./shell.js";
 import { el } from "./dom.js";
 
@@ -38,7 +35,6 @@ const view = {
 };
 
 let elements;
-let ghostScroll;
 
 function plural(count, word) {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -136,14 +132,13 @@ function render() {
   elements.current.textContent = activePack ? activePack.name : "No tag packs";
   elements.toggle.title = activePack ? `${activePack.name}: switch, search, or uninstall tag packs` : "No tag packs installed";
   elements.uninstall.disabled = !activePack || view.busy;
-  elements.uninstall.title = activePack ? `Uninstall ${activePack.name} (Undo is available for 10 seconds)` : "No tag pack to uninstall";
+  elements.uninstall.title = activePack ? `Uninstall ${activePack.name} (Undo is available)` : "No tag pack to uninstall";
   const query = elements.search.value;
   const results = searchInstalledPacks(query, view.hubRecords);
   elements.list.replaceChildren(...results.map(packRow));
   elements.list.dataset.total = String(Object.keys(packs).length);
   renderCountStatus(results.length, Object.keys(packs).length, query.trim());
   renderNotice();
-  ghostScroll.end();
 }
 
 async function refreshHubRecords() {
@@ -153,15 +148,6 @@ async function refreshHubRecords() {
     console.warn(`${LOG_PREFIX} Could not read File Hub install records.`, error);
   }
   render();
-}
-
-// --- Ghost scroll (shared/ghost-scroll.js) ---
-
-function renderGhost(item, index, total) {
-  return [
-    el("span", { className: "lazymod-pack-ghost-name", text: item.querySelector(".lazymod-pack-item-name")?.textContent || "" }),
-    el("span", { className: "lazymod-pack-ghost-position", text: `${index + 1} / ${total}` }),
-  ];
 }
 
 // --- Actions ---
@@ -214,7 +200,7 @@ async function handleUndo() {
 function revealActiveRow() {
   const row = elements.list.querySelector(".lazymod-pack-item.active");
   if (!row) return;
-  ghostScroll.setScrollTop(row.offsetTop - (elements.list.clientHeight - row.offsetHeight) / 2);
+  elements.list.scrollTop = row.offsetTop - (elements.list.clientHeight - row.offsetHeight) / 2;
 }
 
 function handleOutsidePointer(event) {
@@ -229,7 +215,6 @@ function setOpen(open, { restoreFocus = false } = {}) {
   elements.toggle.setAttribute("aria-expanded", String(open));
   if (!open) {
     document.removeEventListener("pointerdown", handleOutsidePointer, true);
-    ghostScroll.end();
     if (restoreFocus) elements.toggle.focus({ preventScroll: true });
     return;
   }
@@ -274,12 +259,10 @@ export function initPackBrowser() {
     browser: $("#lm-pack-browser"),
     search: $("#lm-pack-search"),
     list: $("#lm-pack-list"),
-    ghost: $("#lm-pack-ghost"),
     status: $("#lm-pack-status"),
     notice: $("#lm-pack-notice"),
     uninstall: $("#lm-uninstall-pack"),
   };
-  ghostScroll = attachGhostScroll({ list: elements.list, ghost: elements.ghost, renderGhost });
   elements.browser.dataset.busy = "false";
 
   elements.toggle.addEventListener("click", () => setOpen(!view.open));
@@ -292,7 +275,7 @@ export function initPackBrowser() {
   elements.browser.addEventListener("keydown", handlePanelKeydown);
   elements.search.addEventListener("input", () => {
     view.error = "";
-    ghostScroll.setScrollTop(0);
+    elements.list.scrollTop = 0;
     render();
   });
   elements.search.addEventListener("keydown", (event) => {

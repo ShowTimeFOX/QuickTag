@@ -198,6 +198,8 @@ try {
           ],
         },
       ]),
+    move: (context, x, y) =>
+      perform(context, [{ type: "pointer", id: "mouse", parameters: { pointerType: "mouse" }, actions: [{ type: "pointerMove", x: Math.round(x), y: Math.round(y) }] }]),
     wheel: (context, x, y, deltaY) =>
       perform(context, [
         { type: "pointer", id: "mouse", parameters: { pointerType: "mouse" }, actions: [{ type: "pointerMove", x: Math.round(x), y: Math.round(y) }] },

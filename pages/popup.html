@@ -127,7 +127,6 @@
           />
           <div class="lazymod-pack-list-wrap">
             <div class="lazymod-pack-list" id="lm-pack-list" role="list" aria-label="Installed tag packs" tabindex="0"></div>
-            <div class="lazymod-pack-ghost" id="lm-pack-ghost" aria-hidden="true"></div>
           </div>
           <div class="lazymod-pack-status" id="lm-pack-status" role="status" aria-live="polite"></div>
         </div>
@@ -337,6 +336,16 @@
             <span>On</span>
           </label>
         </div>
+        <div class="lazymod-settings-control lazymod-settings-control-separated">
+          <div>
+            <strong>Ghost scroll on the pack selector</strong>
+            <p>Scroll the mouse wheel over the tag pack selector to flip through your packs in a floating list, then click one to switch.</p>
+          </div>
+          <label class="lazymod-checkbox-option" for="lm-ghost-scroll">
+            <input type="checkbox" id="lm-ghost-scroll" checked />
+            <span>On</span>
+          </label>
+        </div>
         <div class="lazymod-settings-control">
           <div>
             <strong>Window scale</strong>
@@ -500,4 +509,8 @@
       </div>
     </div>
   </div>
+  <!-- Ghost scroll: floating pack list opened by the mouse wheel over the pack
+       switcher (scripts/content/ui/pack-ghost-scroll.js). A direct child of the
+       window, so the scrolling tab views never clip it. -->
+  <div class="lazymod-ghost-list" id="lm-pack-ghost-list" role="listbox" aria-label="Tag packs" hidden></div>
 </div>

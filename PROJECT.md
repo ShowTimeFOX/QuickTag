@@ -145,12 +145,12 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `data/character.json` | Default Character Portrait tag pack. |
 | `data/anthro.json` | Default Anthro & Fursuit tag pack. |
-| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema, presets, and layout editing), `file-hub.js` (File Hub catalogue and pack validation), `ghost-scroll.js` (ghost scroll for the pack switcher), and `validation.js`. No DOM access at module level. |
+| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema, presets, and layout editing), `file-hub.js` (File Hub catalogue and pack validation), and `validation.js`. No DOM access at module level. |
 | `scripts/background.js` | Background entry module; registers event listeners. |
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
 | `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js` (tag palettes and the "AI" group), `chips.js`, `ai-settings.js` (AI threshold), `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js` (tag palettes and the "AI" group), `chips.js`, `ai-settings.js` (AI threshold), `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack switcher dropdown: search, uninstall), `pack-ghost-scroll.js` (wheel-over-switcher ghost scroll list and its setting); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/about-page.js` | About page module: shows the installed version (`chrome.runtime.getManifest()`). |
 | `scripts/docs-page.js` | Docs page module: sidebar, one section at a time, `#section` and `#section/question` addresses, previous/next links. |
@@ -401,14 +401,14 @@ if you need help.
 - **Pack switcher** (`ui/pack-browser.js`). The Tagging view's pack selector
   is a button (`#lm-pack-switcher`) that opens a dropdown panel, not a native
   `<select>`: browsers close a native select popup whenever an ancestor
-  scrolls (a wheel over the select scrolls `#lazymod-body`), and its popup
-  cannot show ghost scroll. The panel closes on a pack choice, `Escape`, the
+  scrolls (a wheel over the select scrolls `#lazymod-body`). The panel
+  closes on a pack choice, `Escape`, the
   switcher button, or a `pointerdown` outside it; the outside check uses
   `composedPath()` because document listeners see shadow-DOM clicks
   retargeted to the host. The list is rendered while closed too, so the label
-  and list follow every palette change. Scrolls made by code (centering the
-  active pack on open, resetting on search) are recognized by their target
-  position and do not start ghost scroll. Focus Mode's palette keeps a native
+  and list follow every palette change. The list scrolls natively, with no
+  wheel handling or ghost effects (`overscroll-behavior: contain` keeps it
+  from scrolling the tagger). Focus Mode's palette keeps a native
   `<select>`; nothing around it scrolls.
 - **Uninstall and pack search** (`content/pack-manager.js`, shown by
   `ui/pack-browser.js` and the Assets cards). `palettes.removePack` deletes a
@@ -424,15 +424,26 @@ if you need help.
   through `paletteChanged` (sources `packs` and `assets`) and storage change
   events. Search matches case-insensitive substrings against a per-pack index
   cached by pack object (a `WeakMap`), and never modifies packs.
-- **Ghost scroll** (`shared/ghost-scroll.js`). The pack list listens only to its own passive `scroll`
-  events (no wheel handlers, no `preventDefault`), so page scrolling is never
-  captured; `overscroll-behavior: contain` keeps a wheel at the end of the
-  list from scrolling the tagger body. While it scrolls, the item nearest the list's center is marked,
-  named in an overlay, and shown larger, and the overlay fades out 500 ms
-  after the last scroll event. Sizes change with `transform` only and the
-  list sets `overflow-anchor: none`: a layout change would move the scroll
-  position, fire another scroll event, and keep the overlay from fading.
-  Transitions are disabled under `prefers-reduced-motion`.
+- **Ghost scroll** (`ui/pack-ghost-scroll.js`). A mouse wheel over the
+  closed pack switcher opens a floating pack list (`#lm-pack-ghost-list`)
+  right over it, with the active pack's row on the switcher; hovering alone
+  does nothing, and the dropdown stays closed. The list is a direct child of
+  the tagger window (so the scrolling tab views never clip it), positioned
+  from JS in the window's unscaled coordinates. Wheel input moves it by whole
+  rows (50 px of wheel delta per pack, so touchpad deltas add up) and is
+  handled with `preventDefault` only while ghost scroll is on and the
+  dropdown is closed, so the tagger body never scrolls under it. The pack
+  under the pointer gets `is-hovered` from `elementFromPoint` on pointer
+  moves and scrolls, because `:hover` does not follow content scrolling
+  under a still pointer; a click selects it (`paletteChanged`, source
+  `ghost-scroll`). Leaving the list and the switcher, or 2 s without wheel or
+  pointer movement, fades it out (`is-closing`: opacity, 150 ms ease-out); a
+  choice, `Escape`, a `pointerdown` outside, opening the dropdown, hiding the
+  extension, or turning the setting off close it at once. Setting:
+  **Settings › Interface › Ghost scroll on the pack selector**
+  (`lazymod_ghost_scroll`, on unless `false`), applied immediately and in
+  every tab through storage change events; when it is off, wheel events over
+  the switcher are left alone.
 
 ## Browser loading notes
 
@@ -502,7 +513,8 @@ node tools/browser-tests/firefox.mjs
 
 They cover loading, the strict-CSP page, the tagger, Focus Mode, the Assets
 tab (against a local mock File Hub), the pack switcher (real mouse and wheel
-input, search, ghost scroll, uninstall and undo), the background script, the popup, and
+input, search, native dropdown scrolling, wheel ghost scroll and its setting,
+uninstall and undo), the background script, the popup, and
 the editor. Then load the repository root in each target
 browser for the manual checks listed in that README. Full AI analysis testing
 requires a running ComfyUI instance with the WD14 node installed.

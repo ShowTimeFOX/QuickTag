@@ -59,7 +59,8 @@ scripts/
       focus-mode.js     Focus Mode controller; focus-*.js are its panels (they get an `api`, never import it)
       focus-layout-editor.js  Customize: move/resize panels, save as new layout
       assets-panel.js   Assets tab (File Hub browse/install)
-      pack-browser.js   pack switcher dropdown: search, ghost scroll, uninstall with undo
+      pack-browser.js   pack switcher dropdown: search, uninstall with undo (native scrolling)
+      pack-ghost-scroll.js  wheel over the closed switcher: floating pack list + its Settings toggle
       visual-effects.js Reduce visual effects (class on the shadow host)
       ai-settings.js    AI threshold control (Settings)
   background.js         background entry (registers listeners synchronously)
@@ -68,7 +69,6 @@ scripts/
     constants.js        storage keys, message actions, defaults — single source of truth
     shortcuts.js        shortcut match/format (macOS Option fallback); focus-layout.js = layout JSON schema
     file-hub.js         File Hub catalogue/pack validation (unsafe keys, limits, sha256)
-    ghost-scroll.js     ghost scroll (pack switcher); DOM only inside its functions
   editor/               palette editor components
   docs/                 Docs page content (sections.js: plain data, user language) and render.js
   extension-popup.js, palette-editor.js, about-page.js, docs-page.js, permissions-page.js   page entry modules (<script type="module">)

@@ -222,6 +222,11 @@ try {
       }
       await mouse(handle, { type: "mouseReleased", x: x2, y: y2, button: "left", buttons: 0, clickCount: 1 });
     },
+    /** Moves the mouse without pressing a button (hover). */
+    async move(handle, x, y) {
+      await send("Target.activateTarget", { targetId: handle.targetId });
+      await mouse(handle, { type: "mouseMoved", x, y });
+    },
     async wheel(handle, x, y, deltaY) {
       await send("Target.activateTarget", { targetId: handle.targetId });
       await mouse(handle, { type: "mouseMoved", x, y });
