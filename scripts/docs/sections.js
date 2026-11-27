@@ -32,7 +32,7 @@
 export const RELEASES = [
   {
     version: "1.2.0",
-    label: "Upcoming",
+    label: "November 2026",
     highlights: [
       "**Focus Mode** (`Alt+A`): a full-screen workspace with the image, your tags, and the palette side by side. Mute tags without deleting them, sort and clean up the list, and arrange the panels the way you like.",
       "**Assets tab**: browse and install community tag packs from File Hub in one click, preview what's inside first, and get updates when a newer version is published.",
