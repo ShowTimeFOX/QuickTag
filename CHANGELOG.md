@@ -141,6 +141,13 @@
   and theme styles are inserted with their content.
 - Importing a tag pack threw an error after the import and did not reset the
   file picker, so selecting the same file again did nothing.
+- Title bar: clicking Ghost Mode (or another title bar button) on its icon
+  could start dragging the window. At a window scale other than 100% the
+  window then jumped sideways on the slightest movement, so the button moved
+  out from under the pointer and the click was lost. Buttons never start a
+  drag now, a drag needs a few pixels of movement, the window follows the
+  pointer exactly at any scale, and a release outside the page no longer
+  leaves the window stuck to the cursor.
 - Chrome: tag groups, categories, and packs switched to alphabetical order
   after the first save, because Chrome's storage returns object keys sorted.
   Their order is now saved with them; site profile order is saved too (it

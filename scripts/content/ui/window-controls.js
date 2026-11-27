@@ -187,32 +187,80 @@ function initResize() {
   document.addEventListener("pointercancel", endResize);
 }
 
+/** Movement (px) before a press on the title bar becomes a drag. */
+const DRAG_THRESHOLD_PX = 4;
+/** Controls in the title bar; a press on them (or their icons) never drags. */
+const NON_DRAG_TARGETS = "button, a, input, select, textarea, label, [role='button']";
+
+/**
+ * Moves the floating window by its title bar.
+ * - Presses on controls never start a drag. The check walks the event path,
+ *   because a click on a button's icon targets the <svg>/<path>, not the
+ *   button (before, that started a drag and clicks on Ghost or Focus Mode
+ *   could be lost).
+ * - A drag starts only after DRAG_THRESHOLD_PX, so a click never moves it.
+ * - Positions use the window's CSS left/top, not its scaled bounding box:
+ *   with `transform: scale()` and `transform-origin: top right`, the box is
+ *   offset from `left`, which made the window jump on the first move.
+ * - Pointer capture, and ending on pointercancel / lost capture / a move with
+ *   no button pressed, keep a release outside the page from leaving it stuck
+ *   to the cursor.
+ */
 function initDragging() {
   const { windowEl } = shell;
   const handle = $("#lazymod-drag-handle");
-  let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
+  let drag = null;
 
-  handle.addEventListener("mousedown", (event) => {
-    if (["BUTTON", "INPUT", "SELECT"].includes(event.target.tagName) || isWindowDocked()) return;
-    isDragging = true;
-    const rect = windowEl.getBoundingClientRect();
-    offsetX = event.clientX - rect.left;
-    offsetY = event.clientY - rect.top;
+  const endDrag = (event) => {
+    if (!drag || (event && event.pointerId !== drag.pointerId)) return;
+    const { moved, pointerId } = drag;
+    drag = null;
+    windowEl.classList.remove("is-dragging");
+    if (handle.hasPointerCapture?.(pointerId)) handle.releasePointerCapture(pointerId);
+    if (moved) persistFloatingPosition();
+  };
+
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || !event.isPrimary || isWindowDocked()) return;
+    if (event.composedPath().some((node) => node instanceof Element && node !== handle && handle.contains(node) && node.matches(NON_DRAG_TARGETS))) return;
+    const computed = getComputedStyle(windowEl);
+    drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: parseFloat(computed.left) || 0,
+      top: parseFloat(computed.top) || 0,
+      moved: false,
+    };
   });
 
-  document.addEventListener("mousemove", (event) => {
-    if (!isDragging || isWindowDocked()) return;
-    windowEl.style.left = `${event.clientX - offsetX}px`;
-    windowEl.style.top = `${event.clientY - offsetY}px`;
+  // On document (like the old mousemove), so a fast move that leaves the bar
+  // before the threshold still starts the drag; capture takes over after it.
+  document.addEventListener("pointermove", (event) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    if (event.buttons === 0 || isWindowDocked()) {
+      endDrag(event);
+      return;
+    }
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.moved) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      drag.moved = true;
+      windowEl.classList.add("is-dragging");
+      try {
+        handle.setPointerCapture(event.pointerId);
+      } catch {
+        // Synthetic pointers cannot be captured; moves inside the bar still work.
+      }
+    }
+    windowEl.style.left = `${drag.left + dx}px`;
+    windowEl.style.top = `${drag.top + dy}px`;
   });
 
-  document.addEventListener("mouseup", () => {
-    if (!isDragging) return;
-    isDragging = false;
-    persistFloatingPosition();
-  });
+  document.addEventListener("pointerup", endDrag);
+  document.addEventListener("pointercancel", endDrag);
+  handle.addEventListener("lostpointercapture", endDrag);
 }
 
 export function initWindowControls() {

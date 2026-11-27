@@ -282,6 +282,12 @@ if you need help.
   visible tags. Focus Mode palette chips add or remove tags (no muting; mute
   on the badges). In the tagger, the Tagging view is a flex column and the
   chips take the free height (`#lm-user-chips` `flex: 1 1 0`).
+- **Title bar drag** (`initDragging` in `ui/window-controls.js`): pointer
+  events; presses on controls (checked along the event path, so a button's
+  icon counts) never drag; a drag starts after 4 px; positions come from the
+  window's CSS `left`/`top` (its bounding box is offset by `transform:
+  scale()` with `transform-origin: top right`); pointer capture, and ending
+  on `pointercancel`, lost capture, or a move with no button pressed.
 - **Window layout.** The tagger window is a flex column: the title bar and
   the tab strip (`#lm-main-tabs`) are `flex: 0 0 auto` and never shrink (the
   strip's `overflow-x: auto` would otherwise let it collapse to its padding in

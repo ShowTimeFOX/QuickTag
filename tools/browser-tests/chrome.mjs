@@ -11,6 +11,7 @@ import { runPackBrowserChecks } from "./pack-checks.mjs";
 import { runAboutChecks } from "./about-checks.mjs";
 import { runSettingsChecks, runPermissionPageChecks } from "./settings-checks.mjs";
 import { runPaletteChecks } from "./palette-checks.mjs";
+import { runTitleBarChecks } from "./titlebar-checks.mjs";
 
 const chromeExe = browserPath("chrome");
 const profileDir = makeTempDir("chrome-profile");
@@ -211,6 +212,16 @@ try {
       await mouse(handle, { type: "mousePressed", x, y, button: "left", clickCount: 1 });
       await mouse(handle, { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
     },
+    /** Press at (x1, y1), move in a few steps, release at (x2, y2). */
+    async drag(handle, x1, y1, x2, y2) {
+      await send("Target.activateTarget", { targetId: handle.targetId });
+      await mouse(handle, { type: "mouseMoved", x: x1, y: y1 });
+      await mouse(handle, { type: "mousePressed", x: x1, y: y1, button: "left", buttons: 1, clickCount: 1 });
+      for (let step = 1; step <= 4; step += 1) {
+        await mouse(handle, { type: "mouseMoved", x: x1 + ((x2 - x1) * step) / 4, y: y1 + ((y2 - y1) * step) / 4, button: "left", buttons: 1 });
+      }
+      await mouse(handle, { type: "mouseReleased", x: x2, y: y2, button: "left", buttons: 0, clickCount: 1 });
+    },
     async wheel(handle, x, y, deltaY) {
       await send("Target.activateTarget", { targetId: handle.targetId });
       await mouse(handle, { type: "mouseMoved", x, y });
@@ -230,6 +241,7 @@ try {
   await runPackBrowserChecks(adapters);
   await runSettingsChecks(adapters);
   await runPaletteChecks(adapters);
+  await runTitleBarChecks(adapters);
 
   // Popup page
   const popup = await openTab(`chrome-extension://${extensionId}/pages/extension-popup.html`, "popup");

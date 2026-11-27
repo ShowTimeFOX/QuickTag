@@ -13,6 +13,7 @@ import { runPackBrowserChecks } from "./pack-checks.mjs";
 import { runAboutChecks } from "./about-checks.mjs";
 import { runSettingsChecks, runPermissionPageChecks } from "./settings-checks.mjs";
 import { runPaletteChecks } from "./palette-checks.mjs";
+import { runTitleBarChecks } from "./titlebar-checks.mjs";
 
 const firefoxExe = browserPath("firefox");
 const profileDir = makeTempDir("firefox-profile");
@@ -183,6 +184,20 @@ try {
           actions: [{ type: "pointerMove", x: Math.round(x), y: Math.round(y) }, { type: "pointerDown", button: 0 }, { type: "pointerUp", button: 0 }],
         },
       ]),
+    drag: (context, x1, y1, x2, y2) =>
+      perform(context, [
+        {
+          type: "pointer",
+          id: "mouse",
+          parameters: { pointerType: "mouse" },
+          actions: [
+            { type: "pointerMove", x: Math.round(x1), y: Math.round(y1) },
+            { type: "pointerDown", button: 0 },
+            { type: "pointerMove", x: Math.round(x2), y: Math.round(y2), duration: 120 },
+            { type: "pointerUp", button: 0 },
+          ],
+        },
+      ]),
     wheel: (context, x, y, deltaY) =>
       perform(context, [
         { type: "pointer", id: "mouse", parameters: { pointerType: "mouse" }, actions: [{ type: "pointerMove", x: Math.round(x), y: Math.round(y) }] },
@@ -196,6 +211,7 @@ try {
   await runPackBrowserChecks(adapters);
   await runSettingsChecks(adapters);
   await runPaletteChecks(adapters);
+  await runTitleBarChecks(adapters);
 
   // BiDi refuses direct navigation to moz-extension:// URLs, so a web page
   // navigates there itself (the test copy exposes these pages as WAR).

@@ -36,10 +36,10 @@ $env:FIREFOX_PATH = "C:\path\to\firefox.exe"
 | File | Purpose |
 | --- | --- |
 | `pages.mjs` | Local HTTP server with a plain page, a strict-CSP page (`default-src 'none'` and Trusted Types), tall and wide SVG images for the Focus Mode Fit checks, and a mock File Hub under `/hub/` (`hubState` lets checks change versions and fail requests), plus the probe expressions evaluated in pages. |
-| `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs`, `pack-checks.mjs`, `settings-checks.mjs`, `palette-checks.mjs`, `about-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab, pack browser, site profiles / tag separator / reduced effects / permission page, palette order / AI group / Flat view / full height, About page demos). `pack-checks.mjs` runs after the Assets checks (it uses the installed mock packs) and ends with only the `default-character` pack, which the editor check opens. |
+| `checks.mjs`, `focus-checks.mjs`, `assets-checks.mjs`, `pack-checks.mjs`, `settings-checks.mjs`, `palette-checks.mjs`, `titlebar-checks.mjs`, `about-checks.mjs` | Checks shared by both runners (layout fixes, Focus Mode, Assets tab, pack browser, site profiles / tag separator / reduced effects / permission page, palette order / AI group / Flat view / full height, title bar clicks and drag at 90% scale, About page demos). `pack-checks.mjs` runs after the Assets checks (it uses the installed mock packs) and ends with only the `default-character` pack, which the editor check opens. |
 | `chrome.mjs` | Starts Chrome with `--remote-debugging-pipe --enable-unsafe-extension-debugging` and loads the test copy with the DevTools `Extensions.loadUnpacked` command (branded Chrome no longer accepts `--load-extension`). |
 | `firefox.mjs` | Starts Firefox with WebDriver BiDi and installs a temporary add-on with `webExtension.install`. |
-| `pointer` adapter | Both runners pass real (trusted) mouse clicks and wheel input to the checks: DevTools `Input.dispatchMouseEvent` in Chrome, BiDi `input.performActions` in Firefox. The pack switcher checks use it. |
+| `pointer` adapter | Both runners pass real (trusted) mouse clicks, drags (press, move, release), and wheel input to the checks: DevTools `Input.dispatchMouseEvent` in Chrome, BiDi `input.performActions` in Firefox. The pack switcher checks use it. |
 | `config.mjs` | Browser paths, temporary directories, the test copies (`createTestCopy`), and result reporting. |
 
 - Browser profiles are created in the OS temp directory and deleted afterwards.

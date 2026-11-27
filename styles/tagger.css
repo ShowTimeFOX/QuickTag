@@ -2608,3 +2608,10 @@
   min-height: 150px;
   max-height: none;
 }
+
+/* Title bar drag (window-controls.js): only after the drag threshold. */
+.lazymod-float-window.is-dragging,
+.lazymod-float-window.is-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
