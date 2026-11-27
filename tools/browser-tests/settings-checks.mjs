@@ -127,6 +127,71 @@ export async function runSettingsChecks({ open, evaluate, check, origin }) {
       effectsOff.buttonTransition !== "0s",
     { effectsBefore, effectsOn, effectsFocus, synced: synced.hostClass, effectsOff },
   );
+
+  await runDockedProfileSummaryCheck({ evaluate, check }, page);
+}
+
+/**
+ * Settings › Current page profile while docked (narrow): the Matched profile
+ * and URL pattern rows (labels and values) stay inside the summary box, and
+ * nothing in it scrolls horizontally. The profile here has a long generated
+ * URL pattern; a very long profile name is tried too.
+ */
+const SUMMARY_LAYOUT = `(() => {
+  const root = ${ROOT};
+  const win = root.querySelector("#lazymod-window");
+  const summary = root.querySelector(".lazymod-settings-summary");
+  const box = summary.getBoundingClientRect();
+  const style = getComputedStyle(summary);
+  const inner = { left: box.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft), right: box.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight) };
+  const view = root.querySelector("#lm-view-sites").getBoundingClientRect();
+  const parts = ["#lm-settings-profile", "#lm-settings-pattern"].flatMap((id) => {
+    const value = root.querySelector(id);
+    const row = value.closest(".lazymod-settings-row");
+    return [row, row.firstElementChild, value].map((element) => {
+      const rect = element.getBoundingClientRect();
+      return { id: id + (element === row ? " row" : element === value ? " value" : " label"), left: Math.round(rect.left * 10) / 10, right: Math.round(rect.right * 10) / 10, inside: rect.left >= inner.left - 0.5 && rect.right <= inner.right + 0.5, scrolls: element.scrollWidth > element.clientWidth + 1 && element !== value };
+    });
+  });
+  return {
+    docked: win.classList.contains("docked"),
+    scale: root.querySelector("#lm-scale-slider").value,
+    summary: { left: Math.round(inner.left), right: Math.round(inner.right), scrolls: summary.scrollWidth > summary.clientWidth + 1, inView: box.left >= view.left - 0.5 && box.right <= view.right + 0.5 },
+    viewScrolls: root.querySelector("#lm-view-sites").scrollWidth > root.querySelector("#lm-view-sites").clientWidth + 1,
+    pattern: root.querySelector("#lm-settings-pattern").textContent,
+    profile: root.querySelector("#lm-settings-profile").textContent,
+    parts,
+  };
+})()`;
+const setScale = (value) => `(() => {
+  const slider = ${ROOT}.querySelector("#lm-scale-slider");
+  slider.value = ${JSON.stringify(String(value))};
+  slider.dispatchEvent(new Event("input", { bubbles: true }));
+  slider.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+})()`;
+const setDocked = (docked) => `(() => { const root = ${ROOT}; if (root.querySelector("#lazymod-window").classList.contains("docked") !== ${docked}) root.querySelector("#lm-dock-btn").click(); return true; })()`;
+const fits = (layout) => layout.docked && layout.parts.every((part) => part.inside && !part.scrolls) && !layout.summary.scrolls && layout.summary.inView && !layout.viewScrolls;
+
+async function runDockedProfileSummaryCheck({ evaluate, check }, page) {
+  await evaluate(page, SHOW_SETTINGS);
+  await evaluate(page, setDocked(true));
+  await sleep(300);
+  const docked = await evaluate(page, SUMMARY_LAYOUT);
+  await evaluate(page, setScale(1.3));
+  await sleep(300);
+  const dockedLarge = await evaluate(page, SUMMARY_LAYOUT);
+  // A very long profile name (display only; nothing is saved).
+  await evaluate(page, `(() => { ${ROOT}.querySelector("#lm-settings-profile").textContent = "a-very-long-profile-name-without-any-spaces.example.com:8080"; return true; })()`);
+  const longName = await evaluate(page, SUMMARY_LAYOUT);
+  await evaluate(page, setScale(1));
+  await evaluate(page, setDocked(false));
+  await evaluate(page, SHOW_SETTINGS);
+  check(
+    "Settings (docked): Matched profile and URL pattern stay inside the profile summary (no horizontal overflow), also at 130% scale and with a long profile name",
+    docked.pattern.length > 30 && fits(docked) && fits(dockedLarge) && fits(longName),
+    { docked, dockedLarge: { scale: dockedLarge.scale, summary: dockedLarge.summary, bad: dockedLarge.parts.filter((part) => !part.inside || part.scrolls) }, longName: { summary: longName.summary, bad: longName.parts.filter((part) => !part.inside || part.scrolls) } },
+  );
 }
 
 const PERMISSION_STATE = `(() => ({

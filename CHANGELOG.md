@@ -131,6 +131,9 @@
 
 ### Fixed
 
+- Settings › Current page profile: in a docked (narrow) window, the Matched
+  profile and URL pattern values ran past the edge of their box. Long values
+  are now truncated inside it, with the full text in a tooltip.
 - The window buttons, including close (x), no longer shift when the site
   profile badge is long, when a theme decorates the title, or when the page
   sets inherited text styles such as `line-height`, `letter-spacing`, or

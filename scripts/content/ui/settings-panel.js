@@ -22,8 +22,10 @@ export function renderActiveSiteBadge() {
 
 export function renderSettingsUI() {
   const config = getActiveSiteConfig();
-  $("#lm-settings-profile").textContent = state.activeSiteKey;
-  $("#lm-settings-pattern").textContent = config.urlPattern || state.activeSiteKey;
+  const pattern = config.urlPattern || state.activeSiteKey;
+  // Long values are truncated in a narrow window; the tooltip shows them in full.
+  Object.assign($("#lm-settings-profile"), { textContent: state.activeSiteKey, title: state.activeSiteKey });
+  Object.assign($("#lm-settings-pattern"), { textContent: pattern, title: pattern });
   [
     ["#lm-settings-tag-selector", config.tagInputSelector],
     ["#lm-settings-img-selector", config.imgSelector],

@@ -1095,6 +1095,9 @@
 
 .lazymod-settings-summary {
   display: grid;
+  /* minmax(0, …): a long profile name or URL pattern must not widen the
+     column past the box (an auto track grows to the row's min-content). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 4px 0 12px;
   padding: 10px;
@@ -1114,7 +1117,21 @@
 }
 
 .lazymod-settings-row {
+  min-width: 0;
   font-size: 12px;
+}
+
+/* Matched profile / URL pattern: the label keeps its width, the value
+   shrinks and truncates (full text in its tooltip), so a narrow docked
+   window never overflows. */
+.lazymod-settings-row > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.lazymod-settings-row code {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .lazymod-settings-row > span,
