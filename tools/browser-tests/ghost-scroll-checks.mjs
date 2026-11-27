@@ -33,6 +33,14 @@ const GHOST_STATE = `(() => {
     spacers: [...list.querySelectorAll(".lazymod-ghost-spacer")].map((spacer) => spacer.dataset.edge + ":" + Math.round(spacer.getBoundingClientRect().height)),
     borders: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth].map(parseFloat),
     mask: style.maskImage || style.webkitMaskImage || "",
+    // Highlighted pack: scale (from its transform matrix) and stacking, vs. a neighbor.
+    raised: (() => {
+      const item = list.querySelector(".lazymod-ghost-item.is-hovered");
+      if (!item) return null;
+      const scaleOf = (element) => { const transform = getComputedStyle(element).transform; return transform && transform !== "none" ? Number(transform.slice(transform.indexOf("(") + 1).split(",")[0]) : 1; };
+      const neighbor = item.nextElementSibling?.classList.contains("lazymod-ghost-item") ? item.nextElementSibling : item.previousElementSibling;
+      return { scale: scaleOf(item), zIndex: getComputedStyle(item).zIndex, neighborScale: neighbor ? scaleOf(neighbor) : 1 };
+    })(),
     coversSwitcher: !list.hidden && a.top <= b.top + 1 && a.bottom >= b.bottom - 1 && a.left <= b.left + 1 && a.right >= b.right - 1,
     dropdownOpen: !root.querySelector("#lm-pack-browser").hidden,
     activePack: root.querySelector("#lm-pack-current").textContent,
@@ -72,7 +80,7 @@ export async function runGhostScrollChecks({ open, evaluate, pointer, check, ori
   const packs = await evaluate(page, PACK_STATE);
   const names = packs.items.map((item) => item.name);
   const activeIndex = names.indexOf(packs.activePack);
-  // One wheel tick (120 px) is two packs; leave room for two ticks.
+  // One wheel tick is exactly one pack; leave room for a few ticks.
   const direction = activeIndex + 4 <= names.length - 1 ? 1 : -1;
   const bodyBefore = (await ghost()).bodyScrollTop;
   const first = await wheelOpen(120 * direction);
@@ -88,30 +96,51 @@ export async function runGhostScrollChecks({ open, evaluate, pointer, check, ori
       opened.bodyScrollTop === bodyBefore &&
       opened.hovered.length === 1 &&
       opened.hovered[0] === underPointer &&
-      underPointer === names[activeIndex + 2 * direction] &&
-      Math.abs(opened.scrollTop - (activeIndex + 2 * direction) * opened.rowHeight) <= 1 &&
+      underPointer === names[activeIndex + direction] &&
+      Math.abs(opened.scrollTop - (activeIndex + direction) * opened.rowHeight) <= 1 &&
       opened.activePack === packs.activePack,
-    { hovered: opened.hovered, underPointer, expected: names[activeIndex + 2 * direction], scrollTop: opened.scrollTop, rowHeight: opened.rowHeight, activePack: packs.activePack },
+    { hovered: opened.hovered, underPointer, expected: names[activeIndex + direction], scrollTop: opened.scrollTop, rowHeight: opened.rowHeight, activePack: packs.activePack },
   );
   check(
-    "Ghost scroll: the reel has borders on the left and right only, a top-and-bottom fade mask, and spacers above and below the packs",
-    opened.borders[0] === 0 && opened.borders[2] === 0 && opened.borders[1] >= 1 && opened.borders[3] >= 1 && /linear-gradient/.test(opened.mask) && /transparent|rgba\(0, 0, 0, 0\)/.test(opened.mask) && opened.spacers.length === 2 && opened.spacers.every((spacer) => Number(spacer.split(":")[1]) > 0),
-    { borders: opened.borders, mask: opened.mask, spacers: opened.spacers },
+    "Ghost scroll: the reel has borders on the left and right only, a top-and-bottom fade mask, and spacers above and below the packs; the highlighted pack is scaled up a little (1.05) above its neighbors",
+    Boolean(opened.raised) && Math.abs(opened.raised.scale - 1.05) < 0.005 && opened.raised.neighborScale === 1 && Number(opened.raised.zIndex) > 0 &&
+      opened.borders[0] === 0 && opened.borders[2] === 0 && opened.borders[1] >= 1 && opened.borders[3] >= 1 && /linear-gradient/.test(opened.mask) && /transparent|rgba\(0, 0, 0, 0\)/.test(opened.mask) && opened.spacers.length === 2 && opened.spacers.every((spacer) => Number(spacer.split(":")[1]) > 0),
+    { borders: opened.borders, mask: opened.mask, spacers: opened.spacers, raised: opened.raised },
   );
 
-  // More wheel ticks keep sliding packs under the same pointer position.
-  await pointer.wheel(page, first.point.x, first.point.y, 120 * direction);
+  // A bigger single tick (240 px) still moves exactly one pack.
+  await pointer.wheel(page, first.point.x, first.point.y, 240 * direction);
   await sleep(SLIDE_MS);
   const scrolled = await ghost();
   const underPointerAfter = await evaluate(page, itemAt(first.point));
   check(
-    "Ghost scroll: further wheel ticks slide the following packs under the pointer, and the highlight follows live",
-    scrolled.open && scrolled.scrollTop !== opened.scrollTop && scrolled.hovered.length === 1 && scrolled.hovered[0] === underPointerAfter && underPointerAfter === names[activeIndex + 4 * direction],
-    { before: [opened.scrollTop, opened.hovered], after: [scrolled.scrollTop, scrolled.hovered], expected: names[activeIndex + 4 * direction] },
+    "Ghost scroll: each wheel tick moves strictly one pack (also a 240 px tick), and the highlight follows the pack under the pointer",
+    scrolled.open &&
+      Math.abs(scrolled.scrollTop - opened.scrollTop - direction * opened.rowHeight) <= 1 &&
+      scrolled.hovered.length === 1 &&
+      scrolled.hovered[0] === underPointerAfter &&
+      underPointerAfter === names[activeIndex + 2 * direction],
+    { before: [opened.scrollTop, opened.hovered], after: [scrolled.scrollTop, scrolled.hovered], expected: names[activeIndex + 2 * direction] },
   );
 
+  // Touchpad-like micro deltas: below the threshold nothing moves; a burst
+  // that crosses it moves exactly one pack, never two.
+  for (let event = 0; event < 3; event += 1) await pointer.wheel(page, first.point.x, first.point.y, 5 * direction);
+  await sleep(SLIDE_MS);
+  const micro = await ghost();
+  for (let event = 0; event < 8; event += 1) await pointer.wheel(page, first.point.x, first.point.y, 6 * direction);
+  await sleep(SLIDE_MS);
+  const burst = await ghost();
+  const underPointerBurst = await evaluate(page, itemAt(first.point));
+  check(
+    "Ghost scroll: small touchpad deltas add up (no move below the threshold) and a short burst moves exactly one pack",
+    micro.open && Math.abs(micro.scrollTop - scrolled.scrollTop) <= 1 && burst.open && Math.abs(burst.scrollTop - micro.scrollTop - direction * opened.rowHeight) <= 1 && underPointerBurst === names[activeIndex + 3 * direction] && burst.hovered[0] === underPointerBurst,
+    { scrolled: scrolled.scrollTop, micro: micro.scrollTop, burst: burst.scrollTop, rowHeight: opened.rowHeight, underPointerBurst, expected: names[activeIndex + 3 * direction] },
+  );
+  const scrolledForChoice = burst;
+
   // A click selects the highlighted pack and closes the list.
-  const choice = scrolled.hovered[0];
+  const choice = scrolledForChoice.hovered[0];
   await pointer.click(page, first.point.x, first.point.y);
   const chosen = await waitFor(evaluate, page, GHOST_STATE, (state) => !state.open, 2000);
   const afterChoice = await evaluate(page, PACK_STATE);
@@ -123,11 +152,11 @@ export async function runGhostScrollChecks({ open, evaluate, pointer, check, ori
 
   // The first and the last pack can both be scrolled under the pointer (spacers).
   const ends = await wheelOpen(-120);
-  for (let tick = 0; tick < Math.ceil(names.length / 2) + 1; tick += 1) await pointer.wheel(page, ends.point.x, ends.point.y, -120);
+  for (let tick = 0; tick < names.length + 1; tick += 1) await pointer.wheel(page, ends.point.x, ends.point.y, -120);
   await sleep(SLIDE_MS);
   const atFirst = await ghost();
   const firstUnder = await evaluate(page, itemAt(ends.point));
-  for (let tick = 0; tick < Math.ceil(names.length / 2) + 1; tick += 1) await pointer.wheel(page, ends.point.x, ends.point.y, 120);
+  for (let tick = 0; tick < names.length + 1; tick += 1) await pointer.wheel(page, ends.point.x, ends.point.y, 120);
   await sleep(SLIDE_MS);
   const atLast = await ghost();
   const lastUnder = await evaluate(page, itemAt(ends.point));

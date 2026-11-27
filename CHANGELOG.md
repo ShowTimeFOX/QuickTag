@@ -42,9 +42,10 @@
   uninstalled, the next one is selected. The opened list scrolls natively.
 - Ghost scroll on the pack selector: scrolling the mouse wheel over the
   closed selector opens a floating reel of packs centered on it (hovering
-  alone does nothing). Each wheel step slides the next pack under the still
-  pointer, all the way to the first and last pack; the pack under the pointer
-  is highlighted and a click selects it. The reel has borders on its sides
+  alone does nothing). Each wheel notch slides exactly one pack under the
+  still pointer (touchpad movement adds up, so a quick swipe never skips
+  packs), all the way to the first and last pack; the pack under the pointer
+  is highlighted, slightly larger than its neighbors, and a click selects it. The reel has borders on its sides
   only and fades out at the top and bottom. It disappears with a 150 ms
   ease-out fade when the pointer leaves it or after 2 seconds without
   movement, and closes on Escape or a click outside. It can be turned off in

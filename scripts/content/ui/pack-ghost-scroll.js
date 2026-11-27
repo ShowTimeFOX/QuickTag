@@ -38,8 +38,15 @@ export const GHOST_IDLE_MS = 2000;
 export const GHOST_FADE_MS = 150;
 const VISIBLE_ROWS = 7;
 const WINDOW_MARGIN = 4;
-/** Wheel distance (px) per pack step; line-based deltas count 20 px per line. */
-const STEP_PX = 50;
+/**
+ * Wheel steps: a mouse notch (a line/page-based delta, or one pixel delta of
+ * at least NOTCH_MIN_PX) moves exactly one pack, whatever its size. Smaller
+ * pixel deltas (touchpads) add up to TOUCHPAD_STEP_PX and then move one pack,
+ * at most once per TOUCHPAD_COOLDOWN_MS; a change of direction starts over.
+ */
+const NOTCH_MIN_PX = 50;
+const TOUCHPAD_STEP_PX = 40;
+const TOUCHPAD_COOLDOWN_MS = 90;
 
 const view = {
   enabled: true,
@@ -47,6 +54,7 @@ const view = {
   closeTimer: null,
   idleTimer: null,
   wheelRemainder: 0,
+  lastTouchpadStep: 0,
   pointer: { x: 0, y: 0 },
   /** Pack rows (no spacers), the pack the reel is moving to, and the row height. */
   rows: [],
@@ -142,6 +150,7 @@ function openList() {
   list.hidden = false;
   view.open = true;
   view.wheelRemainder = 0;
+  view.lastTouchpadStep = 0;
   positionList();
   addOpenListeners();
 }
@@ -205,17 +214,34 @@ function scrollBehavior() {
 }
 
 /** Slides the reel by whole packs; small touchpad deltas add up. */
-function scrollByWheel(event) {
-  view.wheelRemainder += wheelPixels(event);
-  const steps = Math.trunc(view.wheelRemainder / STEP_PX) || (Math.abs(view.wheelRemainder) >= STEP_PX / 2 ? Math.sign(view.wheelRemainder) : 0);
-  if (!steps) return;
-  view.wheelRemainder -= steps * STEP_PX;
-  // At either end, the reel stops (and the remainder does not build up).
-  const next = Math.max(0, Math.min(view.rows.length - 1, view.index + steps));
-  if (next === view.index) {
+/** -1, 0, or 1: the pack step for this wheel event (see NOTCH_MIN_PX). */
+function wheelStep(event) {
+  const pixels = wheelPixels(event);
+  if (!pixels) return 0;
+  const direction = Math.sign(pixels);
+  if (event.deltaMode !== 0 || Math.abs(pixels) >= NOTCH_MIN_PX) {
     view.wheelRemainder = 0;
-    return;
+    return direction;
   }
+  if (Math.sign(view.wheelRemainder) !== direction) view.wheelRemainder = 0;
+  view.wheelRemainder += pixels;
+  if (Math.abs(view.wheelRemainder) < TOUCHPAD_STEP_PX) return 0;
+  const now = performance.now();
+  if (now - view.lastTouchpadStep < TOUCHPAD_COOLDOWN_MS) {
+    // Too soon after the last step: hold at the threshold, never queue steps.
+    view.wheelRemainder = direction * TOUCHPAD_STEP_PX;
+    return 0;
+  }
+  view.lastTouchpadStep = now;
+  view.wheelRemainder = 0;
+  return direction;
+}
+
+/** Slides the reel by one pack per wheel step; it stops at both ends. */
+function scrollByWheel(event) {
+  const step = wheelStep(event);
+  const next = Math.max(0, Math.min(view.rows.length - 1, view.index + step));
+  if (next === view.index) return;
   view.index = next;
   elements.list.scrollTo({ top: next * view.rowHeight, behavior: scrollBehavior() });
 }

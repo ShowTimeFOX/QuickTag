@@ -434,15 +434,19 @@ if you need help.
   pack i sits on the switcher's row at `scrollTop = i × row height`, which
   lets the first and last pack reach it too; for that, the reel has no
   vertical padding or top/bottom border. Each wheel step moves a target index
-  by one pack (50 px of wheel delta per pack, so touchpad deltas add up;
-  clamped at both ends) and `scrollTo` slides there smoothly (instantly with
+  by exactly one pack, clamped at both ends: a mouse notch (a line/page
+  delta, or one pixel delta of at least 50 px) is one step whatever its size;
+  smaller pixel deltas (touchpads) add up to 40 px, step at most once per
+  90 ms, and start over on a change of direction. `scrollTo` slides there smoothly (instantly with
   Reduce visual effects or reduced motion), so packs pass under the still
   pointer. Wheel input is handled with `preventDefault` only while ghost
   scroll is on and the dropdown is closed, so the tagger body never scrolls
   under it. The pack under the pointer gets `is-hovered` from
   `elementFromPoint` on pointer moves and every scroll frame, because
-  `:hover` does not follow content scrolling under a still pointer. Styling:
-  borders on the left and right only, and a `mask-image` (with
+  `:hover` does not follow content scrolling under a still pointer; the
+  highlighted pack is raised slightly (`scale(1.05)`, `z-index: 1`, an opaque
+  background over its neighbors; the reel's side padding leaves room for it
+  inside the borders). Styling: borders on the left and right only, and a `mask-image` (with
   `-webkit-mask-image`) gradient fades the background and packs out at the
   top and bottom; a click selects it (`paletteChanged`, source
   `ghost-scroll`). Leaving the list and the switcher, or 2 s without wheel or

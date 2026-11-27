@@ -2400,7 +2400,8 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 0 3px;
+  /* Side room for the highlighted pack's scale-up (inside the side borders). */
+  padding: 0 7px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -2448,6 +2449,7 @@
   color: var(--lm-muted, #91a0b5);
   font-size: 12px;
   cursor: pointer;
+  transition: transform 120ms ease-out, background-color 120ms ease-out;
 }
 
 .lazymod-ghost-item.active {
@@ -2455,10 +2457,14 @@
   font-weight: 600;
 }
 
+/* The highlighted pack is raised a little over its neighbors. */
 .lazymod-ghost-item.is-hovered {
-  background: var(--lm-accent-soft, rgba(79, 143, 238, 0.16));
-  border-color: color-mix(in srgb, var(--lm-accent, #7cafff) 45%, transparent);
+  position: relative;
+  z-index: 1;
+  background: color-mix(in srgb, var(--lm-accent, #7cafff) 22%, var(--lm-surface, #111824));
+  border-color: color-mix(in srgb, var(--lm-accent, #7cafff) 55%, transparent);
   color: var(--lm-text, #e2eaf5);
+  transform: scale(1.05);
 }
 
 .lazymod-ghost-item-name {
@@ -2561,7 +2567,8 @@
 @media (prefers-reduced-motion: reduce) {
   .lazymod-pack-trigger-icon,
   .lazymod-pack-item,
-  .lazymod-ghost-list {
+  .lazymod-ghost-list,
+  .lazymod-ghost-item {
     transition: none;
   }
 }
