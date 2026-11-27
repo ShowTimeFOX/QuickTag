@@ -71,7 +71,7 @@ export function createTestCopy({ label, hubBaseUrl, exposePages = false }) {
   if (exposePages) {
     const manifestPath = path.join(dir, "manifest.json");
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-    manifest.web_accessible_resources[0].resources.push("pages/extension-popup.html", "pages/palette-editor.html", "pages/about.html", "pages/permissions.html");
+    manifest.web_accessible_resources[0].resources.push("pages/extension-popup.html", "pages/palette-editor.html", "pages/about.html", "pages/docs.html", "pages/permissions.html");
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   }
   return dir;

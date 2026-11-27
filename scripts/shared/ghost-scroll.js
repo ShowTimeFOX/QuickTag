@@ -3,9 +3,9 @@
 // neighbors), and a ghost overlay names the centered item. The overlay hides
 // `idleMs` after the last scroll event.
 //
-// Used by the tagger's pack switcher (content/ui/pack-browser.js) and the
-// About page demo. DOM is touched only inside the returned functions and
-// listeners, never at module level.
+// Used by the tagger's pack switcher (content/ui/pack-browser.js). DOM is
+// touched only inside the returned functions and listeners, never at module
+// level.
 //
 // It listens only to the list's own passive `scroll` events (no wheel
 // handling, no preventDefault), so page scrolling is never captured. Scrolls

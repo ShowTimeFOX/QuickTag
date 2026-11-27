@@ -1,132 +1,102 @@
-// About page checks (What's new section and its demos), shared by chrome.mjs
-// and firefox.mjs. `openAbout()` opens pages/about.html and returns a handle.
-import { sleep } from "./pages.mjs";
+// About and Docs page checks, shared by chrome.mjs and firefox.mjs.
+// `openAbout()` opens pages/about.html, `openDocs(hash)` pages/docs.html.
 import { waitFor } from "./checks.mjs";
 
-const ABOUT_STATE = `(() => {
-  const nav = [...document.querySelectorAll(".page-nav a")].map((link) => link.getAttribute("href"));
-  return {
-    ready: Boolean(document.querySelector("#demo-pack-list .demo-pack")),
-    nav,
-    navTargetsExist: nav.every((href) => href.startsWith("#") && Boolean(document.getElementById(href.slice(1)))),
-    whatsNewFirst: document.querySelector("main > section")?.id,
-    showcases: [...document.querySelectorAll(".showcase h3")].map((heading) => heading.textContent),
-    cards: [...document.querySelectorAll(".feature-grid .card h3")].map((heading) => heading.textContent),
-    outdated: /starter palette is protected/.test(document.body.textContent),
-  };
-})()`;
-const PACK_DEMO = `(() => {
-  const list = document.getElementById("demo-pack-list");
-  const ghost = document.getElementById("demo-pack-ghost");
-  return {
-    rows: [...list.querySelectorAll(".demo-pack")].map((row) => row.querySelector(".demo-pack-name").textContent + (row.querySelector(".demo-pack-match") ? " [" + row.querySelector(".demo-pack-match").textContent + "]" : "")),
-    scrolling: list.classList.contains("is-ghost-scrolling"),
-    ghostVisible: ghost.dataset.visible,
-    ghostName: ghost.querySelector(".demo-ghost-name")?.textContent || "",
-    centered: list.querySelector(".is-centered .demo-pack-name")?.textContent || "",
-    status: document.getElementById("demo-pack-status").textContent,
-  };
-})()`;
-const demoSearch = (value) =>
-  `(() => { const input = document.getElementById("demo-pack-search"); input.value = ${JSON.stringify(value)}; input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
-const FOCUS_DEMO = `(() => {
-  const grid = document.getElementById("demo-focus-grid");
-  return { areas: grid.style.gridTemplateAreas, columns: grid.style.gridTemplateColumns, scale: grid.style.getPropertyValue("--demo-scale"), status: document.getElementById("demo-focus-status").textContent };
-})()`;
-const clickFocus = (action) => `(() => { document.querySelector('#showcase-focus [data-action="${action}"]').click(); return true; })()`;
-const ASSET_DEMO = `(() => ({
-  contentsHidden: document.getElementById("demo-asset-contents").hidden,
-  contents: document.getElementById("demo-asset-contents").textContent,
-  install: document.getElementById("demo-asset-install").textContent,
-  installDisabled: document.getElementById("demo-asset-install").disabled,
-  uninstallHidden: document.getElementById("demo-asset-uninstall").hidden,
-  status: document.getElementById("demo-asset-status").textContent,
-  hasUndo: Boolean(document.querySelector("#demo-asset-status button")),
-}))()`;
-const clickId = (id) => `(() => { document.getElementById(${JSON.stringify(id)}).click(); return true; })()`;
+const EXPECTED_SECTIONS = ["getting-started", "palette-ai", "window", "site-profiles", "assets", "troubleshooting", "whats-new"];
+const EXPECTED_FAQ = ["window-moved", "window-off-screen", "url-pattern", "profile-elements", "unsaved-changes", "file-hub"];
+// Words that would mean internal details leaked into the user docs.
+const JARGON = /scripts\/|\.mjs\b|\bstorage\.local\b|lazymod_|innerHTML|content script|service worker|module/i;
 
-export async function runAboutChecks({ openAbout, evaluate, check }) {
-  const page = await openAbout();
-  const about = await waitFor(evaluate, page, ABOUT_STATE, (state) => state?.ready, 10000);
+const ABOUT_STATE = `(() => ({
+  ready: Boolean(document.getElementById("about-version")?.textContent),
+  version: document.getElementById("about-version").textContent,
+  manifestVersion: "v" + chrome.runtime.getManifest().version,
+  highlights: [...document.querySelectorAll("#highlights .card h3")].map((heading) => heading.textContent),
+  docsHref: document.getElementById("about-open-docs")?.getAttribute("href"),
+  docsLinks: [...document.querySelectorAll('a[href^="docs.html"]')].map((link) => link.getAttribute("href")),
+  releaseNotes: Boolean(document.querySelector("#whats-new, .showcase, .demo")) || /What's new in|NEW IN 1\\./.test(document.body.textContent),
+  words: document.querySelector("main").textContent.trim().split(/\\s+/).length,
+}))()`;
+
+const DOCS_STATE = `(() => {
+  const section = document.querySelector("#docs-content .docs-section");
+  return {
+    nav: [...document.querySelectorAll("#docs-nav .docs-nav-link")].map((link) => link.dataset.section),
+    active: [...document.querySelectorAll("#docs-nav .docs-nav-link.active")].map((link) => link.dataset.section),
+    current: document.querySelector("#docs-nav [aria-current='page']")?.dataset.section || "",
+    section: section?.dataset.section || "",
+    title: section?.querySelector("h1")?.textContent || "",
+    blocks: section ? section.children.length : 0,
+    text: section?.textContent || "",
+    internalLinks: [...(section?.querySelectorAll("a[href^='#']") || [])].map((link) => link.getAttribute("href")),
+    externalLinks: [...(section?.querySelectorAll("a[href^='http']") || [])].map((link) => ({ href: link.href, target: link.target, rel: link.rel })),
+    faq: [...(section?.querySelectorAll("details[data-faq]") || [])].map((item) => ({ id: item.dataset.faq, open: item.open })),
+    badges: [...(section?.querySelectorAll(".docs-badge") || [])].map((badge) => badge.textContent),
+    version: document.getElementById("docs-version").textContent,
+    overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  };
+})()`;
+const clickNav = (id) => `(() => { document.querySelector('#docs-nav [data-section="${id}"]').click(); return true; })()`;
+const setHash = (hash) => `(() => { location.hash = ${JSON.stringify(hash)}; return true; })()`;
+
+export async function runAboutChecks({ openAbout, openDocs, evaluate, check }) {
+  const about = await waitFor(evaluate, await openAbout(), ABOUT_STATE, (state) => state?.ready, 10000);
   check(
-    "About: What's new comes first and lists the v1.2 features; navigation links resolve; feature cards updated",
-    about.ready &&
-      about.whatsNewFirst === "whats-new" &&
-      about.nav[0] === "#whats-new" &&
-      about.navTargetsExist &&
-      about.showcases.length === 3 &&
-      ["Pack switcher", "Assets · File Hub"].every((title) => about.cards.includes(title)) &&
-      !about.outdated,
+    "About: short overview with 4 highlights, the installed version badge, and Open the Docs; no release notes",
+    about.version === about.manifestVersion &&
+      about.highlights.length === 4 &&
+      about.docsHref === "docs.html" &&
+      about.docsLinks.includes("docs.html#troubleshooting") &&
+      about.docsLinks.includes("docs.html#whats-new") &&
+      !about.releaseNotes &&
+      about.words < 350,
     about,
   );
 
-  // Pack switcher demo: deep search and ghost scroll (shared/ghost-scroll.js).
-  await evaluate(page, demoSearch("wolf"));
-  const byTag = await evaluate(page, PACK_DEMO);
-  await evaluate(page, demoSearch("lighting"));
-  const byName = await evaluate(page, PACK_DEMO);
-  await evaluate(page, demoSearch(""));
-  await evaluate(page, `(() => { const list = document.getElementById("demo-pack-list"); list.scrollTop = (list.scrollHeight - list.clientHeight) / 2; return true; })()`);
-  await sleep(200);
-  const scrolling = await evaluate(page, PACK_DEMO);
-  await sleep(900);
-  const idle = await evaluate(page, PACK_DEMO);
+  const page = await openDocs();
+  const first = await waitFor(evaluate, page, DOCS_STATE, (state) => state?.section, 10000);
   check(
-    "About demo (pack switcher): searches tags and names; ghost scroll names the centered pack, then fades",
-    byTag.rows.join() === "Anthro & Fursuit Pack [tag: wolf]" &&
-      byName.rows[0] === "Lighting Essentials" &&
-      scrolling.scrolling &&
-      scrolling.ghostVisible === "true" &&
-      Boolean(scrolling.ghostName) &&
-      scrolling.ghostName === scrolling.centered &&
-      !idle.scrolling &&
-      idle.ghostVisible === "false",
-    { byTag: byTag.rows, byName: byName.rows, scrolling, idle },
+    "Docs: sidebar lists the 7 sections in order; the first opens by default; version badge",
+    first.nav.join() === EXPECTED_SECTIONS.join() && first.section === "getting-started" && first.active.join() === "getting-started" && first.current === "getting-started" && /^v\d+\.\d+\.\d+$/.test(first.version),
+    { nav: first.nav, section: first.section, active: first.active, version: first.version },
   );
 
-  // Focus Mode demo: the real layout transforms and a scale preview.
-  const initial = await evaluate(page, FOCUS_DEMO);
-  await evaluate(page, clickFocus("swap"));
-  const swapped = await evaluate(page, FOCUS_DEMO);
-  await evaluate(page, clickFocus("wider"));
-  const wider = await evaluate(page, FOCUS_DEMO);
-  await evaluate(page, `(() => { const input = document.getElementById("demo-focus-scale"); input.value = "1.5"; input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
-  const scaled = await evaluate(page, FOCUS_DEMO);
-  await evaluate(page, clickFocus("reset"));
-  const reset = await evaluate(page, FOCUS_DEMO);
+  // Every sidebar link shows its section; collect links and text along the way.
+  const visited = [];
+  for (const id of EXPECTED_SECTIONS) {
+    await evaluate(page, clickNav(id));
+    visited.push(await waitFor(evaluate, page, DOCS_STATE, (state) => state.section === id, 3000));
+  }
+  const brokenLinks = visited.flatMap((state) => state.internalLinks.filter((href) => !EXPECTED_SECTIONS.includes(href.slice(1).split("/")[0])));
+  const unsafeExternal = visited.flatMap((state) => state.externalLinks.filter((link) => !link.href.startsWith("https://") || link.target !== "_blank" || !/noopener/.test(link.rel)));
+  const jargon = visited.filter((state) => JARGON.test(state.text)).map((state) => `${state.section}: ${state.text.match(JARGON)[0]}`);
   check(
-    "About demo (Focus Mode): swap and resize use the layout transforms; scale preview; reset",
-    /"image palette"/.test(initial.areas) &&
-      /"palette image"/.test(swapped.areas) &&
-      /3\.75fr/.test(wider.columns) &&
-      /columns:/.test(wider.status) &&
-      scaled.scale === "1.5" &&
-      reset.areas === initial.areas &&
-      reset.columns === initial.columns,
-    { initial, swapped, wider, scaled: scaled.scale, reset },
+    "Docs: each sidebar link shows its section (title, content, active item); links resolve; external links open safely; no internal jargon",
+    visited.every((state, index) => state.section === EXPECTED_SECTIONS[index] && state.active.join() === state.section && state.title && state.blocks >= 3) &&
+      brokenLinks.length === 0 &&
+      unsafeExternal.length === 0 &&
+      jargon.length === 0 &&
+      visited.every((state) => !state.overflow),
+    { sections: visited.map((state) => [state.section, state.title, state.blocks]), brokenLinks, unsafeExternal, jargon },
   );
 
-  // Assets demo: preview, install, uninstall with undo (no storage involved).
-  await evaluate(page, clickId("demo-asset-preview"));
-  const preview = await evaluate(page, ASSET_DEMO);
-  await evaluate(page, clickId("demo-asset-install"));
-  const installed = await evaluate(page, ASSET_DEMO);
-  await evaluate(page, clickId("demo-asset-uninstall"));
-  const uninstalled = await evaluate(page, ASSET_DEMO);
-  await evaluate(page, `(() => { document.querySelector("#demo-asset-status button").click(); return true; })()`);
-  const restored = await evaluate(page, ASSET_DEMO);
+  const troubleshooting = visited.find((state) => state.section === "troubleshooting");
+  const whatsNew = visited.find((state) => state.section === "whats-new");
   check(
-    "About demo (Assets): Preview lists the contents; Install, then Uninstall with Undo",
-    !preview.contentsHidden &&
-      /2 groups · 3 categories · 14 tags/.test(preview.contents) &&
-      /Sky › Weather \(5\)/.test(preview.contents) &&
-      installed.install === "Installed" &&
-      installed.installDisabled &&
-      !installed.uninstallHidden &&
-      uninstalled.install === "Install" &&
-      uninstalled.hasUndo &&
-      restored.install === "Installed" &&
-      /Restored/.test(restored.status),
-    { preview: preview.contents.slice(0, 120), installed, uninstalled, restored },
+    "Docs: Troubleshooting answers the common questions; What's New has v1.2.0 and v1.1.0",
+    EXPECTED_FAQ.every((id) => troubleshooting.faq.some((item) => item.id === id)) && whatsNew.badges.includes("v1.2.0") && whatsNew.badges.includes("v1.1.0"),
+    { faq: troubleshooting.faq.map((item) => item.id), badges: whatsNew.badges },
+  );
+
+  // Addresses: a question deep link opens it; unknown addresses fall back.
+  await evaluate(page, setHash("#troubleshooting/url-pattern"));
+  const deep = await waitFor(evaluate, page, DOCS_STATE, (state) => state.section === "troubleshooting" && state.faq.some((item) => item.open), 3000);
+  await evaluate(page, setHash("#no-such-section"));
+  const unknown = await waitFor(evaluate, page, DOCS_STATE, (state) => state.section === "getting-started", 3000);
+  const direct = await waitFor(evaluate, await openDocs("#whats-new"), DOCS_STATE, (state) => state?.section, 10000);
+  check(
+    "Docs: docs.html#section opens that section, #troubleshooting/<question> opens the question, unknown addresses show Getting Started",
+    deep.faq.filter((item) => item.open).map((item) => item.id).join() === "url-pattern" && unknown.section === "getting-started" && direct.section === "whats-new",
+    { deep: deep.faq, unknown: unknown.section, direct: direct.section },
   );
 }

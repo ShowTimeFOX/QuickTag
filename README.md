@@ -97,7 +97,7 @@ never scrolls the tagger or the page. `Esc` or a click outside closes the
 list.
 
 **Uninstall** (in the list, or **Uninstall** in the palette header for the
-selected pack) removes a pack right away and offers **Undo** for 10 seconds
+selected pack) removes a pack right away and offers **Undo** for 5 seconds
 below the pack selector. If the removed pack was selected, the next pack in
 the list is selected. A pack installed from File Hub can also be uninstalled
 from its card in the **Assets** tab, which then offers **Install** again.
@@ -244,7 +244,8 @@ Firefox closes. Unpacked extensions are not installed or updated automatically.
 4. Open a page with an image and select **AI** in the tag palettes. The
    suggested tags appear in the "AI" group at the start of the groups.
 
-The extension's **About** page contains more detailed setup instructions.
+The extension's **Docs** page (open **About**, then **Open the Docs**) has
+step-by-step setup instructions and a Troubleshooting section.
 Palette editing, tagging, and other non-AI features do not require ComfyUI.
 
 ## Checking for updates

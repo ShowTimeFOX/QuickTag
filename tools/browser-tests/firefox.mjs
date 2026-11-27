@@ -241,7 +241,7 @@ try {
     origin,
     realGesture: false,
   });
-  await runAboutChecks({ openAbout: () => openExtensionPage("pages/about.html"), evaluate, check });
+  await runAboutChecks({ openAbout: () => openExtensionPage("pages/about.html"), openDocs: (hash = "") => openExtensionPage(`pages/docs.html${hash}`), evaluate, check });
 
   const editorUrl = (query) => `${base}/pages/palette-editor.html?${query}`;
   const palette = await openExtensionPage(`pages/palette-editor.html?packId=default-character`);

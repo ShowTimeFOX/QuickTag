@@ -64,7 +64,14 @@ source directory; `manifest.json` contains the shared browser configuration.
   saved locally and included in configuration backups. **Reduce visual
   effects** turns off blur, shadows, filters, transitions, and animations.
 - **Quick actions:** Copy tags, clear the tag field, and view the tag count.
-- **Consistent interface:** The tagger, editor, and About page use English
+- **About and Docs pages:** About (`pages/about.html`) is a short overview
+  with the installed version and a link to Docs. Docs (`pages/docs.html`) is
+  the user guide: a left sidebar with Getting Started, Tag Palette & AI
+  Suggestions, Window Controls / Ghost Mode / Focus Mode, Site Profiles &
+  Auto-Detect, Assets & File Hub, Troubleshooting, and What's New. Sections
+  open by address (`docs.html#troubleshooting`), and a Troubleshooting
+  question by `docs.html#troubleshooting/<question id>`.
+- **Consistent interface:** The tagger, editor, About, and Docs pages use English
   labels, consistent control states, and lightweight SVG action icons. Themes
   retain their own color palettes and visual details.
 
@@ -138,24 +145,28 @@ if you need help.
 | `assets/icon.png` | Icon used in the browser toolbar and extension popup. |
 | `data/character.json` | Default Character Portrait tag pack. |
 | `data/anthro.json` | Default Anthro & Fursuit tag pack. |
-| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema, presets, and layout editing), `file-hub.js` (File Hub catalogue and pack validation), `ghost-scroll.js` (ghost scroll for the pack switcher and the About page demo), and `validation.js`. No DOM access at module level. |
+| `scripts/shared/` | ES modules used by every context: `constants.js` (storage keys, message actions, defaults), `storage.js`, `tags.js`, `palette.js`, `site-configs.js`, `shortcuts.js`, `focus-layout.js` (layout schema, presets, and layout editing), `file-hub.js` (File Hub catalogue and pack validation), `ghost-scroll.js` (ghost scroll for the pack switcher), and `validation.js`. No DOM access at module level. |
 | `scripts/background.js` | Background entry module; registers event listeners. |
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
 | `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
 | `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js` (tag palettes and the "AI" group), `chips.js`, `ai-settings.js` (AI threshold), `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack search, ghost scroll, uninstall); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
-| `scripts/about-page.js` | About page module: the "What's new" demos, built on the shared ghost scroll, Focus Mode layout transforms, and pack summary, with sample data and no storage access. |
+| `scripts/about-page.js` | About page module: shows the installed version (`chrome.runtime.getManifest()`). |
+| `scripts/docs-page.js` | Docs page module: sidebar, one section at a time, `#section` and `#section/question` addresses, previous/next links. |
+| `scripts/docs/` | Docs content and rendering: `sections.js` (all Docs text as plain data: `DOCS_SECTIONS` and `RELEASES`; editing notes at the top) and `render.js` (blocks and inline `**bold**`, `` `code` ``, `[label](target)` to DOM with `createElement`/`textContent`). |
 | `scripts/palette-editor.js` | Editor page module: loads, validates, converts, and saves tag packs, site profiles, and the AI blacklist. |
 | `scripts/editor/` | Editor components: `easy-json.js` (easyJson format) and `code-editor.js` (line numbers and word wrap). |
 | `pages/extension-popup.html` | Toolbar popup for global visibility, ComfyUI status, updates, and the About link. |
 | `pages/palette-editor.html` | Palette and settings editor page. |
-| `pages/about.html` | Feature and setup guide. |
+| `pages/about.html` | Short About page: what QuickTag is, who it is for, highlights, version, and links to Docs. |
+| `pages/docs.html` | Docs page shell; the content comes from `scripts/docs/sections.js`. |
 | `pages/popup.html` | Floating tagger interface template. |
 | `styles/tagger.css` | Shared styles for the tagger and its overlays. |
 | `styles/extension-popup.css` | Toolbar popup styles. |
 | `styles/palette-editor.css` | Palette editor styles. |
-| `styles/about.css` | About page styles. |
+| `styles/about.css` | About page styles and the shared base of the guide pages (colors, brand, buttons, code, footer). |
+| `styles/docs.css` | Docs page layout: sidebar (a scrolling row on narrow screens), sections, Troubleshooting questions, What's New. |
 | `styles/theme-dark.css` | Dark mode theme. |
 | `styles/theme-light.css` | Light mode theme. |
 | `styles/theme-femboy.css` | Femboy theme. |
@@ -405,7 +416,7 @@ if you need help.
   else none); it returns what `restorePack` needs to put the pack back at the
   same position. Uninstall also removes the pack's `lazymod_hub_packages`
   record, and Undo restores both. Uninstall acts immediately; Undo is offered
-  for 10 seconds instead of a blocking confirmation. It is the only way to
+  for 5 seconds (`UNDO_TIMEOUT_MS`) instead of a blocking confirmation. It is the only way to
   remove a pack: the palette header's **Uninstall** (formerly a Delete
   button with `confirm()`) runs the same flow on the selected pack, and its
   Undo appears in `#lm-pack-notice` under the switcher, visible whether the
@@ -413,8 +424,7 @@ if you need help.
   through `paletteChanged` (sources `packs` and `assets`) and storage change
   events. Search matches case-insensitive substrings against a per-pack index
   cached by pack object (a `WeakMap`), and never modifies packs.
-- **Ghost scroll** (`shared/ghost-scroll.js`, also used by the About page
-  demo). The pack list listens only to its own passive `scroll`
+- **Ghost scroll** (`shared/ghost-scroll.js`). The pack list listens only to its own passive `scroll`
   events (no wheel handlers, no `preventDefault`), so page scrolling is never
   captured; `overscroll-behavior: contain` keeps a wheel at the end of the
   list from scrolling the tagger body. While it scrolls, the item nearest the list's center is marked,
@@ -503,3 +513,19 @@ Keep `README.md`, `PROJECT.md`, and `CHANGELOG.md` in English. Update
 `PROJECT.md` and `CHANGELOG.md` in the same change when project features,
 architecture, configuration, or file structure changes. Describe the current
 implementation and omit cosmetic changes that do not affect use or maintenance.
+
+### About and Docs pages (user-facing)
+
+- **About stays high-level:** what QuickTag is, who it is for, a few
+  highlights, the version, and links to Docs. No release notes, setup guides,
+  or feature details there.
+- **Docs is the user guide.** Whenever a user-facing feature or a common
+  workflow changes, update `scripts/docs/sections.js` in the same change:
+  the section where people would look for it (mark new things with
+  `since: "x.y.z"`), a **Troubleshooting** question for problems users are
+  likely to hit, and the **What's New** entry (`RELEASES`, newest first) for
+  the version being developed.
+- **Plain, non-technical language:** say what to click and what happens. No
+  file, module, storage, or API names; use the labels users see in the
+  interface. The browser tests reject a few internal terms in Docs text.
+- Keep section ids stable; About and the Troubleshooting deep links use them.

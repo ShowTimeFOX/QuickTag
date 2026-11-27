@@ -46,11 +46,17 @@
   offers Install again afterwards.
 - Delete layout in Focus Mode Customize removes a saved layout (built-in
   layouts are kept) and shows Default again.
-- The About page starts with "What's new": the pack switcher, Focus Mode
-  customization and scale, and Assets, each with a small interactive demo.
+- Docs page (`pages/docs.html`, opened from About): a user guide with a left
+  sidebar (Getting Started, Tag Palette & AI Suggestions, Window Controls /
+  Ghost Mode / Focus Mode, Site Profiles & Auto-Detect, Assets & File Hub,
+  Troubleshooting, What's New), written in plain language with small version
+  badges for new features. Troubleshooting covers a window that moved or is
+  off-screen, URL patterns with IDs or `*`, profiles that don't find the tag
+  field, unsaved editor changes, File Hub loading, and AI setup. Sections and
+  questions can be linked directly (`docs.html#troubleshooting/url-pattern`).
 - Assets cards: Preview shows a package's groups, categories, and first tags
   before installing (validated like an install, nothing is saved), and Show
-  in Hub opens File Hub filtered to QuickTag packages in its category.
+  in Hub opens the package's page on File Hub.
 - Tag separator per site profile (Settings › Current page profile): how tags
   are joined and split in the site's tag field, for example `, ` for
   comma-separated sites; a space by default.
@@ -104,17 +110,15 @@
   covers every page of the site (host and port) and starts from the `.*`
   selectors.
 - The palette header's Delete button is now Uninstall: packs are removed the
-  same way everywhere, right away with Undo for 10 seconds, instead of after
+  same way everywhere, right away with Undo, instead of after
   a confirmation dialog.
-- About page: updated feature cards (pack switcher, Assets, Focus Mode) and
-  removed the outdated note that the starter palette cannot be deleted.
+- About page: now a short overview (what QuickTag is, who it's for, four
+  highlights, the installed version) with links to Docs. The feature list,
+  ComfyUI and WD14 setup, tag pack format, and troubleshooting moved to Docs.
 - Imported tag packs skip groups and categories named `__proto__`,
   `constructor`, or `prototype`.
 - The tag counter now also updates when the page's tag field is edited
   directly or the Palette tab is opened.
-- Assets: Show in Hub opens the package's own File Hub page (the catalogue's
-  `pageUrl`, or `index.html?package=<id>`) instead of the hub list filtered
-  to QuickTag and the package's category.
 
 ### Fixed
 

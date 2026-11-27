@@ -267,6 +267,7 @@ try {
 
   await runAboutChecks({
     openAbout: () => openTab(`chrome-extension://${extensionId}/pages/about.html`, "about"),
+    openDocs: (hash = "") => openTab(`chrome-extension://${extensionId}/pages/docs.html${hash}`, "docs"),
     evaluate: (handle, expression) => evaluate(handle.sessionId, expression),
     check,
   });
