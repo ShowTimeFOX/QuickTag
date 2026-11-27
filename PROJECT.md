@@ -425,17 +425,26 @@ if you need help.
   events. Search matches case-insensitive substrings against a per-pack index
   cached by pack object (a `WeakMap`), and never modifies packs.
 - **Ghost scroll** (`ui/pack-ghost-scroll.js`). A mouse wheel over the
-  closed pack switcher opens a floating pack list (`#lm-pack-ghost-list`)
-  right over it, with the active pack's row on the switcher; hovering alone
-  does nothing, and the dropdown stays closed. The list is a direct child of
+  closed pack switcher opens a floating pack "reel" (`#lm-pack-ghost-list`)
+  centered on it, with the active pack's row on the switcher; hovering alone
+  does nothing, and the dropdown stays closed. The reel is a direct child of
   the tagger window (so the scrolling tab views never clip it), positioned
-  from JS in the window's unscaled coordinates. Wheel input moves it by whole
-  rows (50 px of wheel delta per pack, so touchpad deltas add up) and is
-  handled with `preventDefault` only while ghost scroll is on and the
-  dropdown is closed, so the tagger body never scrolls under it. The pack
-  under the pointer gets `is-hovered` from `elementFromPoint` on pointer
-  moves and scrolls, because `:hover` does not follow content scrolling
-  under a still pointer; a click selects it (`paletteChanged`, source
+  from JS in the window's unscaled coordinates and moved inside the window
+  near its edges. Spacer elements above and below the packs are sized so
+  pack i sits on the switcher's row at `scrollTop = i × row height`, which
+  lets the first and last pack reach it too; for that, the reel has no
+  vertical padding or top/bottom border. Each wheel step moves a target index
+  by one pack (50 px of wheel delta per pack, so touchpad deltas add up;
+  clamped at both ends) and `scrollTo` slides there smoothly (instantly with
+  Reduce visual effects or reduced motion), so packs pass under the still
+  pointer. Wheel input is handled with `preventDefault` only while ghost
+  scroll is on and the dropdown is closed, so the tagger body never scrolls
+  under it. The pack under the pointer gets `is-hovered` from
+  `elementFromPoint` on pointer moves and every scroll frame, because
+  `:hover` does not follow content scrolling under a still pointer. Styling:
+  borders on the left and right only, and a `mask-image` (with
+  `-webkit-mask-image`) gradient fades the background and packs out at the
+  top and bottom; a click selects it (`paletteChanged`, source
   `ghost-scroll`). Leaving the list and the switcher, or 2 s without wheel or
   pointer movement, fades it out (`is-closing`: opacity, 150 ms ease-out); a
   choice, `Escape`, a `pointerdown` outside, opening the dropdown, hiding the

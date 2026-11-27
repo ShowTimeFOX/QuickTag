@@ -41,12 +41,14 @@
   under the pointer. If the selected pack is
   uninstalled, the next one is selected. The opened list scrolls natively.
 - Ghost scroll on the pack selector: scrolling the mouse wheel over the
-  closed selector opens a floating list of packs right over it (hovering alone
-  does nothing). The pack under the pointer is highlighted and a click selects
-  it; the list fades out (150 ms, ease-out) when the pointer leaves it or after
-  2 seconds without movement, and closes on Escape or a click outside. It can
-  be turned off in Settings › Interface › Ghost scroll on the pack selector
-  (on by default).
+  closed selector opens a floating reel of packs centered on it (hovering
+  alone does nothing). Each wheel step slides the next pack under the still
+  pointer, all the way to the first and last pack; the pack under the pointer
+  is highlighted and a click selects it. The reel has borders on its sides
+  only and fades out at the top and bottom. It disappears with a 150 ms
+  ease-out fade when the pointer leaves it or after 2 seconds without
+  movement, and closes on Escape or a click outside. It can be turned off in
+  Settings › Interface › Ghost scroll on the pack selector (on by default).
 - Uninstall with Undo for installed packs on their Assets cards; the card
   offers Install again afterwards.
 - Delete layout in Focus Mode Customize removes a saved layout (built-in

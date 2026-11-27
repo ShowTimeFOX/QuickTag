@@ -1,7 +1,9 @@
 // Ghost scroll (Tagging view): scrolling the mouse wheel over the pack
-// switcher opens a floating list of packs right on top of it, without opening
-// the dropdown. The pack under the pointer is highlighted (also while the
-// list scrolls under a still pointer), and a click selects it. Hovering alone
+// switcher opens a floating "reel" of packs centered on it, without opening
+// the dropdown. Each wheel step slides the reel by one pack (smoothly), so
+// successive packs pass under the still pointer; the pack under the pointer
+// is highlighted live and a click selects it. Spacers above and below the
+// packs let the first and last pack reach the pointer row too. Hovering alone
 // does nothing.
 //
 // The list closes with a short ease-out fade when the pointer leaves the list
@@ -46,6 +48,10 @@ const view = {
   idleTimer: null,
   wheelRemainder: 0,
   pointer: { x: 0, y: 0 },
+  /** Pack rows (no spacers), the pack the reel is moving to, and the row height. */
+  rows: [],
+  index: 0,
+  rowHeight: 30,
 };
 let elements;
 
@@ -58,10 +64,11 @@ const packCount = () => Object.keys(state.paletteData?.packs || {}).length;
 
 // --- Items and highlight ---
 
+const spacer = (edge) => el("div", { className: "lazymod-ghost-spacer", dataset: { edge }, attrs: { "aria-hidden": "true" } });
+
 function renderItems() {
   const activeId = state.paletteData?.activePackId;
-  elements.list.replaceChildren(
-    ...searchInstalledPacks("", new Map()).map(({ packId, pack, meta }) =>
+  view.rows = searchInstalledPacks("", new Map()).map(({ packId, pack, meta }) =>
       el(
         "div",
         {
@@ -72,8 +79,9 @@ function renderItems() {
         },
         [el("span", { className: "lazymod-ghost-item-name", text: pack.name }), el("span", { className: "lazymod-ghost-item-meta", text: plural(meta.tagCount, "tag") })],
       ),
-    ),
   );
+  view.index = Math.max(0, view.rows.findIndex((row) => row.dataset.packId === activeId));
+  elements.list.replaceChildren(spacer("top"), ...view.rows, spacer("bottom"));
 }
 
 /** Highlights the pack under the pointer (`:hover` does not follow a scroll under a still pointer). */
@@ -88,29 +96,31 @@ function updateHighlight() {
 
 // --- Open, position, close ---
 
-/** Places the list over the switcher, the active pack under the pointer. */
+/**
+ * Centers the reel on the switcher (moved inside the window near its edges)
+ * and sizes the spacers so pack i sits on the switcher's row at
+ * scrollTop = i × rowHeight, for every pack including the first and last.
+ */
 function positionList() {
   const { list, toggle } = elements;
   const scale = getCurrentScale();
   const windowRect = shell.windowEl.getBoundingClientRect();
   const toggleRect = toggle.getBoundingClientRect();
   const windowHeight = windowRect.height / scale;
-  const toggleTop = (toggleRect.top - windowRect.top) / scale;
-  const rowHeight = list.firstElementChild?.offsetHeight || 30;
-  const style = getComputedStyle(list);
-  const border = parseFloat(style.borderTopWidth) || 0;
-  const padding = parseFloat(style.paddingTop) || 0;
-  // The first row's top sits on the switcher's top edge.
-  const inset = border + padding;
-  const height = Math.min(Math.min(VISIBLE_ROWS, list.children.length) * rowHeight + inset * 2, windowHeight - WINDOW_MARGIN * 2);
-  const top = Math.max(WINDOW_MARGIN, Math.min(toggleTop - inset, windowHeight - height - WINDOW_MARGIN));
+  const toggleCenter = (toggleRect.top - windowRect.top + toggleRect.height / 2) / scale;
+  const rowHeight = view.rows[0]?.offsetHeight || 30;
+  const height = Math.min(VISIBLE_ROWS * rowHeight, windowHeight - WINDOW_MARGIN * 2);
+  const top = Math.max(WINDOW_MARGIN, Math.min(toggleCenter - height / 2, windowHeight - height - WINDOW_MARGIN));
+  // Where the switcher's row is inside the reel (no top border: see tagger.css).
+  const anchor = toggleCenter - top;
+  list.querySelector('[data-edge="top"]').style.height = `${Math.max(0, anchor - rowHeight / 2)}px`;
+  list.querySelector('[data-edge="bottom"]').style.height = `${Math.max(0, height - anchor - rowHeight / 2)}px`;
   list.style.left = `${(toggleRect.left - windowRect.left) / scale}px`;
   list.style.width = `${toggleRect.width / scale}px`;
   list.style.top = `${top}px`;
   list.style.height = `${height}px`;
-  // Scroll so the active pack's row lies over the switcher (under the pointer).
-  const active = list.querySelector(".lazymod-ghost-item.active");
-  if (active) list.scrollTop = active.offsetTop + top + border - toggleTop;
+  view.rowHeight = rowHeight;
+  list.scrollTop = view.index * rowHeight;
 }
 
 function addOpenListeners() {
@@ -152,6 +162,7 @@ function finishClose() {
   elements.list.hidden = true;
   elements.list.classList.remove("is-closing");
   elements.list.replaceChildren();
+  view.rows = [];
 }
 
 function close({ animate = true } = {}) {
@@ -187,14 +198,26 @@ function wheelPixels(event) {
   return event.deltaY;
 }
 
-/** Moves the list by whole packs; small touchpad deltas add up. */
+/** Smooth slides, except with Reduce visual effects or reduced motion. */
+function scrollBehavior() {
+  const reduced = shell.host.classList.contains("lm-reduced-effects") || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  return reduced ? "auto" : "smooth";
+}
+
+/** Slides the reel by whole packs; small touchpad deltas add up. */
 function scrollByWheel(event) {
   view.wheelRemainder += wheelPixels(event);
   const steps = Math.trunc(view.wheelRemainder / STEP_PX) || (Math.abs(view.wheelRemainder) >= STEP_PX / 2 ? Math.sign(view.wheelRemainder) : 0);
   if (!steps) return;
   view.wheelRemainder -= steps * STEP_PX;
-  const rowHeight = elements.list.firstElementChild?.offsetHeight || 30;
-  elements.list.scrollTop += steps * rowHeight;
+  // At either end, the reel stops (and the remainder does not build up).
+  const next = Math.max(0, Math.min(view.rows.length - 1, view.index + steps));
+  if (next === view.index) {
+    view.wheelRemainder = 0;
+    return;
+  }
+  view.index = next;
+  elements.list.scrollTo({ top: next * view.rowHeight, behavior: scrollBehavior() });
 }
 
 function handleWheel(event) {

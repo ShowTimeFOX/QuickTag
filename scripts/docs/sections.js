@@ -114,7 +114,7 @@ export const DOCS_SECTIONS = [
       },
       { heading: "Flip through packs with the mouse wheel", since: "1.2.0" },
       {
-        p: "Without opening the list, scroll the mouse wheel over the pack selector. A small floating list of your packs appears right there. The pack under the pointer is highlighted; click it to switch. Move the pointer away, wait a moment, press `Esc`, or click elsewhere to close it without switching.",
+        p: "Without opening the list, scroll the mouse wheel over the pack selector. Your packs appear in a small reel and slide past under the pointer, so you can keep the mouse still. When the pack you want is highlighted, click it. Move the pointer away, wait a moment, press `Esc`, or click elsewhere to close it without switching.",
       },
       { p: "Don't want it? Turn off **Settings › Interface › Ghost scroll on the pack selector**. The wheel then scrolls the tagger as usual." },
       { heading: "Import, export, and edit packs" },

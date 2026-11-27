@@ -2388,26 +2388,40 @@
   opacity: 1;
 }
 
-/* Ghost scroll (pack-ghost-scroll.js): a floating pack list over the pack
-   switcher, opened by the mouse wheel. Positioned from JS in the window's
-   unscaled coordinates; fades out with a short ease-out. */
+/* Ghost scroll (pack-ghost-scroll.js): a floating "reel" of packs centered
+   on the pack switcher, opened by the mouse wheel. Positioned and sized from
+   JS in the window's unscaled coordinates; the spacers let the first and last
+   pack reach the switcher's row. Borders on the sides only, and a mask fades
+   the background and the packs out at the top and bottom. No vertical
+   padding or borders: JS places pack i on the switcher at i × row height. */
 .lazymod-ghost-list {
   position: absolute;
   z-index: 30;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 3px;
+  padding: 0 3px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   background: color-mix(in srgb, var(--lm-surface, #111824) 94%, transparent);
-  border: 1px solid color-mix(in srgb, var(--lm-accent, #7cafff) 45%, transparent);
-  border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  border: 0 solid color-mix(in srgb, var(--lm-accent, #7cafff) 45%, transparent);
+  border-left-width: 1px;
+  border-right-width: 1px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 22%, black 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 22%, black 78%, transparent);
   opacity: 1;
   transition: opacity 150ms ease-out;
+}
+
+.lazymod-ghost-list::-webkit-scrollbar {
+  display: none;
+}
+
+.lazymod-ghost-spacer {
+  flex: 0 0 auto;
+  pointer-events: none;
 }
 
 .lazymod-ghost-list[hidden] {
