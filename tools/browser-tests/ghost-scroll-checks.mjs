@@ -5,7 +5,10 @@
 // still pointer (first and last packs included), the pack under the pointer
 // is highlighted, and a click selects it; leaving, the idle timeout, Escape, and an outside pointerdown
 // dismiss it (fade-out); the Settings toggle turns it off immediately and in
-// other tabs.
+// other tabs. Then the same reel on the Focus Mode pack <select>, at 90%
+// scale (CSS zoom on the overlay): it draws above the overlay, steps one pack
+// per notch, selects on click, closes before Focus Mode on Escape, and
+// follows the setting.
 import { sleep } from "./pages.mjs";
 import { ROOT, READY, waitFor } from "./checks.mjs";
 
@@ -238,4 +241,122 @@ export async function runGhostScrollChecks({ open, evaluate, pointer, check, ori
   await evaluate(page, ESCAPE);
   await sleep(FADE_SETTLE_MS);
   check("Ghost scroll setting: turned on again, the wheel opens the list", reenabled.state.open && (await ghost()).checkbox, { open: reenabled.state.open });
+
+  await runFocusGhostScrollChecks({ evaluate, pointer, check }, page, { PACK_STATE, pointOf, names });
+}
+
+const FOCUS_REEL_STATE = `(() => {
+  const root = ${ROOT};
+  const focus = root.querySelector("#lm-focus-root");
+  const list = root.querySelector("#lm-focus-ghost-list");
+  const select = root.querySelector("#lm-focus-root .lm-focus-pack");
+  const a = list?.getBoundingClientRect();
+  const b = select.getBoundingClientRect();
+  return {
+    focusOpen: Boolean(focus && !focus.hidden),
+    zoom: focus?.style.zoom || "",
+    open: Boolean(list && !list.hidden),
+    closing: Boolean(list?.classList.contains("is-closing")),
+    inOverlay: Boolean(list && list.parentElement === focus),
+    items: list ? [...list.querySelectorAll(".lazymod-ghost-item")].map((item) => item.querySelector(".lazymod-ghost-item-name").textContent) : [],
+    hovered: list ? [...list.querySelectorAll(".lazymod-ghost-item.is-hovered")].map((item) => item.querySelector(".lazymod-ghost-item-name").textContent) : [],
+    scrollTop: list ? list.scrollTop : 0,
+    // In the reel's CSS px (the overlay may be zoomed): row box height / visual scale.
+    rowHeight: list && !list.hidden && list.querySelector(".lazymod-ghost-item") ? list.querySelector(".lazymod-ghost-item").getBoundingClientRect().height / (a.width / parseFloat(list.style.width)) : 0,
+    alignedWithSelect: Boolean(a) && !list.hidden && Math.abs(a.left - b.left) <= 1.5 && Math.abs(a.right - b.right) <= 1.5 && a.top <= b.top && a.bottom >= b.bottom,
+    selectValue: select.options[select.selectedIndex]?.textContent || "",
+    activePack: root.querySelector("#lm-pack-current").textContent,
+  };
+})()`;
+const setWindowScale = (value) => `(() => {
+  const slider = ${ROOT}.querySelector("#lm-scale-slider");
+  slider.value = ${JSON.stringify(String(value))};
+  slider.dispatchEvent(new Event("input", { bubbles: true }));
+  slider.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+})()`;
+const FOCUS_ESCAPE = `(() => { ${ROOT}.querySelector("#lm-focus-root").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true, composed: true })); return true; })()`;
+const focusItemAt = (point) => `(() => {
+  const hit = ${ROOT}.elementFromPoint(${point.x}, ${point.y});
+  return { name: hit?.closest?.(".lazymod-ghost-item")?.querySelector(".lazymod-ghost-item-name").textContent || "", inReel: Boolean(hit?.closest?.("#lm-focus-ghost-list")) };
+})()`;
+
+async function runFocusGhostScrollChecks({ evaluate, pointer, check }, page, { PACK_STATE, pointOf, names }) {
+  const reel = () => evaluate(page, FOCUS_REEL_STATE);
+  await pointer.move(page, 5, 5);
+  await evaluate(page, setWindowScale(0.9));
+  await evaluate(page, clickById("#lm-focus-header"));
+  await waitFor(evaluate, page, FOCUS_REEL_STATE, (state) => state.focusOpen, 3000);
+  await sleep(300);
+  const point = await evaluate(page, pointOf("#lm-focus-root .lm-focus-pack"));
+  const before = await evaluate(page, PACK_STATE);
+  const activeIndex = names.indexOf(before.activePack);
+  const direction = activeIndex + 3 <= names.length - 1 ? 1 : -1;
+
+  await pointer.wheel(page, point.x, point.y, 120 * direction);
+  await sleep(SLIDE_MS);
+  const opened = await reel();
+  const hitOpened = await evaluate(page, focusItemAt(point));
+  check(
+    "Focus Mode ghost scroll: the wheel over the pack select opens the reel inside the overlay, drawn above it and aligned with the select (90% zoom); one notch moves one pack under the pointer",
+    point.hits &&
+      opened.focusOpen &&
+      opened.zoom === "0.9" &&
+      opened.open &&
+      opened.inOverlay &&
+      opened.alignedWithSelect &&
+      opened.items.join() === names.join() &&
+      hitOpened.inReel &&
+      hitOpened.name === names[activeIndex + direction] &&
+      opened.hovered.join() === hitOpened.name &&
+      Math.abs(opened.scrollTop - (activeIndex + direction) * opened.rowHeight) <= 1,
+    { point, opened: { ...opened, items: opened.items.length }, hitOpened, expected: names[activeIndex + direction] },
+  );
+
+  await pointer.wheel(page, point.x, point.y, 240 * direction);
+  await sleep(SLIDE_MS);
+  const stepped = await reel();
+  const hitStepped = await evaluate(page, focusItemAt(point));
+  check(
+    "Focus Mode ghost scroll: a further notch (even 240 px) moves exactly one more pack",
+    stepped.open && hitStepped.name === names[activeIndex + 2 * direction] && stepped.hovered.join() === hitStepped.name && Math.abs(stepped.scrollTop - opened.scrollTop - direction * opened.rowHeight) <= 1,
+    { hitStepped, expected: names[activeIndex + 2 * direction], scrollTop: [opened.scrollTop, stepped.scrollTop], rowHeight: opened.rowHeight },
+  );
+
+  const choice = hitStepped.name;
+  await pointer.click(page, point.x, point.y);
+  const chosen = await waitFor(evaluate, page, FOCUS_REEL_STATE, (state) => !state.open && state.selectValue === choice, 3000);
+  check(
+    "Focus Mode ghost scroll: clicking a pack selects it (Focus palette and tagger follow) and closes the reel; Focus Mode stays open",
+    !chosen.open && chosen.focusOpen && chosen.selectValue === choice && chosen.activePack === choice,
+    { chosen, choice },
+  );
+
+  // Escape closes the reel first, then (a second Escape) Focus Mode.
+  await pointer.wheel(page, point.x, point.y, 120 * direction);
+  await waitFor(evaluate, page, FOCUS_REEL_STATE, (state) => state.open && !state.closing, 3000);
+  await evaluate(page, FOCUS_ESCAPE);
+  await sleep(FADE_SETTLE_MS);
+  const escaped = await reel();
+  check("Focus Mode ghost scroll: Escape closes the reel and leaves Focus Mode open", !escaped.open && escaped.focusOpen && escaped.selectValue === choice, escaped);
+
+  // The setting applies here too.
+  await evaluate(page, clickById("#lm-ghost-scroll"));
+  await pointer.wheel(page, point.x, point.y, 120);
+  await sleep(400);
+  const disabled = await reel();
+  await evaluate(page, clickById("#lm-ghost-scroll"));
+  await pointer.wheel(page, point.x, point.y, 120);
+  const enabled = await waitFor(evaluate, page, FOCUS_REEL_STATE, (state) => state.open, 3000);
+  await evaluate(page, FOCUS_ESCAPE);
+  await sleep(FADE_SETTLE_MS);
+  check(
+    "Focus Mode ghost scroll: with the setting off the wheel opens nothing; on again, it opens the reel",
+    !disabled.open && disabled.focusOpen && enabled.open,
+    { disabled: disabled.open, enabled: enabled.open },
+  );
+
+  await evaluate(page, FOCUS_ESCAPE);
+  await waitFor(evaluate, page, FOCUS_REEL_STATE, (state) => !state.focusOpen, 3000);
+  await evaluate(page, setWindowScale(1));
 }

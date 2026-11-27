@@ -95,7 +95,7 @@ switch to it. Scrolling the list never scrolls the tagger or the page. `Esc`
 or a click outside closes the list.
 
 **Ghost scroll:** without opening the list, scroll the mouse wheel over the
-pack selector to flip through your packs: they slide past under the pointer
+pack selector (in the tagger or in Focus Mode) to flip through your packs: they slide past under the pointer
 like a reel, so you can keep the mouse still. The pack under the pointer is
 highlighted; click it to switch. Move the pointer away, wait a
 moment, press `Esc`, or click elsewhere to close it without switching. Turn

@@ -60,7 +60,7 @@ scripts/
       focus-layout-editor.js  Customize: move/resize panels, save as new layout
       assets-panel.js   Assets tab (File Hub browse/install)
       pack-browser.js   pack switcher dropdown: search, uninstall with undo (native scrolling)
-      pack-ghost-scroll.js  wheel over the closed switcher: floating pack list + its Settings toggle
+      pack-ghost-scroll.js  wheel ghost scroll reel (attachGhostScroll: tagger switcher + Focus pack select) + its Settings toggle
       visual-effects.js Reduce visual effects (class on the shadow host)
       ai-settings.js    AI threshold control (Settings)
   background.js         background entry (registers listeners synchronously)

@@ -40,9 +40,10 @@
   It replaces the native drop-down, which closed whenever the tagger scrolled
   under the pointer. If the selected pack is
   uninstalled, the next one is selected. The opened list scrolls natively.
-- Ghost scroll on the pack selector: scrolling the mouse wheel over the
-  closed selector opens a floating reel of packs centered on it (hovering
-  alone does nothing). Each wheel notch slides exactly one pack under the
+- Ghost scroll on the pack selector, in the tagger and in Focus Mode:
+  scrolling the mouse wheel over the closed selector opens a floating reel of
+  packs centered on it (hovering alone does nothing; in Focus Mode, Escape
+  closes the reel before Focus Mode). Each wheel notch slides exactly one pack under the
   still pointer (touchpad movement adds up, so a quick swipe never skips
   packs), all the way to the first and last pack; the pack under the pointer
   is highlighted, slightly larger than its neighbors, and a click selects it. The reel has borders on its sides

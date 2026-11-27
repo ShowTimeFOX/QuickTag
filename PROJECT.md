@@ -150,7 +150,7 @@ if you need help.
 | `scripts/background/` | `messages.js` (message router, opens extension pages), `updates.js` (update check and badge), `comfyui.js` (WD14 analysis), `file-hub.js` (File Hub catalogue and package downloads). |
 | `scripts/content.js` | Classic-script loader that imports `scripts/content/main.js`. |
 | `scripts/content/` | Tagger logic: `main.js` (startup order), `state.js` (shared runtime state), `events.js` (event bus), `visibility.js`, `page.js` (host page DOM and tag field), `site-profiles.js`, `palettes.js`, `fuzzy-search.js`, `config-backup.js`, `messaging.js`, `focus-tags.js` (Focus Mode tag model and page sync), `file-hub.js` (File Hub install records), `pack-manager.js` (uninstall with undo, installed-pack search). |
-| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js` (tag palettes and the "AI" group), `chips.js`, `ai-settings.js` (AI threshold), `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack switcher dropdown: search, uninstall), `pack-ghost-scroll.js` (wheel-over-switcher ghost scroll list and its setting); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
+| `scripts/content/ui/` | Tagger interface components: `shell.js` (Shadow DOM), `theme.js`, `tabs.js`, `palette-panel.js` (tag palettes and the "AI" group), `chips.js`, `ai-settings.js` (AI threshold), `settings-panel.js`, `quick-actions.js`, `element-picker.js`, `window-layout.js`, `window-controls.js`, `ghost-mode.js`, `status.js`, `scroll-arrows.js`, `dom.js` (safe element builder), `shortcut-recorder.js`, `assets-panel.js` (Assets tab), `pack-browser.js` (pack switcher dropdown: search, uninstall), `pack-ghost-scroll.js` (wheel ghost scroll reel for the tagger and Focus Mode pack selectors, and its setting); Focus Mode: `focus-mode.js` (controller), `focus-topbar.js`, `focus-image.js`, `focus-tags-panel.js`, `focus-palette.js`, `focus-layout-dialog.js`, `focus-layout-editor.js` (Customize), `focus-settings.js`. |
 | `scripts/extension-popup.js` | Toolbar popup module: global visibility, ComfyUI connectivity, and update checks. |
 | `scripts/about-page.js` | About page module: shows the installed version (`chrome.runtime.getManifest()`). |
 | `scripts/docs-page.js` | Docs page module: sidebar, one section at a time, `#section` and `#section/question` addresses, previous/next links. |
@@ -424,13 +424,23 @@ if you need help.
   through `paletteChanged` (sources `packs` and `assets`) and storage change
   events. Search matches case-insensitive substrings against a per-pack index
   cached by pack object (a `WeakMap`), and never modifies packs.
-- **Ghost scroll** (`ui/pack-ghost-scroll.js`). A mouse wheel over the
-  closed pack switcher opens a floating pack "reel" (`#lm-pack-ghost-list`)
-  centered on it, with the active pack's row on the switcher; hovering alone
-  does nothing, and the dropdown stays closed. The reel is a direct child of
-  the tagger window (so the scrolling tab views never clip it), positioned
-  from JS in the window's unscaled coordinates and moved inside the window
-  near its edges. Spacer elements above and below the packs are sized so
+- **Ghost scroll** (`ui/pack-ghost-scroll.js`). A mouse wheel over a pack
+  selector opens a floating pack "reel" centered on it, with the active
+  pack's row on the selector; hovering alone does nothing, and the selector's
+  own list stays closed. One core serves both selectors through
+  `attachGhostScroll({ trigger, list, isBlocked, onOpen, onClose })`, and only
+  one reel is open at a time: the tagger's pack switcher (reel
+  `#lm-pack-ghost-list`, a direct child of the tagger window; blocked while
+  the dropdown is open) and the Focus Mode pack `<select>` (reel
+  `#lm-focus-ghost-list`, created by `focus-palette.js` as a child of
+  `#lm-focus-root`, `z-index` above the panels; registered with
+  `api.pushDismissable` while open, so `Escape` closes it before Focus Mode).
+  Being direct children of their positioned containers keeps scrolling views
+  from clipping them. The containers scale differently (the window with
+  `transform: scale()`, Focus Mode with CSS `zoom`), so the reel measures the
+  container's scale and origin by placing itself as a 100 px probe, then
+  positions itself in the container's CSS pixels, kept inside the container
+  and the viewport. Spacer elements above and below the packs are sized so
   pack i sits on the switcher's row at `scrollTop = i × row height`, which
   lets the first and last pack reach it too; for that, the reel has no
   vertical padding or top/bottom border. Each wheel step moves a target index

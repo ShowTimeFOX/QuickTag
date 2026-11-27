@@ -1,7 +1,9 @@
 // Focus Mode palette, laid out like the tagger palette: AI button and pack in
 // the header; group tabs (with the AI group first while it has results or is
 // running); category sub-tabs, or Flat view with category labels; "+ All";
-// search; chips that reflect the Focus Mode tag states.
+// search; chips that reflect the Focus Mode tag states. The pack <select>
+// also gets the wheel ghost scroll reel (pack-ghost-scroll.js), drawn inside
+// the overlay and closed first by Escape (api.pushDismissable).
 // Click: active → remove, absent or muted → add (muting is on the badges).
 import { formatTag } from "../../shared/tags.js";
 import { state } from "../state.js";
@@ -12,6 +14,7 @@ import { getAnalysisPhase, getAnalysisStatus, getSuggestedEntries, getSuggestedT
 import { el, button } from "./dom.js";
 import { createEmptyMessage, createTagChip } from "./chips.js";
 import { attachScrollArrows, enableWheelScrolling } from "./scroll-arrows.js";
+import { attachGhostScroll } from "./pack-ghost-scroll.js";
 
 const STATE_ICONS = { active: "−", muted: "+", none: "+" };
 const STATE_TITLES = { active: "Active: click to remove", muted: "Muted in the tag list: click to switch on", none: "Click to add" };
@@ -211,6 +214,23 @@ export function createFocusPalettePanel(api) {
     renderBody(pack);
     renderAllToggle(pack);
   }
+
+  // Ghost scroll on the pack <select>; its native list stays untouched.
+  const ghostReel = el("div", { className: "lazymod-ghost-list lm-focus-ghost-list", id: "lm-focus-ghost-list", hidden: true, attrs: { role: "listbox", "aria-label": "Tag packs" } });
+  api.root.appendChild(ghostReel);
+  let releaseEscape = null;
+  const reel = attachGhostScroll({
+    trigger: packSelect,
+    list: ghostReel,
+    isBlocked: () => packSelect.disabled,
+    onOpen: () => {
+      releaseEscape ??= api.pushDismissable(() => reel.close());
+    },
+    onClose: () => {
+      releaseEscape?.();
+      releaseEscape = null;
+    },
+  });
 
   packSelect.addEventListener("change", () => {
     if (!selectPack(packSelect.value)) return;
